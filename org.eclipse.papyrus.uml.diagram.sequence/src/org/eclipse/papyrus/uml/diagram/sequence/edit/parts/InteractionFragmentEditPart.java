@@ -183,7 +183,7 @@ public abstract class InteractionFragmentEditPart extends ShapeNodeEditPart {
 		}
 			
 		int i = 0;
-//*8
+/*8
 System.out.println("in updateCoveredLifelines, lifelineEditPartsToCheck : " + lifelineEditPartsToCheck);
 //*/
 		for(Object child : lifelineEditPartsToCheck) {
