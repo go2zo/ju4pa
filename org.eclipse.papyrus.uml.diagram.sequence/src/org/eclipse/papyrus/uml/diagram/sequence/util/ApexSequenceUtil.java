@@ -485,21 +485,35 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		Rectangle copyRect4 = thisFigure.getBounds().getCopy();
 		
 		System.out.println("----------------------");
+		System.out.println("agep.getNotationView() :                        : " + agep.resolveSemanticElement());
+		System.out.println("agep.getParent() :                              : " + agep.getParent());
+		System.out.println("agep.getParent().getFigure()                    : " + ((AbstractGraphicalEditPart)agep.getParent()).getFigure());
+		System.out.println("");
+		System.out.println("thisFigure                                      : " + thisFigure);
+		System.out.println("thisFigure.getParent()                          : " + thisFigure.getParent());
+		System.out.println("");
+		System.out.println("thisFigure.getInset() :                         : " + thisFigure.getInsets());
 		System.out.println("thisFigure.getBounds().getCopy()                : " + origRect);	
 		
 		thisFigure.translateFromParent(copyRect1);
-		System.out.println("thisFigure.translateFromParent(copyRect1)       : " + copyRect1);
+//		System.out.println("thisFigure.translateFromParent(copyRect1)       : " + copyRect1);		
+		
+		thisFigure.translateToParent(copyRect3);
+//		System.out.println("thisFigure.translateToParent(copyRect3)         : " + copyRect3);
 		
 		thisFigure.translateToAbsolute(copyRect2);
 		System.out.println("thisFigure.translateToAbsolute(copyRect2)       : " + copyRect2);
 		
-		thisFigure.translateToParent(copyRect3);
-		System.out.println("thisFigure.translateToParent(copyRect3)         : " + copyRect3);
-		
 		thisFigure.translateToRelative(copyRect4);
-		System.out.println("thisFigure.translateToRelative(copyRect4)       : " + copyRect4);
+//		System.out.println("thisFigure.translateToRelative(copyRect4)       : " + copyRect4);		
 		
-		System.out.println("thisFigure.getParent() : " + thisFigure.getParent());
+//		System.out.println("thisFigure.getParent().getClass()               : " + thisFigure.getParent().getClass());
+//		System.out.println("thisFigure.getParent().getInsets()              : " + thisFigure.getParent().getInsets());
+//		System.out.println("thisFigure.getParent().getBounds()              : " + thisFigure.getParent().getBounds());
+		Rectangle parentR = thisFigure.getParent().getBounds().getCopy();
+		thisFigure.getParent().translateToAbsolute(parentR);
+		
+		System.out.println("thisFigure.getParent().translateToAbs(parentF)  : " + parentR);
 		
 		Rectangle copyRect11 = thisFigure.getBounds().getCopy();
 		Rectangle copyRect21 = thisFigure.getBounds().getCopy();
@@ -507,16 +521,17 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		Rectangle copyRect41 = thisFigure.getBounds().getCopy();
 		
 		thisFigure.getParent().translateFromParent(copyRect11);
-		System.out.println("parentFigure.translateFromParent(copyRect11)    : " + copyRect11);
-		
-		thisFigure.getParent().translateToAbsolute(copyRect21);
-		System.out.println("parentFigure.translateToAbsolute(copyRect21)    : " + copyRect21);
+//		System.out.println("parentFigure.translateFromParent(copyRect11)    : " + copyRect11);
 		
 		thisFigure.getParent().translateToParent(copyRect31);
-		System.out.println("parentFigure.translateToParent(copyRect31)      : " + copyRect31);
+//		System.out.println("parentFigure.translateToParent(copyRect31)      : " + copyRect31);
+				
+		thisFigure.getParent().translateToAbsolute(copyRect21);
+		System.out.println("parentFigure.translateToAbsolute(copyRect21)    : " + copyRect21);
+
 		
 		thisFigure.getParent().translateToRelative(copyRect41);
-		System.out.println("parentFigure.translateToRelative(copyRect41)    : " + copyRect41);
+//		System.out.println("parentFigure.translateToRelative(copyRect41)    : " + copyRect41);
 		
 //		apexShowChildrenEditPart(agep);
 		List children = apexGetChildEditPartList(agep);
@@ -534,22 +549,31 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				Rectangle copyRect32 = childFigure.getBounds().getCopy();
 				Rectangle copyRect42 = childFigure.getBounds().getCopy();
 				
+//				System.out.println("cfep.getNotationView() :                        : " + cfep.resolveSemanticElement());
+//				System.out.println("cfep.getParent() :                              : " + cfep.getParent());
+//				System.out.println("cfep.getParent().getFigure()                    : " + ((InteractionOperandEditPart)cfep.getParent()).getFigure());
+//				System.out.println("");
+//				System.out.println("childFigure                                      : " + childFigure);
+//				System.out.println("childFigure.getParent()                          : " + childFigure.getParent());
+				
 				System.out.println("");
 				System.out.println("childFigure.getBounds().getCopy()           : " + origRect2);	
 				
 				childFigure.translateFromParent(copyRect12);
-				System.out.println("childFigure.translateFromParent(copyRect12) : " + copyRect12);
+//				System.out.println("childFigure.translateFromParent(copyRect12) : " + copyRect12);
+				
+				childFigure.translateToParent(copyRect32);
+//				System.out.println("childFigure.translateToParent(copyRect32)   : " + copyRect32);
 				
 				childFigure.translateToAbsolute(copyRect22);
 				System.out.println("childFigure.translateToAbsolute(copyRect22) : " + copyRect22);
 				
-				childFigure.translateToParent(copyRect32);
-				System.out.println("childFigure.translateToParent(copyRect32)   : " + copyRect32);
-				
 				childFigure.translateToRelative(copyRect42);
-				System.out.println("childFigure.translateToRelative(copyRect42) : " + copyRect42);
+//				System.out.println("childFigure.translateToRelative(copyRect42) : " + copyRect42);
 				
-				System.out.println("childFigure.getParent() : " + childFigure.getParent());
+//				System.out.println("childFigure.getParent().getClass()          : " + childFigure.getParent().getClass());
+//				System.out.println("childFigure.getParent().getInsets()         : " + childFigure.getParent().getInsets());
+				System.out.println("childFigure.getParent().getBounds()         : " + childFigure.getParent().getBounds());
 				
 				Rectangle copyRect13 = childFigure.getBounds().getCopy();
 				Rectangle copyRect23 = childFigure.getBounds().getCopy();
@@ -557,16 +581,16 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				Rectangle copyRect43 = childFigure.getBounds().getCopy();
 				
 				childFigure.getParent().translateFromParent(copyRect13);
-				System.out.println("parentFigure.translateFromParent(copyRect13): " + copyRect13);
+//				System.out.println("parentFigure.translateFromParent(copyRect13): " + copyRect13);
+				
+				childFigure.getParent().translateToParent(copyRect33);
+//				System.out.println("parentFigure.translateToParent(copyRect33)  : " + copyRect33);
 				
 				childFigure.getParent().translateToAbsolute(copyRect23);
 				System.out.println("parentFigure.translateToAbsolute(copyRect23): " + copyRect23);
 				
-				childFigure.getParent().translateToParent(copyRect33);
-				System.out.println("parentFigure.translateToParent(copyRect33)  : " + copyRect33);
-				
 				childFigure.getParent().translateToRelative(copyRect43);
-				System.out.println("parentFigure.translateToRelative(copyRect43): " + copyRect43);
+//				System.out.println("parentFigure.translateToRelative(copyRect43): " + copyRect43);
 			}
 		}
 		
