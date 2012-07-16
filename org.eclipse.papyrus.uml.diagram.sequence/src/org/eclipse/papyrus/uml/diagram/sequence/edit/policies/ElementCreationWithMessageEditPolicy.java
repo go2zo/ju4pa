@@ -13,6 +13,9 @@
  *****************************************************************************/
 package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
 import org.eclipse.gef.EditPart;
@@ -26,8 +29,6 @@ import org.eclipse.gmf.runtime.diagram.ui.requests.CreateConnectionViewAndElemen
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.command.PromptCreateElementAndNodeCommand;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.uml2.uml.ExecutionSpecification;
@@ -60,7 +61,12 @@ public class ElementCreationWithMessageEditPolicy extends LifelineChildGraphical
 				EditPart sourceEP = viewRequest.getSourceEditPart();
 				EObject source = ViewUtil.resolveSemanticElement((View)sourceEP.getModel());
 
+				/* apex improved start */
+				if (apexGetMessageHints().contains(viewRequest.getConnectionViewDescriptor().getSemanticHint())) {
+				/* apex improved end */
+				/* apex replaced
 				if(getSyncMessageHint().equals(viewRequest.getConnectionViewDescriptor().getSemanticHint()) || getReplyMessageHint().equals(viewRequest.getConnectionViewDescriptor().getSemanticHint())) {
+				 */
 					if(target instanceof Lifeline ||
 					// handle reflexive synch message by creating a new ES
 					(target instanceof ExecutionSpecification && target.equals(source))) {
@@ -72,10 +78,18 @@ public class ElementCreationWithMessageEditPolicy extends LifelineChildGraphical
 							targetEP = targetEP.getParent();
 							target = ViewUtil.resolveSemanticElement((View)targetEP.getModel());
 						}
+						/* apex improved start */
+						return new ICommandProxy(new PromptCreateElementAndNodeCommand(
+								command, getEditingDomain(),viewRequest.getConnectionViewDescriptor(),
+								(ShapeNodeEditPart) targetEP, target,sourceEP,request, ift));
+						/* apex improved end */
+						/* apex replaced
 						EditPart sourceEditPart = request.getSourceEditPart();
 						if (sourceEditPart instanceof ActionExecutionSpecificationEditPart || sourceEditPart instanceof BehaviorExecutionSpecificationEditPart) {
 							return new ICommandProxy(new PromptCreateElementAndNodeCommand(command, getEditingDomain(),viewRequest.getConnectionViewDescriptor(),(ShapeNodeEditPart) targetEP, target,sourceEP,request, ift));
 						}
+						 */
+						
 //						IHintedType elementType = null;
 //						if(sourceEditPart instanceof ActionExecutionSpecificationEditPart) {
 //							elementType = (IHintedType)UMLElementTypes.ActionExecutionSpecification_3006;
@@ -113,5 +127,23 @@ public class ElementCreationWithMessageEditPolicy extends LifelineChildGraphical
 
 	private TransactionalEditingDomain getEditingDomain() {
 		return ((IGraphicalEditPart)getHost()).getEditingDomain();
+	}
+	
+	/**
+	 * 모든 Message들의 SemanticHint List 반환
+	 * @return
+	 */
+	private static List<String> apexGetMessageHints() {
+		List<String> hints = new ArrayList<String>();
+		
+		hints.add(((IHintedType)UMLElementTypes.Message_4003).getSemanticHint());
+		hints.add(((IHintedType)UMLElementTypes.Message_4004).getSemanticHint());
+		hints.add(((IHintedType)UMLElementTypes.Message_4005).getSemanticHint());
+//		hints.add(((IHintedType)UMLElementTypes.Message_4006).getSemanticHint());
+		hints.add(((IHintedType)UMLElementTypes.Message_4007).getSemanticHint());
+		hints.add(((IHintedType)UMLElementTypes.Message_4008).getSemanticHint());
+		hints.add(((IHintedType)UMLElementTypes.Message_4009).getSemanticHint());
+		
+		return hints;
 	}
 }

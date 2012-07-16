@@ -60,7 +60,6 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.CreationEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.DragDropEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.EditPolicyRoles;
-import org.eclipse.gmf.runtime.diagram.ui.editpolicies.GraphicalNodeEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.figures.IBorderItemLocator;
 import org.eclipse.gmf.runtime.diagram.ui.l10n.DiagramUIMessages;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeConnectionRequest;
@@ -88,6 +87,7 @@ import org.eclipse.papyrus.uml.diagram.common.editpolicies.AppliedStereotypeLabe
 import org.eclipse.papyrus.uml.diagram.common.editpolicies.BorderItemResizableEditPolicy;
 import org.eclipse.papyrus.uml.diagram.common.figure.node.NodeNamedElementFigure;
 import org.eclipse.papyrus.uml.diagram.common.providers.UIAdapterImpl;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ApexLifelineConnectionHandleEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.CustomDiagramDragDropEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ElementCreationWithMessageEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineAppliedStereotypeNodeLabelDisplayEditPolicy;
@@ -96,6 +96,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineItemSemant
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineSelectionEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineXYLayoutEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.RemoveOrphanViewPolicy;
+import org.eclipse.papyrus.uml.diagram.sequence.figures.ApexCustomLifelineDotLineCustomFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.figures.LifelineDotLineCustomFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.locator.CenterLocator;
 import org.eclipse.papyrus.uml.diagram.sequence.locator.TimeMarkElementPositionLocator;
@@ -212,6 +213,10 @@ public class LifelineEditPart extends NamedElementEditPart {
 		
 		//Fixed bug: https://bugs.eclipse.org/bugs/show_bug.cgi?id=364608
 		installEditPolicy(EditPolicy.PRIMARY_DRAG_ROLE, new LifelineSelectionEditPolicy());
+		/* apex added start */
+		// jiho - ConnectionHandle을 DashLine에 위치시키는 EditPolicy
+		installEditPolicy(EditPolicyRoles.CONNECTION_HANDLES_ROLE, new ApexLifelineConnectionHandleEditPolicy());
+		/* apex added end*/
 	}
 
 	/**
@@ -1481,7 +1486,12 @@ public class LifelineEditPart extends NamedElementEditPart {
 			this.add(fFigureExecutionsContainerFigure, BorderLayout.CENTER);
 			fFigureExecutionsContainerFigure.setLayoutManager(new StackLayout());
 
+			/* apex improved start */
+			fFigureLifelineDotLineFigure = new ApexCustomLifelineDotLineCustomFigure();
+			/* apex improved end */
+			/* apex replaced
 			fFigureLifelineDotLineFigure = new LifelineDotLineCustomFigure();
+			 */
 
 			fFigureExecutionsContainerFigure.add(fFigureLifelineDotLineFigure);
 

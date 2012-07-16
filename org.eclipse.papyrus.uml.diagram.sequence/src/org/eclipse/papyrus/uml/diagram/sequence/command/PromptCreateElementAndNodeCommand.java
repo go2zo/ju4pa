@@ -18,8 +18,10 @@ import org.eclipse.gmf.runtime.diagram.ui.commands.CreateOrSelectElementCommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateConnectionViewRequest.ConnectionViewDescriptor;
+import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.gmf.runtime.emf.type.core.IElementType;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
+import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
@@ -28,6 +30,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.part.UMLVisualIDRegistry;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.InteractionFragment;
 
 public class PromptCreateElementAndNodeCommand extends
@@ -85,6 +88,19 @@ public class PromptCreateElementAndNodeCommand extends
 				container);
 		command.add(new ICommandProxy(createExecutionSpecificationCommand));
 
+		/* apex added start */
+		// jiho - Source인 ExecSpec의 Bounds, Connection의 Anchor을 자동변경하는 Command 생성
+		if (sourceEP instanceof ActionExecutionSpecificationEditPart || sourceEP instanceof BehaviorExecutionSpecificationEditPart) {
+			View view = (View)sourceEP.getModel();
+			ApexSetBoundsForExecutionSpecificationCommand setBoundsCommand = new ApexSetBoundsForExecutionSpecificationCommand(
+					editingDomain, createExecutionSpecificationCommand, new EObjectAdapter(view));
+			command.add(new ICommandProxy(setBoundsCommand));
+
+			command.add(new ICommandProxy(new ApexPreserveAnchorsPositionCommand(
+					(ShapeNodeEditPart)sourceEP, setBoundsCommand, ApexPreserveAnchorsPositionCommand.PRESERVE_Y)));
+		}
+		/* apex added end */
+		
 		// put the anchor at the top of the figure
 		ChangeEdgeTargetCommand changeTargetCommand = new ChangeEdgeTargetCommand(
 				editingDomain, createExecutionSpecificationCommand, descriptor,
