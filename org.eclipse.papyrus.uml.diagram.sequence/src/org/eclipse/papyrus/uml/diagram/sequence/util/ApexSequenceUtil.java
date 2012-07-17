@@ -674,13 +674,13 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * 해당 Rectangle에 intersect되는 모든 Lifeline 반환
 	 * 절대좌표로 비교
 	 * 
-	 * @param selectionRect
+	 * @param selectionRect 절대좌표화된 선택영역
 	 * @param hostEditPart
 	 * @return
 	 */
 	public static List apexGetPositionallyCoveredLifelineEditParts(Rectangle selectionRect, AbstractGraphicalEditPart hostEditPart) {
 		
-		hostEditPart.getFigure().translateToAbsolute(selectionRect);
+		//hostEditPart.getFigure().translateToAbsolute(selectionRect);
 		
 		List positionallyCoveredLifelineEditParts = new ArrayList();
 
@@ -690,9 +690,17 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			EditPart ep = epEntry.getValue();
 
 			if(ep instanceof LifelineEditPart) {
-				Rectangle figureBounds = SequenceUtil.getAbsoluteBounds((LifelineEditPart)ep);
+				Rectangle figureBounds = ApexSequenceUtil.apexGetAbsoluteRectangle((LifelineEditPart)ep);
 
 				if(selectionRect.intersects(figureBounds)) {
+//*8
+System.out.println("&&&&&&&&&&&&&&&&");
+System.out
+		.println("ApexSequenceUtil.apexGetPositionallyCoveredLifelineEditParts(), line : "
+				+ Thread.currentThread().getStackTrace()[1].getLineNumber());
+System.out.println("selectionRect : " + selectionRect);
+System.out.println("figureBounds  : " + figureBounds);
+//*/
 					positionallyCoveredLifelineEditParts.add(ep);
 				}
 			}
