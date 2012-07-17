@@ -14,10 +14,11 @@
 package org.eclipse.papyrus.uml.diagram.sequence.util;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Rectangle;
@@ -27,14 +28,18 @@ import org.eclipse.emf.edit.command.RemoveCommand;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
 import org.eclipse.gef.EditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
+import org.eclipse.gmf.runtime.notation.Bounds;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
+import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.Lifeline;
 import org.eclipse.uml2.uml.UMLPackage;
 
 /**
- * This class updates the property CoveredBy of Lifeline when a Lifeline gets created, moved/resize and also the resize of moving of each CombinedFragment  
+ * This class updates the property CoveredBy of Lifeline when a Lifeline gets created, moved/resize 
+ * and also the resize of moving of each CombinedFragment  
  * 
  * @author yyang
  *
@@ -99,22 +104,26 @@ public class LifelineCoveredByUpdater {
 			Rectangle childBounds = entry.getValue();
 			updateLifeline(editPart, childBounds);
 		}
-	}
-		
-	public void updateLifeline(LifelineEditPart lifelineEditpart, Rectangle rect) {
+	}	
+	
+	/**
+	 * @param lifelineEditpart
+	 * @param lifelineBounds
+	 */
+	public void updateLifeline(LifelineEditPart lifelineEditpart, Rectangle lifelineBounds) {
 		Lifeline lifeline = (Lifeline) lifelineEditpart.resolveSemanticElement();
 		EList<InteractionFragment> coveredByLifelines = lifeline
 				.getCoveredBys();
 
 		coveredByLifelinesToAdd.clear();
-		coveredByLifelinesToRemove.clear();
+		coveredByLifelinesToRemove.clear();				
 		
 		for (Map.Entry<InteractionFragmentEditPart, Rectangle> entry : interactionFragments.entrySet()) {
 			InteractionFragmentEditPart editPart = entry.getKey();
 			Rectangle childBounds = entry.getValue();
 			InteractionFragment interactionFragment = (InteractionFragment) editPart
 					.resolveSemanticElement();
-			if (rect.intersects(childBounds)) {
+			if (lifelineBounds.intersects(childBounds)) {
 				if (!coveredByLifelines.contains(interactionFragment)) {
 					coveredByLifelinesToAdd.add(interactionFragment);
 				}

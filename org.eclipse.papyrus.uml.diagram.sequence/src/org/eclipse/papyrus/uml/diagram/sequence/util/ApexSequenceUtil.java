@@ -690,17 +690,9 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			EditPart ep = epEntry.getValue();
 
 			if(ep instanceof LifelineEditPart) {
-				Rectangle figureBounds = ApexSequenceUtil.apexGetAbsoluteRectangle((LifelineEditPart)ep);
+				Rectangle lifelineRect = ApexSequenceUtil.apexGetAbsoluteRectangle((LifelineEditPart)ep);
 
-				if(selectionRect.intersects(figureBounds)) {
-//*8
-System.out.println("&&&&&&&&&&&&&&&&");
-System.out
-		.println("ApexSequenceUtil.apexGetPositionallyCoveredLifelineEditParts(), line : "
-				+ Thread.currentThread().getStackTrace()[1].getLineNumber());
-System.out.println("selectionRect : " + selectionRect);
-System.out.println("figureBounds  : " + figureBounds);
-//*/
+				if(selectionRect.intersects(lifelineRect)) {
 					positionallyCoveredLifelineEditParts.add(ep);
 				}
 			}
