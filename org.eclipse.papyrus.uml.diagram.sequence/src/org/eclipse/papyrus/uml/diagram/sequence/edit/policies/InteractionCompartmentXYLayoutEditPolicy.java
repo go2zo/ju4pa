@@ -1362,7 +1362,7 @@ System.out.println("??? in omw right after LifelineEditPart target after Connect
 			Rectangle origCFBounds = cfFigure.getBounds().getCopy();
 
 			// origCFBounds 를 화면 좌상단을 원점으로 하는 절대좌표값으로 변경
-			cfFigure.getParent().translateToAbsolute(origCFBounds);
+			cfFigure.translateToAbsolute(origCFBounds);
 
 			// origCFBounds 를 cfFigure.getParent()의 좌상단 절대좌표값만큼 더하여 변경, 즉 parent의 변경만큼 origCFBounds도 변경 
 			origCFBounds.translate(cfFigure.getParent().getBounds().getLocation());	
@@ -1378,7 +1378,7 @@ System.out.println("??? in omw right after LifelineEditPart target after Connect
 			if ( ep instanceof InteractionOperandEditPart ) {
 				InteractionOperandEditPart ioep = (InteractionOperandEditPart)ep;
 				Rectangle parentOperandBounds = ioep.getFigure().getBounds().getCopy();
-				parentEditPart.getFigure().translateToAbsolute(parentOperandBounds);
+				ioep.getFigure().translateToAbsolute(parentOperandBounds);
 /*8				
 				System.out.println("---------------------------------");		
 				System.out.println("depth                        : " + depth);
@@ -1390,6 +1390,7 @@ System.out.println("??? in omw right after LifelineEditPart target after Connect
 				System.out.println("parent EP                    : " + parentEditPart);
 				System.out.println("parent IO                    : " + (InteractionOperandEditPart)ep);
 */
+				// 확장의 경우
 				if ( newBoundsCF.right() > parentOperandBounds.right() ||
 					     newBoundsCF.bottom() > parentOperandBounds.bottom() ) {
 /*8					
@@ -1403,7 +1404,7 @@ System.out.println("newBounds is bigger than parentOperand");
 				//Resize 계통 method가 CF가 아닌 org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart로 동작하도록 개조
 				InteractionInteractionCompartmentEditPart iicep = (InteractionInteractionCompartmentEditPart)ep;
 				Rectangle parentIicEPBounds = iicep.getFigure().getBounds().getCopy();
-				parentEditPart.getFigure().translateToAbsolute(parentIicEPBounds);
+				iicep.getFigure().translateToAbsolute(parentIicEPBounds);
 /*8
 				System.out.println("---------------------------------");		
 				System.out.println("depth                        : " + depth);

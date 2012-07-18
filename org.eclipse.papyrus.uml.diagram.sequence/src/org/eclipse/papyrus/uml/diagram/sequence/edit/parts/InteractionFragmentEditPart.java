@@ -182,15 +182,22 @@ public abstract class InteractionFragmentEditPart extends ShapeNodeEditPart {
 					lifelineEditPartsToCheck = ApexSequenceUtil.apexGetPositionallyCoveredLifelineEditParts(origRect, this);	
 				} else if (origRect.width < newRect.width) { // width 확대 시 새 경계내에 있는 lifeline을 check
 					lifelineEditPartsToCheck = ApexSequenceUtil.apexGetPositionallyCoveredLifelineEditParts(newRect, this);
+				} else { // 확대/축소가 아닌 경우, 즉 상하이동의 경우
+					lifelineEditPartsToCheck = null;
 				}
 			}
 			
-			for(Object lifelineEditPartToCheck : lifelineEditPartsToCheck) {
-				if(lifelineEditPartToCheck instanceof LifelineEditPart) {
-					LifelineEditPart lifelineEditPart = (LifelineEditPart)lifelineEditPartToCheck;
-					updateCoveredLifelines(lifelineEditPart, newBound, coveredLifelinesToAdd, coveredLifelinesToRemove, coveredLifelines);
-				}
+			// 상하이동의 경우 covereds가 바뀔 일이 없으므로
+			// 상하이동이 아닌 경우만 updateCoveredLifelines 호출
+			if ( lifelineEditPartsToCheck != null ) { 
+				for(Object lifelineEditPartToCheck : lifelineEditPartsToCheck) {
+					if(lifelineEditPartToCheck instanceof LifelineEditPart) {
+						LifelineEditPart lifelineEditPart = (LifelineEditPart)lifelineEditPartToCheck;
+						updateCoveredLifelines(lifelineEditPart, newBound, coveredLifelinesToAdd, coveredLifelinesToRemove, coveredLifelines);
+					}
+				}	
 			}
+			
 			/* apex improved end */
 			/* apex replaced
 			this.getFigure().translateToAbsolute(newBound);
@@ -251,19 +258,12 @@ public abstract class InteractionFragmentEditPart extends ShapeNodeEditPart {
 				// 원래 CF에 포함되지 않았던 경우에만 add
 				if (!origRect.intersects(lifelineRect)) {
 					coveredLifelinesToAdd.add(lifeline);
-					System.out
-					.println("InteractionFragmentEditPart.updateCoveredLifelines(), line : "
-							+ Thread.currentThread()
-									.getStackTrace()[1]
-									.getLineNumber());
-					System.out.println("coveredLifelinesToAdd : " + coveredLifelinesToAdd);
 				}						
 			}
 		// 새 경계와 lifeline 경계가 교차되지 않고
 		// 원래 covered에 있던 lifeline은 remove
 		} else {
-			coveredLifelinesToRemove.add(lifeline);
-			System.out.println("coveredLifelinesToRemove : " + coveredLifelinesToRemove);
+			coveredLifelinesToRemove.add(lifeline);			
 		}
 		/* apex improved end */
 		
