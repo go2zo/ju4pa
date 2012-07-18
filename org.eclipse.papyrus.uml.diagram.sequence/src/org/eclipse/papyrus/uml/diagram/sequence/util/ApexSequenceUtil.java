@@ -25,7 +25,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.draw2d.Connection;
-import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
@@ -43,11 +42,11 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragment2Edit
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ContinuationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractionCompartmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionUseEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.ExecutionOccurrenceSpecification;
 import org.eclipse.uml2.uml.Interaction;
@@ -83,13 +82,13 @@ public class ApexSequenceUtil {
 			if ( editPart instanceof IGraphicalEditPart ) {
 				
 				IGraphicalEditPart agep1 = (IGraphicalEditPart)editPart;
-				
+					
 				int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
 
 				if ( yTopThisEP >= yBottomOfAgep
 						&& !belowEditPartMap.containsKey(agep1)) {
 					belowEditPartMap.put(agep1, yTopThisEP);
-				}
+				}	
 			}	
 		}
 		
@@ -109,7 +108,106 @@ public class ApexSequenceUtil {
 
 		return belowEditPartList;
 	}
+	
+	/**
+	 * 중첩되지 않고 Sibling 중에서
+	 * 해당 AbstractGraphicalEditPart 보다 y좌표가 아래에 있어
+	 * 하향 이동 시 함께 움직여줘야 할 EditPartList 반환 
+	 * 
+	 * @param agep   기준이 되는 AbstractGraphicalEditPart
+	 * @return aep보다 아래에 위치한 EditPart의 List
+	 */
+	public static List apexGetMovableEditPartList(IGraphicalEditPart agep) {
+					
+		Set<Entry<Object, EditPart>> wholeEditPartEntries = agep.getViewer().getEditPartRegistry().entrySet();
+		
+		Map<IGraphicalEditPart, Integer> belowEditPartMap = new HashMap<IGraphicalEditPart, Integer>();
 
+		int yBottomOfAgep = apexGetAbsolutePosition(agep, SWT.BOTTOM);
+	
+		for (Entry<Object, EditPart> aEPEntry : wholeEditPartEntries ) {
+			
+			EditPart editPart = aEPEntry.getValue();
+			if (editPart.equals(agep))
+				continue;
+			if (!(editPart instanceof INodeEditPart))
+				continue;
+			if ( editPart instanceof IGraphicalEditPart ) {
+				
+				IGraphicalEditPart agep1 = (IGraphicalEditPart)editPart;
+		
+				// parent가 interactionCompartment인 것(즉, 중첩되지 않은 것)
+				if ( agep1.getParent() instanceof InteractionInteractionCompartmentEditPart) {
+					
+					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
+	
+					if ( yTopThisEP >= yBottomOfAgep
+							&& !belowEditPartMap.containsKey(agep1)) {
+						belowEditPartMap.put(agep1, yTopThisEP);
+					}	
+				}				
+			}	
+		}
+		
+		// agep1의 sibling
+		List<IGraphicalEditPart> siblings = apexGetSiblingEditParts2(agep);
+		for ( IGraphicalEditPart ep : siblings ) {
+			if (ep.equals(agep))
+				continue;
+			if (!(ep instanceof INodeEditPart))
+				continue;
+			if ( ep instanceof IGraphicalEditPart ) {
+				
+				IGraphicalEditPart agep1 = (IGraphicalEditPart)ep;
+				
+				int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
+
+				if ( yTopThisEP >= yBottomOfAgep
+						&& !belowEditPartMap.containsKey(agep1)) {
+					belowEditPartMap.put(agep1, yTopThisEP);
+				}	
+				
+			}	
+		}
+		
+		
+		Collection<Entry<IGraphicalEditPart, Integer>> entrySet = belowEditPartMap.entrySet();
+		List<Entry<IGraphicalEditPart, Integer>> entryList = new ArrayList<Entry<IGraphicalEditPart, Integer>>(entrySet);
+		Collections.sort(entryList, new Comparator<Entry<IGraphicalEditPart, Integer>>() {
+			public int compare(Entry<IGraphicalEditPart, Integer> o1,
+					Entry<IGraphicalEditPart, Integer> o2) {
+				return o1.getValue().compareTo(o2.getValue());
+			}
+		});
+		
+		List<IGraphicalEditPart> belowEditPartList = new ArrayList<IGraphicalEditPart>(entryList.size());
+		for (Entry<IGraphicalEditPart, Integer> entry : entryList) {
+			belowEditPartList.add(entry.getKey());
+		}
+/*8
+		System.out
+				.println("ApexSequenceUtil.apexGetMovableEditPartList(), line : "
+						+ Thread.currentThread().getStackTrace()[1]
+								.getLineNumber());
+		for ( int i = 0 ; i < belowEditPartList.size() ; i++ ) {
+			System.out.println("["+i+"] " + belowEditPartList.get(i));
+		}
+//*/
+		return belowEditPartList;
+	}
+
+	
+	public static List<IGraphicalEditPart> apexGetSiblingEditParts2(IGraphicalEditPart gep) {
+		
+		List<IGraphicalEditPart> siblings = null;
+		EditPart ep = gep.getParent();
+		if ( ep instanceof InteractionInteractionCompartmentEditPart
+		     || ep instanceof InteractionOperandEditPart ) {
+			siblings = ep.getChildren();
+		}
+		return siblings;
+	}
+	
 	/**
 	 * 주어진 EditPartList를 검색하여
 	 * y좌표 기준 주어진 AbstractGraphicalEditPart의 바로 아래에 위치한 AbstractGraphicalEditPart 반환
@@ -120,6 +218,41 @@ public class ApexSequenceUtil {
 	 */
 	public static IGraphicalEditPart apexGetBeneathEditPart(IGraphicalEditPart agep, List belowEditPartList) {
 
+		int gap = Integer.MAX_VALUE;
+		IGraphicalEditPart beneathEditPart = null;
+
+		int yCF = apexGetAbsolutePosition(agep, SWT.BOTTOM);
+		
+		Iterator it = belowEditPartList.iterator();
+		
+		while( it.hasNext()) {
+			
+			IGraphicalEditPart sep = (IGraphicalEditPart)it.next();
+			
+			int yEP = apexGetAbsolutePosition(sep, SWT.TOP);
+			
+			int thisGap = yEP - yCF;
+			
+			if ( thisGap < gap ) {
+				gap = thisGap;
+				beneathEditPart = sep;
+			}
+		}
+		return beneathEditPart;
+	}
+	
+	/**
+	 * 주어진 EditPartList를 검색하여
+	 * y좌표 기준 주어진 AbstractGraphicalEditPart의 바로 아래에 위치한 AbstractGraphicalEditPart 반환
+	 * 
+	 * @param agep    기준이 되는 AbstractGraphicalEditPart
+	 * @param belowEditPartList    검색할 EditPart의 List
+	 * @return    y좌표 기준 agep의 바로 아래에 위치한 AbstractGraphicalEditPart
+	 */
+	public static IGraphicalEditPart apexGetBeneathEditPart(IGraphicalEditPart agep) {
+
+		List belowEditPartList = apexGetBelowEditPartList(agep);
+		
 		int gap = Integer.MAX_VALUE;
 		IGraphicalEditPart beneathEditPart = null;
 

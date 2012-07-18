@@ -76,6 +76,7 @@ import org.eclipse.gmf.runtime.gef.ui.figures.DefaultSizeNodeFigure;
 import org.eclipse.gmf.runtime.gef.ui.figures.NodeFigure;
 import org.eclipse.gmf.runtime.gef.ui.internal.parts.TextCellEditorEx;
 import org.eclipse.gmf.runtime.gef.ui.internal.parts.WrapTextCellEditor;
+import org.eclipse.gmf.runtime.notation.Bounds;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -1427,6 +1428,25 @@ AbstractBorderedShapeEditPart implements ITextAwareEditPart {
 				}
 			}
 		}
+		
+		if (notification.getNotifier() instanceof Bounds) {
+			final Bounds newBounds = (Bounds)notification.getNotifier();
+			//updateCoveredLifelines(newBounds);
+			System.out.println("ioep.handleNotification - Bounds");
+			
+			// 아래 로직은 Lifeline의 경계 변경 시 해당 lifeline의 coveredBy를 수정하는 것으로
+			// LifelineEditPart.handleNotification()에서 호출되어 수행되므로 제외처리
+			// CombinedFragment의 경계 변경에 따른 해당 lifeline의 coveredBy는
+			// CombinedFragment의 covered에 의한 notification에 따라 맞게 수정됨
+			/* apex replaced
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					LifelineCoveredByUpdater updater = new LifelineCoveredByUpdater(); 
+					updater.update(CombinedFragmentEditPart.this, newBounds);
+				}
+			});
+			*/
+		}	
 		super.handleNotificationEvent(notification);
 	}
 
