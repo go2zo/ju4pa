@@ -14,6 +14,8 @@
 package org.eclipse.papyrus.uml.diagram.sequence.util;
 
 /**
+ * apex updated
+ * 
  * Constants used in the sequence diagram
  */
 public interface SequenceRequestConstant {

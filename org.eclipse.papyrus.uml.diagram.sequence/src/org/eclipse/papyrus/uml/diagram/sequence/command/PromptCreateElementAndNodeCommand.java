@@ -23,6 +23,7 @@ import org.eclipse.gmf.runtime.emf.type.core.IElementType;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
@@ -67,6 +68,9 @@ public class PromptCreateElementAndNodeCommand extends
 		command.add(createCommand);
 	}
 
+	/**
+	 * apex updated
+	 */
 	protected CommandResult doExecuteWithResult(
 			IProgressMonitor progressMonitor, IAdaptable info)
 			throws ExecutionException {
@@ -90,10 +94,11 @@ public class PromptCreateElementAndNodeCommand extends
 
 		/* apex added start */
 		// jiho - Source인 ExecSpec의 Bounds, Connection의 Anchor을 자동변경하는 Command 생성
-		if (sourceEP instanceof ActionExecutionSpecificationEditPart || sourceEP instanceof BehaviorExecutionSpecificationEditPart) {
+		if (sourceEP instanceof AbstractExecutionSpecificationEditPart) {
 			View view = (View)sourceEP.getModel();
 			ApexSetBoundsForExecutionSpecificationCommand setBoundsCommand = new ApexSetBoundsForExecutionSpecificationCommand(
 					editingDomain, createExecutionSpecificationCommand, new EObjectAdapter(view));
+			
 			command.add(new ICommandProxy(setBoundsCommand));
 
 			command.add(new ICommandProxy(new ApexPreserveAnchorsPositionCommand(

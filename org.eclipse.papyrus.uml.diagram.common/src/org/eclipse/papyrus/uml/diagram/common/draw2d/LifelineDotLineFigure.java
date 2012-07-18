@@ -38,6 +38,8 @@ public class LifelineDotLineFigure extends Shape {
 	// Methods
 
 	/**
+	 * apex updated
+	 * 
 	 * Instantiates a new lifeline dot line figure.
 	 */
 	public LifelineDotLineFigure() {

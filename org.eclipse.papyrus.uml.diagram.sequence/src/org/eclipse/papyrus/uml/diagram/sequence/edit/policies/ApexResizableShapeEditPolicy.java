@@ -31,7 +31,6 @@ import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 
 /**
@@ -128,6 +127,8 @@ public class ApexResizableShapeEditPolicy extends ResizableShapeEditPolicy {
 	}
 	
 	/**
+	 * apex updated
+	 * 
 	 * Cfreates a new AutoSize comamnd
 	 * 
 	 * @param request

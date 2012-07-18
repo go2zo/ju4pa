@@ -62,6 +62,7 @@ import org.eclipse.gmf.runtime.diagram.ui.editpolicies.DragDropEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.EditPolicyRoles;
 import org.eclipse.gmf.runtime.diagram.ui.figures.IBorderItemLocator;
 import org.eclipse.gmf.runtime.diagram.ui.l10n.DiagramUIMessages;
+import org.eclipse.gmf.runtime.diagram.ui.requests.CreateConnectionViewRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeConnectionRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewAndElementRequest;
 import org.eclipse.gmf.runtime.draw2d.ui.figures.ConstrainedToolbarLayout;
@@ -105,6 +106,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.CommandHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.LifelineCoveredByUpdater;
 import org.eclipse.papyrus.uml.diagram.sequence.util.NotificationHelper;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.uml2.uml.ConnectableElement;
@@ -174,6 +176,8 @@ public class LifelineEditPart extends NamedElementEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated
 	 */
 	@Override
@@ -1440,6 +1444,8 @@ public class LifelineEditPart extends NamedElementEditPart {
 		}
 
 		/**
+		 * apex updated
+		 * 
 		 * @generated NOT remove label creation, change layout
 		 */
 		private void createContents() {
@@ -1882,6 +1888,8 @@ public class LifelineEditPart extends NamedElementEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Create specific anchor to handle connection on top, on center and on bottom of the lifeline
 	 */
 	@Override
@@ -1895,6 +1903,17 @@ public class LifelineEditPart extends NamedElementEditPart {
 					return new LifelineAnchor(getPrimaryShape().getFigureLifelineNameContainerFigure());
 				}
 			}
+			/* apex added start */
+			// jiho - 복수 ElementType에 대한 처리
+//			for (Object elementType : relationshipTypes) {
+//				Request createConnectionRequest = createRequest.getRequestForType((IElementType)elementType);
+//				if (createConnectionRequest instanceof CreateConnectionViewRequest) {
+//					ConnectionAnchor targetAnchor = getTargetConnectionAnchor(createConnectionRequest);
+//					if (targetAnchor != null)
+//						return targetAnchor;
+//				}
+//			}
+			/* apex added end */
 		} else if(request instanceof ReconnectRequest) {
 			ReconnectRequest reconnectRequest = (ReconnectRequest)request;
 			ConnectionEditPart connectionEditPart = reconnectRequest.getConnectionEditPart();
@@ -1904,6 +1923,28 @@ public class LifelineEditPart extends NamedElementEditPart {
 			}
 		}
 
+		/* apex added start */
+		// jiho - Message을 Horizontal로 생성
+//		if (request instanceof CreateConnectionViewRequest) {
+//			CreateConnectionViewRequest createRequest = (CreateConnectionViewRequest)request;
+//			Point sourceLocation = (Point)createRequest.getExtendedData().get(SequenceRequestConstant.SOURCE_LOCATION_DATA);
+//			Point srcPoint = sourceLocation.getCopy();
+//			
+//			getNodeFigure().translateToAbsolute(srcPoint);
+//			
+//			Point location = createRequest.getLocation().getCopy();
+//			
+//			System.out.println("srcLoc=" + sourceLocation + " reqLoc=" + location);
+//			location.setY(srcPoint.y);
+//			// 화면 이동에 따른 location의 위치 변동
+////			getNodeFigure().translateFromParent(location);
+////			getNodeFigure().translateToRelative(location);
+//			// ExecutionSpecification생성 시 location 이용
+//			createRequest.setLocation(location);
+////			return getNodeFigure().getTargetConnectionAnchorAt(location);
+//		}
+		/* apex added end */
+		
 		return super.getTargetConnectionAnchor(request);
 	}
 

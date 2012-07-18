@@ -45,6 +45,9 @@ import org.eclipse.uml2.uml.Lifeline;
  */
 public class ElementCreationWithMessageEditPolicy extends LifelineChildGraphicalNodeEditPolicy {
 
+	/**
+	 * apex updated
+	 */
 	@Override
 	protected Command getConnectionCompleteCommand(CreateConnectionRequest request) {
 //		CompoundCommand compound = new CompoundCommand();

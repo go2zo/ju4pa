@@ -65,13 +65,20 @@ implements ITreeBranchEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Installs a specific message router on the edit part.
 	 * 
 	 * @generated NOT
 	 */
 	protected void installRouter() {
 		getConnectionFigure().setConnectionRouter(LifelineChildGraphicalNodeEditPolicy.messageRouter);
+		/* apex improved start */
+		getConnectionFigure().setCursor(org.eclipse.gmf.runtime.gef.ui.internal.l10n.Cursors.CURSOR_SEG_MOVE);
+		/* apex improved end */
+		/* apex replaced
 		getConnectionFigure().setCursor(Cursors.ARROW);
+		*/
 		refreshBendpoints();
 	}
 
@@ -162,9 +169,15 @@ implements ITreeBranchEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated NOT inherits from UMLEdgeFigure to manage stereotype label
 	 */
-	public class MessageFound extends UMLEdgeFigure {
+	public class MessageFound extends UMLEdgeFigure
+	/* apex added start */
+	implements MessageFigure
+	/* apex added end */
+	{
 
 		/**
 		 * @generated

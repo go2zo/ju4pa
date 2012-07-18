@@ -31,6 +31,7 @@ import org.eclipse.gmf.runtime.draw2d.ui.figures.WrappingLabel;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.editpolicies.AppliedStereotypeLinkLabelDisplayEditPolicy;
 import org.eclipse.papyrus.uml.diagram.common.figure.edge.UMLEdgeFigure;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractMessageEditPart.MessageFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.CreationOnMessageEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineChildGraphicalNodeEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.MessageConnectionEditPolicy;
@@ -63,13 +64,20 @@ implements ITreeBranchEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Installs a specific message router on the edit part.
 	 * 
 	 * @generated NOT
 	 */
 	protected void installRouter() {
 		getConnectionFigure().setConnectionRouter(LifelineChildGraphicalNodeEditPolicy.messageRouter);
+		/* apex improved start */
+		getConnectionFigure().setCursor(org.eclipse.gmf.runtime.gef.ui.internal.l10n.Cursors.CURSOR_SEG_MOVE);
+		/* apex improved end */
+		/* apex replaced
 		getConnectionFigure().setCursor(Cursors.ARROW);
+		*/
 		refreshBendpoints();
 	}
 
@@ -160,9 +168,15 @@ implements ITreeBranchEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated NOT inherits from UMLEdgeFigure to manage stereotype label
 	 */
-	public class MessageSync extends UMLEdgeFigure {
+	public class MessageSync extends UMLEdgeFigure
+	/* apex added start */
+	implements MessageFigure
+	/* apex added end */
+	{
 
 		/**
 		 * @generated

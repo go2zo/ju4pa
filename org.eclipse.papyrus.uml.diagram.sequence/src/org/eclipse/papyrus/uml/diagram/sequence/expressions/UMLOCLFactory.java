@@ -48,6 +48,8 @@ public class UMLOCLFactory {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated
 	 */
 	public static UMLAbstractExpression getExpression(int index, EClassifier context, Map<String, EClassifier> environment) {

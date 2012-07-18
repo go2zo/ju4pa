@@ -59,8 +59,10 @@ import org.eclipse.papyrus.infra.gmfdiag.preferences.utils.GradientPreferenceCon
 import org.eclipse.papyrus.infra.gmfdiag.preferences.utils.PreferenceConstantHelper;
 import org.eclipse.papyrus.uml.diagram.common.draw2d.anchors.FixedAnchor;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ActionExecutionSpecificationItemSemanticEditPolicy;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ApexExecutionSpecificationSelectionEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ElementCreationWithMessageEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ExecutionSpecificationComponentEditPolicy;
+import org.eclipse.papyrus.uml.diagram.sequence.figures.ApexCustomDefaultSizeNodeFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.swt.graphics.Color;
 
@@ -147,13 +149,20 @@ AbstractExecutionSpecificationEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Overrides to disable the defaultAnchorArea. The edge is now more stuck with the middle of the
 	 * figure.
 	 * 
 	 * @generated NOT
 	 */
 	protected NodeFigure createNodePlate() {
+		/* apex improved start */
+		ApexCustomDefaultSizeNodeFigure result = new ApexCustomDefaultSizeNodeFigure(16, 50) {
+		/* apex improved end */
+		/* apex replaced
 		DefaultSizeNodeFigure result = new DefaultSizeNodeFigure(16, 60) {
+		 */
 
 			/**
 			 * @see org.eclipse.gmf.runtime.gef.ui.figures.NodeFigure#isDefaultAnchorArea(org.eclipse.draw2d.geometry.PrecisionPoint)
@@ -176,16 +185,24 @@ AbstractExecutionSpecificationEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated
 	 */
 	@Override
 	public EditPolicy getPrimaryDragEditPolicy() {
+		/* apex improved start */
+		EditPolicy policy = getEditPolicy(EditPolicy.PRIMARY_DRAG_ROLE);
+		return policy != null ? policy : new ApexExecutionSpecificationSelectionEditPolicy();
+		/* apex improved end */
+		/* apex replaced
 		EditPolicy result = super.getPrimaryDragEditPolicy();
 		if(result instanceof ResizableEditPolicy) {
 			ResizableEditPolicy ep = (ResizableEditPolicy)result;
 			ep.setResizeDirections(PositionConstants.NORTH | PositionConstants.SOUTH);
 		}
 		return result;
+		*/
 	}
 
 	/**
@@ -1011,10 +1028,17 @@ AbstractExecutionSpecificationEditPart {
 	public class ExecutionSpecificationRectangleFigure extends RectangleFigure {
 
 		/**
+		 * apex updated
+		 * 
 		 * @generated
 		 */
 		public ExecutionSpecificationRectangleFigure() {
+			/* apex improved start */
+			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(50)));
+			/* apex improved end */
+			/* apex replaced
 			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(60)));
+			*/
 			this.setMinimumSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(25)));
 		}
 
