@@ -489,7 +489,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				}
 */
 				// 중첩된 child CF의 이동 결과 Parent CF의 경계를 넘는 경우 Parent Resize 처리
-				apexResizeParentCombinedFragments(request, combinedFragmentEditPart, childCombinedFragmentEditPart, compoundCmd, depth);
+				apexResizeParentCombinedFragments(request, combinedFragmentEditPart, compoundCmd, depth);
 
 			} else if ( moveDelta.y < 0 ) { // 위로 이동할 경우
 				
@@ -668,7 +668,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			
 			/* apex added start */
 			// 여기에 중첩된 경우 Resize 처리
-			apexResizeParentCombinedFragments(request, combinedFragmentEditPart, childCombinedFragmentEditPart, compoundCmd, depth);			
+			apexResizeParentCombinedFragments(request, combinedFragmentEditPart, compoundCmd, depth);			
 			/* apex added end */
 		}
 
@@ -930,23 +930,12 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		Rectangle origCFBounds = cfFigure.getBounds().getCopy();
 		cfFigure.translateToAbsolute(origCFBounds);
 		
-		
-		
 		Point moveDelta = request.getMoveDelta();
 		
 		Dimension sizeDelta = isResizeByChildMove ? new Dimension(0, moveDelta.y) : request.getSizeDelta();
-/*8		
-System.out.println("InteractionCompartmentXYLayoutEditPolicy.apexResizeCombinedFragmentBoundCommand(), line : "+Thread.currentThread().getStackTrace()[1].getLineNumber());
-System.out.println("before translate, parent-origCFBounds : " + origCFBounds);
-System.out.println("before resize,    parent-origCFBounds : " + origCFBounds);
-//*/
-//		origCFBounds.translate(moveDelta);
+
 		origCFBounds.resize(sizeDelta);
-/*8
-System.out.println("after  translate, parent-origCFBounds : " + origCFBounds);
-System.out.println("after  resize,    parent-origCFBounds : " + origCFBounds);
-//*/
-		
+
 		// childCombinedFragment가 있고, child의 right 보다 작게 resize 안되게
 		List children = ApexSequenceUtil.apexGetChildEditPartList(combinedFragmentEditPart);
 
@@ -960,10 +949,6 @@ System.out.println("after  resize,    parent-origCFBounds : " + origCFBounds);
 				Rectangle childRect = cfep.getFigure().getBounds().getCopy();
 				cfep.getFigure().translateToAbsolute(childRect);
 				
-/*8
-System.out.println("parent-origCFBounds.right() : " + origCFBounds.right());
-System.out.println("childRect.right()           : " + childRect.right());
-//*/
 				// child.right보다 작으면 X
 				if ( origCFBounds.right() <= childRect.right() ) {		
 					ccmd.add(UnexecutableCommand.INSTANCE);
@@ -983,53 +968,46 @@ System.out.println("childRect.right()           : " + childRect.right());
 			                                          "Apex_CF_Resize",
 			                                          new EObjectAdapter((View) combinedFragmentEditPart.getModel()),
 			                                          new Dimension(origCFBounds.width, origCFBounds.height));
+		ccmd.add(new ICommandProxy(resizeCFCommand));
 
 		// CF의 해당 IO의 경계 변경 실제 처리 부분
-		ICommand resizeIOCommand = null;
-		List<InteractionOperandEditPart> ioeps = combinedFragmentEditPart.getOperandChildrenEditParts();
+		if (childCombinedFragmentEditPart != null) {
+			EditPart pep = childCombinedFragmentEditPart.getParent();
+			if ( pep instanceof InteractionOperandEditPart ) {
+				InteractionOperandEditPart ioep = (InteractionOperandEditPart)pep;
+				IFigure ioFigure = ioep.getFigure();
+				Rectangle ioRect = ioFigure.getBounds().getCopy();
+				ioFigure.translateToAbsolute(ioRect);
+				ioRect.resize(sizeDelta);
+				ICommand resizeIOCommand = new SetBoundsCommand(editingDomain, 
+										                "Apex_IO_Resize",
+										                new EObjectAdapter((View) ioep.getModel()),
+										                new Dimension(ioRect.width, ioRect.height));
+				ccmd.add(new ICommandProxy(resizeIOCommand));
+			}	
+		}		
+/*8
+		System.out
+				.println("InteractionCompartmentXYLayoutEditPolicy.apexResizeCombinedFragmentBoundsCommand(), line : "
+						+ Thread.currentThread().getStackTrace()[1]
+								.getLineNumber());
+		
+		IFigure cfFigure1 = combinedFragmentEditPart.getFigure();
+		Rectangle cfRect1 = cfFigure1.getBounds().getCopy();
+		cfFigure1.translateToAbsolute(cfRect1);
+		System.out.println("cf orig abs rect : " + cfRect1 + ", bottom : " + cfRect1.bottom());
+		System.out.println("cf new abs  rect : " + origCFBounds + ", bottom : " + origCFBounds.bottom());
 		
 		if ( childCombinedFragmentEditPart != null ) {
-			
-			InteractionFragment ift = SequenceUtil.findInteractionFragmentContainerAt(childCombinedFragmentEditPart.getFigure().getBounds().getCopy(), childCombinedFragmentEditPart);
-			
-			if ( ift instanceof InteractionOperand ) {
-			
-				InteractionOperand io = (InteractionOperand)ift;
-				
-				for ( InteractionOperandEditPart ioep : ioeps ) {
-					
-					InteractionOperand io1 = (InteractionOperand)ioep.resolveSemanticElement();
-				
-					if ( io.equals(io1) ) {
-						IFigure ioFigure = ioep.getFigure();
-						Rectangle ioRect = ioFigure.getBounds().getCopy();
-						ioFigure.translateToAbsolute(ioRect);
-						ioRect.resize(sizeDelta);
-						resizeIOCommand = new SetBoundsCommand(editingDomain, 
-												                "Apex_IO_Resize",
-												                new EObjectAdapter((View) ioep.getModel()),
-												                new Dimension(ioRect.width, ioRect.height));
-					}
-				}
-			}	
-		} else {
-			InteractionOperandEditPart ioep = ioeps.get(0); 
-			IFigure ioFigure = ioep.getFigure();
-			Rectangle ioRect = ioFigure.getBounds().getCopy();
-			ioFigure.translateToAbsolute(ioRect);
-			ioRect.resize(sizeDelta);
-			resizeIOCommand = new SetBoundsCommand(editingDomain, 
-									                "Apex_IO_Resize",
-									                new EObjectAdapter((View) ioep.getModel()),
-									                new Dimension(ioRect.width, ioRect.height));
+			IFigure ioFigure1 = ((InteractionOperandEditPart)childCombinedFragmentEditPart.getParent()).getFigure();
+			Rectangle ioRect1 = ioFigure1.getBounds().getCopy();
+			ioFigure1.translateToAbsolute(ioRect1);
+			System.out.println("io orig abs rect : " + ioRect1 + ", bottom : " + ioRect1.bottom());
+			ioRect1.resize(sizeDelta);
+			System.out.println("io new abs  rect : " + ioRect1 + ", bottom : " + ioRect1.bottom() +"\n");
 		}
-		
-		
-		ccmd.add(new ICommandProxy(resizeCFCommand));
-		ccmd.add(new ICommandProxy(resizeIOCommand));
-		
+*/
 		return ccmd;
-		//return new ICommandProxy(resizeCFCommand);
 	}
 	
 	/**
@@ -1234,7 +1212,7 @@ System.out.println("??? in omw right after LifelineEditPart target after Connect
 	 * @param depth
 	 * @return
 	 */
-	public static Command apexResizeParentCombinedFragments(ChangeBoundsRequest request, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart combinedFragmentEditPart, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart childCombinedFragmentEditPart, CompoundCommand ccmd, int depth) {
+	public static Command apexResizeParentCombinedFragments(ChangeBoundsRequest request, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart combinedFragmentEditPart, CompoundCommand ccmd, int depth) {
 
 		// parent Operand(또는 InteractionInteractionCompartmentEditPart)가 있고, 즉 중첩되어 있고
 		EditPart ep = combinedFragmentEditPart.getParent();
@@ -1281,7 +1259,7 @@ System.out.println("??? in omw right after LifelineEditPart target after Connect
 /*8					
 System.out.println("newBounds is bigger than parentOperand");
 //*/
-					apexGetCombinedFragmentResizeChildrenCommand(request, (CombinedFragmentEditPart)parentEditPart, (CombinedFragmentEditPart)childCombinedFragmentEditPart, ccmd, depth);
+					apexGetCombinedFragmentResizeChildrenCommand(request, (CombinedFragmentEditPart)parentEditPart, (CombinedFragmentEditPart)combinedFragmentEditPart, ccmd, depth);
 				} else {
 					return ccmd;
 				}
