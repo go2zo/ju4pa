@@ -56,8 +56,10 @@ import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.gmf.runtime.emf.type.core.commands.SetValueCommand;
 import org.eclipse.gmf.runtime.emf.type.core.requests.SetRequest;
+import org.eclipse.gmf.runtime.notation.Bounds;
 import org.eclipse.gmf.runtime.notation.Edge;
 import org.eclipse.gmf.runtime.notation.IdentityAnchor;
+import org.eclipse.gmf.runtime.notation.Node;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.osgi.util.NLS;
@@ -971,6 +973,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		ccmd.add(new ICommandProxy(resizeCFCommand));
 
 		// CF의 해당 IO의 경계 변경 실제 처리 부분
+		// Operand List 모두 변경 처리 필요(alt의 경우)
+		
 		if (childCombinedFragmentEditPart != null) {
 			EditPart pep = childCombinedFragmentEditPart.getParent();
 			if ( pep instanceof InteractionOperandEditPart ) {
@@ -984,7 +988,54 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 										                new EObjectAdapter((View) ioep.getModel()),
 										                new Dimension(ioRect.width, ioRect.height));
 				ccmd.add(new ICommandProxy(resizeIOCommand));
-			}	
+				
+				//*8
+				CombinedFragmentCombinedFragmentCompartmentEditPart cfcfep= (CombinedFragmentCombinedFragmentCompartmentEditPart)ioep.getParent();
+				List childOps = cfcfep.getChildren();
+				
+				// CF에 Operand가 2개 이상 있을 경우 아래에 있는 Op도 이동 처리, 이동은 상대좌표로 처리함
+				if ( childOps.size() > 1 ) {
+					Rectangle ioRect1 = ioFigure.getBounds().getCopy();
+					System.out
+							.println("InteractionCompartmentXYLayoutEditPolicy.apexResizeCombinedFragmentBoundsCommand(), line : "
+									+ Thread.currentThread().getStackTrace()[1]
+											.getLineNumber());
+					System.out.println("해당 IOEP Rect : " + ioRect1);
+					//ioFigure.translateToAbsolute(ioRect1);
+					Iterator it = childOps.iterator();
+					
+					while ( it.hasNext() ) {
+						InteractionOperandEditPart tempIoep = (InteractionOperandEditPart)it.next();
+						IFigure tempIoepFigure = tempIoep.getFigure();
+						Rectangle tempIoepRect = tempIoepFigure.getBounds().getCopy();
+						System.out.println("자식 IOEP Rect : " + tempIoepRect);
+												
+						//System.out.println("getLayoutConstraint() : " + OperandBoundsComputeHelper.getEditPartBounds(tempIoep));
+						
+						//tempIoepFigure.translateToAbsolute(tempIoepRect);						
+						
+						if ( tempIoepRect.y > ioRect1.y ) {
+							// 아래 -1은 이유는 모르나 빼주지 않으면 미세하게 OP의 x가 밀림
+							tempIoepRect.x -= OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER;
+							tempIoepRect.y += moveDelta.y;							
+							
+							int headerHeight = OperandBoundsComputeHelper.computeCombinedFragementHeaderHeight(combinedFragmentEditPart);
+							System.out.println("변경 IOEP Rect : " + tempIoepRect);
+							System.out.println("상위 CFEP Rect : " + combinedFragmentEditPart.getFigure().getBounds().getCopy());
+							// headerHeight에 -1해주는 이유는 모르겠으나 해주면 딱 맞음
+							tempIoepRect.translate(-combinedFragmentEditPart.getFigure().getBounds().getCopy().x, 
+									               -combinedFragmentEditPart.getFigure().getBounds().getCopy().y-headerHeight-OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER);
+							ICommand resizeBelowIOCommand = new SetBoundsCommand(editingDomain, 
+					                "Apex_BELOW_IO_Resize",
+					                tempIoep,
+					                tempIoepRect);
+							ccmd.add(new ICommandProxy(resizeBelowIOCommand));
+						}
+					}
+				}
+				//*/
+			}
+			
 		}		
 /*8
 		System.out
@@ -1253,9 +1304,19 @@ System.out.println("??? in omw right after LifelineEditPart target after Connect
 				System.out.println("parent EP                    : " + parentEditPart);
 				System.out.println("parent IO                    : " + (InteractionOperandEditPart)ep);
 //*/
-				// 확장의 경우
+				// Operand내 최하단 element의 bottom이 Operand bottom 보다 아래로 갈 경우, 즉 확장이 필요한 경우
+				List<IGraphicalEditPart> opChildren = ioep.getChildren();
+				
+				IGraphicalEditPart lowestEditPart = ApexSequenceUtil.apexGetLowestEditPartFromList(opChildren);
+				IFigure lowestFigure = lowestEditPart.getFigure();				
+				Rectangle lowestRect = lowestFigure.getBounds().getCopy();
+				lowestFigure.translateToAbsolute(lowestRect);
+				lowestRect.translate(moveDelta);
+				lowestRect.resize(sizeDelta);				
+
+				// 중첩된 CF의 right가 parentOP의 right보다 크거나, 내부요소 bottom이 parentOP의 bottom보다 클 경우
 				if ( newBoundsCF.right() > parentOperandBounds.right() ||
-					     newBoundsCF.bottom() > parentOperandBounds.bottom() ) {
+						lowestRect.bottom() > parentOperandBounds.bottom() ) {
 /*8					
 System.out.println("newBounds is bigger than parentOperand");
 //*/
@@ -1263,6 +1324,8 @@ System.out.println("newBounds is bigger than parentOperand");
 				} else {
 					return ccmd;
 				}
+				
+				
 			} else if (ep instanceof InteractionInteractionCompartmentEditPart) { // 최상위 CF의 경우
 				//Resize 계통 method가 CF가 아닌 org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart로 동작하도록 개조
 				InteractionInteractionCompartmentEditPart iicep = (InteractionInteractionCompartmentEditPart)ep;

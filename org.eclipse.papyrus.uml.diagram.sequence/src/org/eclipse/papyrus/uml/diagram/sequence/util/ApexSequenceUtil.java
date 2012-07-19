@@ -486,6 +486,33 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	}
 	
 	/**
+	 * 주어진 EditPart List에서 bottom 기준 가장 아래에 있는 EditPart 반환
+	 * @param editPartList
+	 * @return
+	 */
+	public static IGraphicalEditPart apexGetLowestEditPartFromList(List<IGraphicalEditPart> editPartList) {
+		
+		int bottom = Integer.MIN_VALUE;
+		IGraphicalEditPart lowestEditPart = null;
+		
+		for (IGraphicalEditPart ep : editPartList) {	
+			
+			IFigure epFigure = ep.getFigure();
+			Rectangle epRect = epFigure.getBounds().getCopy();
+			epFigure.translateToAbsolute(epRect);
+			
+			int epBottom = epRect.bottom();
+			
+			if ( epBottom > bottom) {
+				lowestEditPart = ep;
+				bottom = epBottom;
+			}
+		}
+		
+		return lowestEditPart;
+	}
+	
+	/**
 	 * Message에 링크된 ExecutionSpec과 Message들을 리스트로 반환
 	 * 
 	 * @param agep
