@@ -20,10 +20,8 @@ import java.util.List;
 import org.eclipse.draw2d.ConnectionAnchor;
 import org.eclipse.draw2d.DelegatingLayout;
 import org.eclipse.draw2d.IFigure;
-import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.RectangleFigure;
 import org.eclipse.draw2d.Shape;
-import org.eclipse.draw2d.StackLayout;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.PrecisionPoint;
 import org.eclipse.emf.ecore.EStructuralFeature;
@@ -34,17 +32,14 @@ import org.eclipse.gef.Request;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.editpolicies.LayoutEditPolicy;
 import org.eclipse.gef.editpolicies.NonResizableEditPolicy;
-import org.eclipse.gef.editpolicies.ResizableEditPolicy;
 import org.eclipse.gef.requests.CreateRequest;
 import org.eclipse.gef.requests.ReconnectRequest;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
-import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.EditPolicyRoles;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeConnectionRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeRequest;
 import org.eclipse.gmf.runtime.draw2d.ui.figures.FigureUtilities;
 import org.eclipse.gmf.runtime.emf.type.core.IElementType;
-import org.eclipse.gmf.runtime.gef.ui.figures.DefaultSizeNodeFigure;
 import org.eclipse.gmf.runtime.gef.ui.figures.NodeFigure;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
@@ -53,10 +48,11 @@ import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.papyrus.infra.gmfdiag.preferences.utils.GradientPreferenceConverter;
 import org.eclipse.papyrus.infra.gmfdiag.preferences.utils.PreferenceConstantHelper;
 import org.eclipse.papyrus.uml.diagram.common.draw2d.anchors.FixedAnchor;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart.FillParentLocator;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ApexExecutionSpecificationSelectionEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.BehaviorExecutionSpecificationItemSemanticEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ElementCreationWithMessageEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ExecutionSpecificationComponentEditPolicy;
+import org.eclipse.papyrus.uml.diagram.sequence.figures.ApexCustomDefaultSizeNodeFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.swt.graphics.Color;
 
@@ -141,13 +137,20 @@ public class BehaviorExecutionSpecificationEditPart extends AbstractExecutionSpe
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Overrides to disable the defaultAnchorArea. The edge is no more stuck with the middle of the
 	 * figure.
 	 * 
 	 * @generated NOT
 	 */
 	protected NodeFigure createNodePlate() {
+		/* apex improved start */
+		ApexCustomDefaultSizeNodeFigure result = new ApexCustomDefaultSizeNodeFigure(16, 50) {
+		/* apex improved end */
+		/* apex replaced
 		DefaultSizeNodeFigure result = new DefaultSizeNodeFigure(16, 60) {
+		 */
 
 			/**
 			 * @see org.eclipse.gmf.runtime.gef.ui.figures.NodeFigure#isDefaultAnchorArea(org.eclipse.draw2d.geometry.PrecisionPoint)
@@ -162,16 +165,24 @@ public class BehaviorExecutionSpecificationEditPart extends AbstractExecutionSpe
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated
 	 */
 	@Override
 	public EditPolicy getPrimaryDragEditPolicy() {
+		/* apex improved start */
+		EditPolicy policy = getEditPolicy(EditPolicy.PRIMARY_DRAG_ROLE);
+		return policy != null ? policy : new ApexExecutionSpecificationSelectionEditPolicy();
+		/* apex improved end */
+		/* apex replaced
 		EditPolicy result = super.getPrimaryDragEditPolicy();
 		if(result instanceof ResizableEditPolicy) {
 			ResizableEditPolicy ep = (ResizableEditPolicy)result;
 			ep.setResizeDirections(PositionConstants.NORTH | PositionConstants.SOUTH);
 		}
 		return result;
+		*/
 	}
 
 	/**
@@ -996,10 +1007,17 @@ public class BehaviorExecutionSpecificationEditPart extends AbstractExecutionSpe
 	public class ExecutionSpecificationRectangleFigure extends RectangleFigure {
 
 		/**
+		 * apex updated
+		 * 
 		 * @generated
 		 */
 		public ExecutionSpecificationRectangleFigure() {
+			/* apex improved start */
+			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(50)));
+			/* apex improved end */
+			/* apex replaced
 			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(60)));
+			*/
 			this.setMinimumSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(25)));
 		}
 

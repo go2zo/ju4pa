@@ -795,4 +795,19 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 		relBounds.y -= parentRectangle.y;
 		return relBounds;
 	}
+
+	/**
+	 * apex updated
+	 */
+	@Override
+	protected Command createAddCommand(ChangeBoundsRequest request,
+			EditPart child, Object constraint) {
+		/* apex added start */
+		if (child instanceof LifelineEditPart) {
+			return null;
+		}
+		/* apex added end */
+		return super.createAddCommand(request, child, constraint);
+	}
+
 }

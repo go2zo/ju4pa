@@ -30,6 +30,7 @@ import org.eclipse.gmf.runtime.draw2d.ui.figures.WrappingLabel;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.editpolicies.AppliedStereotypeLinkLabelDisplayEditPolicy;
 import org.eclipse.papyrus.uml.diagram.common.figure.edge.UMLEdgeFigure;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractMessageEditPart.MessageFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.CreationOnMessageEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineChildGraphicalNodeEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.Message2ItemSemanticEditPolicy;
@@ -159,9 +160,15 @@ implements ITreeBranchEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated NOT inherits from UMLEdgeFigure to manage stereotype label
 	 */
-	public class MessageAsync extends UMLEdgeFigure {
+	public class MessageAsync extends UMLEdgeFigure
+	/* apex added start */
+	implements MessageFigure
+	/* apex added end */
+	{
 
 		/**
 		 * @generated

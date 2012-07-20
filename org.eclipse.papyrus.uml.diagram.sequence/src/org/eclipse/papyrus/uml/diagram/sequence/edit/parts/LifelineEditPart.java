@@ -60,9 +60,9 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.CreationEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.DragDropEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.EditPolicyRoles;
-import org.eclipse.gmf.runtime.diagram.ui.editpolicies.GraphicalNodeEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.figures.IBorderItemLocator;
 import org.eclipse.gmf.runtime.diagram.ui.l10n.DiagramUIMessages;
+import org.eclipse.gmf.runtime.diagram.ui.requests.CreateConnectionViewRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeConnectionRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewAndElementRequest;
 import org.eclipse.gmf.runtime.draw2d.ui.figures.ConstrainedToolbarLayout;
@@ -88,6 +88,7 @@ import org.eclipse.papyrus.uml.diagram.common.editpolicies.AppliedStereotypeLabe
 import org.eclipse.papyrus.uml.diagram.common.editpolicies.BorderItemResizableEditPolicy;
 import org.eclipse.papyrus.uml.diagram.common.figure.node.NodeNamedElementFigure;
 import org.eclipse.papyrus.uml.diagram.common.providers.UIAdapterImpl;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ApexLifelineConnectionHandleEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.CustomDiagramDragDropEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ElementCreationWithMessageEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineAppliedStereotypeNodeLabelDisplayEditPolicy;
@@ -96,6 +97,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineItemSemant
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineSelectionEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineXYLayoutEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.RemoveOrphanViewPolicy;
+import org.eclipse.papyrus.uml.diagram.sequence.figures.ApexCustomLifelineDotLineCustomFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.figures.LifelineDotLineCustomFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.locator.CenterLocator;
 import org.eclipse.papyrus.uml.diagram.sequence.locator.TimeMarkElementPositionLocator;
@@ -104,6 +106,8 @@ import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.CommandHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.LifelineCoveredByUpdater;
 import org.eclipse.papyrus.uml.diagram.sequence.util.NotificationHelper;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.uml2.uml.ConnectableElement;
@@ -173,6 +177,8 @@ public class LifelineEditPart extends NamedElementEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated
 	 */
 	@Override
@@ -212,6 +218,10 @@ public class LifelineEditPart extends NamedElementEditPart {
 		
 		//Fixed bug: https://bugs.eclipse.org/bugs/show_bug.cgi?id=364608
 		installEditPolicy(EditPolicy.PRIMARY_DRAG_ROLE, new LifelineSelectionEditPolicy());
+		/* apex added start */
+		// jiho - ConnectionHandle을 DashLine에 위치시키는 EditPolicy
+		installEditPolicy(EditPolicyRoles.CONNECTION_HANDLES_ROLE, new ApexLifelineConnectionHandleEditPolicy());
+		/* apex added end*/
 	}
 
 	/**
@@ -1435,6 +1445,8 @@ public class LifelineEditPart extends NamedElementEditPart {
 		}
 
 		/**
+		 * apex updated
+		 * 
 		 * @generated NOT remove label creation, change layout
 		 */
 		private void createContents() {
@@ -1481,7 +1493,12 @@ public class LifelineEditPart extends NamedElementEditPart {
 			this.add(fFigureExecutionsContainerFigure, BorderLayout.CENTER);
 			fFigureExecutionsContainerFigure.setLayoutManager(new StackLayout());
 
+			/* apex improved start */
+			fFigureLifelineDotLineFigure = new ApexCustomLifelineDotLineCustomFigure();
+			/* apex improved end */
+			/* apex replaced
 			fFigureLifelineDotLineFigure = new LifelineDotLineCustomFigure();
+			 */
 
 			fFigureExecutionsContainerFigure.add(fFigureLifelineDotLineFigure);
 
@@ -1872,6 +1889,8 @@ public class LifelineEditPart extends NamedElementEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Create specific anchor to handle connection on top, on center and on bottom of the lifeline
 	 */
 	@Override
@@ -1885,6 +1904,19 @@ public class LifelineEditPart extends NamedElementEditPart {
 					return new LifelineAnchor(getPrimaryShape().getFigureLifelineNameContainerFigure());
 				}
 			}
+			
+			/* apex added start */
+			// jiho - 복수 ElementType에 대한 처리
+			for (Object elementType : relationshipTypes) {
+				Request createConnectionRequest = createRequest.getRequestForType((IElementType)elementType);
+				if (createConnectionRequest instanceof CreateConnectionViewRequest) {
+					ConnectionAnchor targetAnchor = getTargetConnectionAnchor(createConnectionRequest);
+					createRequest.setLocation(((CreateConnectionViewRequest) createConnectionRequest).getLocation());
+					if (targetAnchor != null)
+						return targetAnchor;
+				}
+			}
+			/* apex added end */
 		} else if(request instanceof ReconnectRequest) {
 			ReconnectRequest reconnectRequest = (ReconnectRequest)request;
 			ConnectionEditPart connectionEditPart = reconnectRequest.getConnectionEditPart();
@@ -1894,6 +1926,25 @@ public class LifelineEditPart extends NamedElementEditPart {
 			}
 		}
 
+		/* apex added start */
+		// jiho - Message을 Horizontal로 생성
+		if (request instanceof CreateConnectionViewRequest) {
+			EditPart sourceEditPart = ((CreateConnectionViewRequest) request).getSourceEditPart();
+			LifelineEditPart srcLifeline = SequenceUtil.getParentLifelinePart(sourceEditPart);
+			if (!this.equals(srcLifeline)) {
+				
+			CreateConnectionViewRequest createRequest = (CreateConnectionViewRequest)request;
+			Point sourceLocation = (Point)createRequest.getExtendedData().get(SequenceRequestConstant.SOURCE_LOCATION_DATA);
+			Point location = createRequest.getLocation().getCopy();
+			location.setY(sourceLocation.y());
+
+			// ExecutionSpecification생성 시 location 이용
+			createRequest.setLocation(location);
+			return getNodeFigure().getTargetConnectionAnchorAt(location);
+			}
+		}
+		/* apex added end */
+		
 		return super.getTargetConnectionAnchor(request);
 	}
 

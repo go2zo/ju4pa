@@ -31,8 +31,8 @@ import org.eclipse.gmf.runtime.draw2d.ui.geometry.PointListUtilities;
 import org.eclipse.gmf.runtime.draw2d.ui.internal.routers.ObliqueRouter;
 import org.eclipse.gmf.runtime.draw2d.ui.internal.routers.OrthogonalRouterUtilities;
 import org.eclipse.gmf.runtime.draw2d.ui.mapmode.MapModeUtil;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractMessageEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart.LifelineFigure;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.Message2EditPart;
 
 /**
  * A multi behavior router which enable to draw message.
@@ -59,12 +59,30 @@ public class MessageRouter extends ObliqueRouter {
 			return OBLIQUE;
 		}
 
+		/**
+		 * apex updated
+		 * 
+		 * @param conn
+		 * @param newLine
+		 * @return
+		 */
 		private static boolean isHorizontalConnection(Connection conn, PointList newLine) {
+			/* apex improved start */
+			if (!(conn instanceof AbstractMessageEditPart.MessageFigure)) {
+				return false;
+			}
+			int sIndex = newLine.size() > 3 ? 1 : 0;
+			int tIndex = newLine.size() > 2 ? newLine.size() - 2 : newLine.size() - 1;
+			Point sourcePoint = newLine.getPoint(sIndex);
+			Point targetPoint = newLine.getPoint(tIndex);
+			/* apex improved end */
+			/* apex replaced
 			if(!(conn instanceof Message2EditPart.MessageAsync)) {
 				return false;
 			}
 			Point sourcePoint = newLine.getFirstPoint();
 			Point targetPoint = newLine.getLastPoint();
+			*/
 			return Math.abs(sourcePoint.y - targetPoint.y) <= MAX_DELTA;
 		}
 

@@ -12,7 +12,16 @@ import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.figure.edge.UMLEdgeFigure;
 import org.eclipse.uml2.uml.Message;
 
+/**
+ * apex updated
+ */
 public abstract class AbstractMessageEditPart extends ConnectionNodeEditPart {
+	/* apex added start */
+	// Jiho: MessageSync~MessageFound의 공용 인터페이스
+	public interface MessageFigure {
+	}
+	/* apex added end */
+	
 	
 	private List messageEventParts;
 	

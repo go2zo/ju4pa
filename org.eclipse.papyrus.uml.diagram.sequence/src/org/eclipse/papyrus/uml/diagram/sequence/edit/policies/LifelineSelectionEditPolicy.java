@@ -16,7 +16,6 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.gef.EditPart;
 import org.eclipse.gef.GraphicalEditPart;
 import org.eclipse.gef.Handle;
-import org.eclipse.gef.Request;
 import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.handles.MoveHandle;
 import org.eclipse.gef.handles.MoveHandleLocator;
@@ -154,7 +153,7 @@ public class LifelineSelectionEditPolicy extends ResizableEditPolicyEx {
 
 	private void keepInParentBounds(LifelineEditPart lifelineEP, ChangeBoundsRequest request, PrecisionRectangle rect) {
 		if (lifelineEP.getParent() instanceof LifelineEditPart){
-			LifelineEditPart parent = (LifelineEditPart)lifelineEP.getParent() ;
+			LifelineEditPart parent = (LifelineEditPart)lifelineEP.getParent();
 			Rectangle p = parent.getFigure().getBounds().getCopy();
 			parent.getFigure().translateToAbsolute(p);
 			PrecisionRectangle c = getMovedRectangle(rect, request);

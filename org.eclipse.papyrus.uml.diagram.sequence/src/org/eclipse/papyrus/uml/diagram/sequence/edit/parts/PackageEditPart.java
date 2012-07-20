@@ -110,7 +110,7 @@ public class PackageEditPart extends DiagramEditPart {
 			}
 		};
 	}
-
+//asdfasdfsadf
 	/**
 	 * @generated
 	 */

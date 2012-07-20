@@ -14,6 +14,8 @@
 package org.eclipse.papyrus.uml.diagram.sequence.util;
 
 /**
+ * apex updated
+ * 
  * Constants used in the sequence diagram
  */
 public interface SequenceRequestConstant {
@@ -51,4 +53,12 @@ public interface SequenceRequestConstant {
 	
 	/** update connectable element reference */
 	public static final String CONNECTABLE_ELEMENT = "Connectable Element"; //$NON-NLS-1$
+	
+	/* apex added start */
+	/** connectable element create command */
+	public static final String CONNECTABLE_ELEMENT_CREATE_COMMAND = "Connectable Element Create Command"; //$NON-NLS-1$
+	
+	/** update connectable element's type reference*/
+	public static final String CONNECTABLE_ELEMENT_TYPE = "Connectable Element Type"; //$NON-NLS-1$
+	/* apex added end */
 }
