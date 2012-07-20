@@ -397,7 +397,7 @@ public class ApexSequenceUtil {
 	 */
 	public static List apexGetHigherEditPartList(IGraphicalEditPart agep) {
 		
-apexTestCoordinateSystem(agep);
+//apexTestCoordinateSystem(agep);
 		
 		Set<Entry<Object, EditPart>> wholeEditPartEntries = agep.getViewer().getEditPartRegistry().entrySet();
 

@@ -669,6 +669,12 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			}
 			
 			/* apex added start */
+			// 하향 확대 resize 시 아래에 있는 요소 이동 처리
+			// belowEditPart, beneathEditPart를 구성하여 beneathEditPart보다 아래로 확장하는 경우 belowEditPart 모두 이동
+			apexGetResizeOrMoveBelowItemsCommand(request, combinedFragmentEditPart, compoundCmd);
+			/* apex added end */
+			
+			/* apex added start */
 			// 여기에 중첩된 경우 Resize 처리
 			apexResizeParentCombinedFragments(request, combinedFragmentEditPart, compoundCmd, depth);			
 			/* apex added end */
@@ -1017,7 +1023,11 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 						if ( tempIoepRect.y > ioRect1.y ) {
 							// 아래 -1은 이유는 모르나 빼주지 않으면 미세하게 OP의 x가 밀림
 							tempIoepRect.x -= OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER;
-							tempIoepRect.y += moveDelta.y;							
+							if ( moveDelta.y == 0 ) {
+								tempIoepRect.y += sizeDelta.height;
+							} else {
+								tempIoepRect.y += moveDelta.y;	
+							}														
 							
 							int headerHeight = OperandBoundsComputeHelper.computeCombinedFragementHeaderHeight(combinedFragmentEditPart);
 							System.out.println("변경 IOEP Rect : " + tempIoepRect);
@@ -1091,7 +1101,8 @@ System.out.println("###### Translate End #####");
 
 		if ( belowEditPartList.size() > 0 ) {
 			// 이동할 위치
-			Point moveDelta = request.getMoveDelta();		
+			Point moveDelta = request.getMoveDelta();
+			Dimension sizeDelta = request.getSizeDelta();
 
 			IFigure thisFigure = abstractGraphicalEditPart.getFigure();
 			Rectangle origCFBounds = thisFigure.getBounds().getCopy();
@@ -1106,14 +1117,20 @@ System.out.println("before translateToAbsolute Bounds : " + origCFBounds);
 System.out.println("after translateToAbsolute Bounds  : " + origCFBounds);
 */
 
-			origCFBounds.translate(thisFigure.getParent().getBounds().getLocation());
+//			origCFBounds.translate(thisFigure.getParent().getBounds().getLocation());
 /*8
 System.out.println("after translate Bounds            : " + origCFBounds);
 System.out.println("==========================================");
 */
 
-			// 넘겨받은 AbstractGraphicalEditPart 의 이동 후 위치
-			int yAfterMove = origCFBounds.getBottom().y+moveDelta.y;
+			// 넘겨받은 AbstractGraphicalEditPart 의 이동/Resize 후 bottom 위치
+			int bottom = 0;
+			if ( moveDelta.y != 0 ) {
+				bottom = origCFBounds.getBottom().y+moveDelta.y;	
+			} else {
+				bottom = origCFBounds.getBottom().y+sizeDelta.height;
+			}
+			
 
 			// 넘겨받은 AbstractGraphicalEditPart 바로 아래의 EditPart 구성
 			IGraphicalEditPart beneathEditPart  = ApexSequenceUtil.apexGetBeneathEditPart(abstractGraphicalEditPart);
@@ -1125,8 +1142,14 @@ System.out.println("==========================================");
 
 			int topOfBeneathEditPart = ApexSequenceUtil.apexGetAbsolutePosition(beneathEditPart, SWT.TOP);
 
-			// beneathEditPart 보다 아래로 내릴 경우			
-			if (yAfterMove >= topOfBeneathEditPart) {
+			// beneathEditPart 보다 아래로 내릴 경우
+			System.out
+					.println("InteractionCompartmentXYLayoutEditPolicy.apexGetResizeOrMoveBelowItemsCommand(), line : "
+							+ Thread.currentThread().getStackTrace()[1]
+									.getLineNumber());
+			System.out.println("bottom               : " + bottom);
+			System.out.println("topOfBeneathEditPart : " + topOfBeneathEditPart);
+			if (bottom >= topOfBeneathEditPart) {
 
 				Iterator it = belowEditPartList.iterator();
 				while( it.hasNext()) {		
@@ -1173,7 +1196,12 @@ System.out.println("### in omw below list end ###");
 
 								// Convert to relative
 								newBounds.x += moveDelta.x;
-								newBounds.y += moveDelta.y;
+								if ( moveDelta.y != 0 ) {
+									newBounds.y += moveDelta.y;	
+								} else {
+									newBounds.y += sizeDelta.height;
+								}
+								
 
 								SetBoundsCommand setBoundsCmd = new SetBoundsCommand(sep.getEditingDomain(), "Move of a CombinedFragment due to a Upper CF movement", sep, newBounds);
 								compoundCmd.add(new ICommandProxy(setBoundsCmd));						
@@ -1256,7 +1284,9 @@ System.out.println("??? in omw right after LifelineEditPart target after Connect
 	}
 	
 	/**
-	 * 넘겨받은 GraphicalEditPart가 중첩되어 있는 child 인 경우 
+	 * 넘겨받은 GraphicalEditPart가 중첩되어 있는 child 인 경우
+	 * parent CF의 경계 변경여부 결정
+	 * 
 	 * @param request
 	 * @param combinedFragmentEditPart
 	 * @param ccmd

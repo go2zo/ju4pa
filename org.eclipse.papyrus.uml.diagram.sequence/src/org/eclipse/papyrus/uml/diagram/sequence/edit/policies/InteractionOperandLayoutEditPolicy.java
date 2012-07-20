@@ -167,6 +167,9 @@ public class InteractionOperandLayoutEditPolicy extends XYLayoutEditPolicy {
 					if(resizeChildrenCommand != null && resizeChildrenCommand.canExecute()) {
 						compoundCmd.add(resizeChildrenCommand);
 					}
+					/* apex added start */
+					else compoundCmd.add(UnexecutableCommand.INSTANCE);
+					/* apex added end */
 				}
 
 				Command changeConstraintCommand = createChangeConstraintCommand(request, child, translateToModelConstraint(constraintFor));
