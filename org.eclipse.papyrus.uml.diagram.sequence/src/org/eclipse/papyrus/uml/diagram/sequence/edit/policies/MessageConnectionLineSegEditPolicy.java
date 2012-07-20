@@ -13,7 +13,6 @@
  *****************************************************************************/
 package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -87,7 +86,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 			ConnectionNodeEditPart connectionPart = (ConnectionNodeEditPart)getHost();
 			int oldY = ApexSequenceUtil.apexGetAbsolutePosition(connectionPart, SWT.BOTTOM);
 			
-			Object constraint = getConnection().getRoutingConstraint();
+//			Object constraint = getConnection().getRoutingConstraint();
 
 			ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
 			Point location = request.getLocation().getCopy();

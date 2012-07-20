@@ -1,7 +1,5 @@
 package org.eclipse.papyrus.uml.diagram.sequence.draw2d.anchors;
 
-import java.text.Format;
-
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PrecisionPoint;
@@ -44,11 +42,15 @@ public class ApexHorizontalAnchor extends SlidableAnchor {
 		
 		/*8
 		StackTraceElement[] traces = Thread.currentThread().getStackTrace();
-		for (int i = 1; i < 10; i++) {
+		for (int i = 1; i < 5; i++) {
 			StackTraceElement trace = traces[i];
 			System.out.println(trace.getClassName() + ":" + trace.getMethodName() + "(" + trace.getLineNumber() + ")");
 		}
 		System.out.println("------------------------------------------------------");
+		//*/
+		//*
+		System.out.println(location);
+		System.out.println("------------------------------------------------------>");
 		//*/
 		
 		// SEQ-LL-005
