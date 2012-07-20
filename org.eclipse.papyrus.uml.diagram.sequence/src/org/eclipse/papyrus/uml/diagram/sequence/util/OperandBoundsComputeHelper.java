@@ -543,6 +543,7 @@ public class OperandBoundsComputeHelper {
 			} else {
 				/* apex added start */
 				// previousOp의 Lowest bottom+1 보다 위로 resize 안되게 처리 필요
+				// 여기서 하는게 맞나?
 				/* apex added start */
 				if (currentIOEPBounds.getHeight() - Math.abs(heightDelta) < OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT) {
 					return null;
