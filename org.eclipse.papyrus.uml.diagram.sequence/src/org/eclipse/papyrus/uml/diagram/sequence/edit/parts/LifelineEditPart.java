@@ -107,6 +107,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.util.CommandHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.LifelineCoveredByUpdater;
 import org.eclipse.papyrus.uml.diagram.sequence.util.NotificationHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.uml2.uml.ConnectableElement;
@@ -1903,16 +1904,18 @@ public class LifelineEditPart extends NamedElementEditPart {
 					return new LifelineAnchor(getPrimaryShape().getFigureLifelineNameContainerFigure());
 				}
 			}
+			
 			/* apex added start */
 			// jiho - 복수 ElementType에 대한 처리
-//			for (Object elementType : relationshipTypes) {
-//				Request createConnectionRequest = createRequest.getRequestForType((IElementType)elementType);
-//				if (createConnectionRequest instanceof CreateConnectionViewRequest) {
-//					ConnectionAnchor targetAnchor = getTargetConnectionAnchor(createConnectionRequest);
-//					if (targetAnchor != null)
-//						return targetAnchor;
-//				}
-//			}
+			for (Object elementType : relationshipTypes) {
+				Request createConnectionRequest = createRequest.getRequestForType((IElementType)elementType);
+				if (createConnectionRequest instanceof CreateConnectionViewRequest) {
+					ConnectionAnchor targetAnchor = getTargetConnectionAnchor(createConnectionRequest);
+					createRequest.setLocation(((CreateConnectionViewRequest) createConnectionRequest).getLocation());
+					if (targetAnchor != null)
+						return targetAnchor;
+				}
+			}
 			/* apex added end */
 		} else if(request instanceof ReconnectRequest) {
 			ReconnectRequest reconnectRequest = (ReconnectRequest)request;
@@ -1925,24 +1928,21 @@ public class LifelineEditPart extends NamedElementEditPart {
 
 		/* apex added start */
 		// jiho - Message을 Horizontal로 생성
-//		if (request instanceof CreateConnectionViewRequest) {
-//			CreateConnectionViewRequest createRequest = (CreateConnectionViewRequest)request;
-//			Point sourceLocation = (Point)createRequest.getExtendedData().get(SequenceRequestConstant.SOURCE_LOCATION_DATA);
-//			Point srcPoint = sourceLocation.getCopy();
-//			
-//			getNodeFigure().translateToAbsolute(srcPoint);
-//			
-//			Point location = createRequest.getLocation().getCopy();
-//			
-//			System.out.println("srcLoc=" + sourceLocation + " reqLoc=" + location);
-//			location.setY(srcPoint.y);
-//			// 화면 이동에 따른 location의 위치 변동
-////			getNodeFigure().translateFromParent(location);
-////			getNodeFigure().translateToRelative(location);
-//			// ExecutionSpecification생성 시 location 이용
-//			createRequest.setLocation(location);
-////			return getNodeFigure().getTargetConnectionAnchorAt(location);
-//		}
+		if (request instanceof CreateConnectionViewRequest) {
+			EditPart sourceEditPart = ((CreateConnectionViewRequest) request).getSourceEditPart();
+			LifelineEditPart srcLifeline = SequenceUtil.getParentLifelinePart(sourceEditPart);
+			if (!this.equals(srcLifeline)) {
+				
+			CreateConnectionViewRequest createRequest = (CreateConnectionViewRequest)request;
+			Point sourceLocation = (Point)createRequest.getExtendedData().get(SequenceRequestConstant.SOURCE_LOCATION_DATA);
+			Point location = createRequest.getLocation().getCopy();
+			location.setY(sourceLocation.y());
+
+			// ExecutionSpecification생성 시 location 이용
+			createRequest.setLocation(location);
+			return getNodeFigure().getTargetConnectionAnchorAt(location);
+			}
+		}
 		/* apex added end */
 		
 		return super.getTargetConnectionAnchor(request);

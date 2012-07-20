@@ -25,7 +25,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.draw2d.Connection;
-import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
@@ -37,6 +36,7 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.INodeEditPart;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.util.DiagramEditPartsUtil;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragment2EditPart;
@@ -47,7 +47,6 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEdi
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionUseEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.ExecutionOccurrenceSpecification;
 import org.eclipse.uml2.uml.Interaction;
@@ -804,7 +803,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				boolean isInteractionUse = part instanceof InteractionUseEditPart;
 				boolean isInteraction = part instanceof InteractionEditPart;
 				boolean isMessage = part instanceof ConnectionNodeEditPart;
-				boolean isActivation = part instanceof ActionExecutionSpecificationEditPart || part instanceof BehaviorExecutionSpecificationEditPart;
+				boolean isActivation = part instanceof AbstractExecutionSpecificationEditPart;
 				boolean isSameEditPart = gep.equals(part);
 				if(isCombinedFragment || isContinuation || isInteractionOperand || isInteractionUse || isInteraction || isMessage /*|| isActivation*/) {
 					if (!result.contains(part) && !isSameEditPart) {
@@ -837,8 +836,8 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		List<IGraphicalEditPart> result = apexGetSiblingEditParts(gep);
 		int y = ApexSequenceUtil.apexGetAbsolutePosition(gep, SWT.TOP);
 		for (IGraphicalEditPart part : result) {
-			int top = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.BOTTOM);
-			if (y < top) {
+			int bottom = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.BOTTOM);
+			if (y < bottom) {
 				removeList.add(part);
 			}
 		}

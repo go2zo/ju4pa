@@ -71,14 +71,18 @@ public class MessageRouter extends ObliqueRouter {
 			if (!(conn instanceof AbstractMessageEditPart.MessageFigure)) {
 				return false;
 			}
+			int sIndex = newLine.size() > 3 ? 1 : 0;
+			int tIndex = newLine.size() > 2 ? newLine.size() - 2 : newLine.size() - 1;
+			Point sourcePoint = newLine.getPoint(sIndex);
+			Point targetPoint = newLine.getPoint(tIndex);
 			/* apex improved end */
 			/* apex replaced
 			if(!(conn instanceof Message2EditPart.MessageAsync)) {
 				return false;
 			}
-			*/
 			Point sourcePoint = newLine.getFirstPoint();
 			Point targetPoint = newLine.getLastPoint();
+			*/
 			return Math.abs(sourcePoint.y - targetPoint.y) <= MAX_DELTA;
 		}
 
