@@ -69,6 +69,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecif
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentCombinedFragmentCompartmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractionCompartmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
@@ -495,15 +496,36 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 
 			} else if ( moveDelta.y < 0 ) { // 위로 이동할 경우
 				
+				EditPart ep = combinedFragmentEditPart.getParent();
+				IGraphicalEditPart parentCompartmentEditPart  = null;
+				if ( ep instanceof InteractionOperandEditPart || ep instanceof InteractionInteractionCompartmentEditPart ) {
+					parentCompartmentEditPart = (IGraphicalEditPart)ep;
+				} else {
+					return UnexecutableCommand.INSTANCE; 
+				}
+				/*8
+				System.out
+						.println("InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(), line : "
+								+ Thread.currentThread().getStackTrace()[1]
+										.getLineNumber());
+				//*/
+				int topOfParentCompartment = ApexSequenceUtil.apexGetAbsolutePosition(parentCompartmentEditPart, SWT.TOP);
+
+				int yAfterMove = ApexSequenceUtil.apexGetAbsolutePosition(combinedFragmentEditPart, SWT.TOP)+moveDelta.y;
+				// IOEP보다위로 올릴 경우					
+				if ( yAfterMove <= topOfParentCompartment ) {
+					return UnexecutableCommand.INSTANCE;
+				}				
+				
 				List higherEditPartList = ApexSequenceUtil.apexGetHigherEditPartList(combinedFragmentEditPart);
 				
 				if ( higherEditPartList.size() > 0 ) {				
 					
-					int yAfterMove = ApexSequenceUtil.apexGetAbsolutePosition(combinedFragmentEditPart, SWT.TOP)+moveDelta.y;
+					
 					IGraphicalEditPart aboveEditPart  = ApexSequenceUtil.apexGetAboveEditPart(combinedFragmentEditPart, higherEditPartList);
 					int yAbove = ApexSequenceUtil.apexGetAbsolutePosition(aboveEditPart, SWT.BOTTOM);
-
-					// aboveEditPart보다 위로 올릴 경우					
+					
+					// aboveEditPart보다 또는 IOEP보다위로 올릴 경우					
 					if ( yAfterMove <= yAbove ) {
 						return UnexecutableCommand.INSTANCE;
 					}
@@ -984,41 +1006,63 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		if (childCombinedFragmentEditPart != null) {
 			EditPart pep = childCombinedFragmentEditPart.getParent();
 			if ( pep instanceof InteractionOperandEditPart ) {
+				
 				InteractionOperandEditPart ioep = (InteractionOperandEditPart)pep;
 				IFigure ioFigure = ioep.getFigure();
 				Rectangle ioRect = ioFigure.getBounds().getCopy();
-				ioFigure.translateToAbsolute(ioRect);
+				System.out
+						.println("InteractionCompartmentXYLayoutEditPolicy.apexResizeCombinedFragmentBoundsCommand(), line : "
+								+ Thread.currentThread().getStackTrace()[1]
+										.getLineNumber());
+				System.out.println("raw     ioRect    : " + ioRect);
+				ioFigure.getParent().translateToAbsolute(ioRect);
+				System.out.println("par abs ioRect    : " + ioRect);
 				ioRect.resize(sizeDelta);
+				System.out.println("res     ioRect    : " + ioRect);
+				
+				CombinedFragmentCombinedFragmentCompartmentEditPart cfcfep= (CombinedFragmentCombinedFragmentCompartmentEditPart)ioep.getParent();
+				List childOps = cfcfep.getChildren();
+				
+
+/*8
+				ICommand resizeIOCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(ioep, ioRect);
+//				Command resizeIOCommand = OperandBoundsComputeHelper.createIOEPResizeCommand(ioep, siblingIoepHeight, cfcfep, direction);
+				ccmd.add(new ICommandProxy(resizeIOCommand));
+//*/
+//*8				
 				ICommand resizeIOCommand = new SetBoundsCommand(editingDomain, 
 										                "Apex_IO_Resize",
 										                new EObjectAdapter((View) ioep.getModel()),
 										                new Dimension(ioRect.width, ioRect.height));
 				ccmd.add(new ICommandProxy(resizeIOCommand));
+//*/
 				
-				//*8
-				CombinedFragmentCombinedFragmentCompartmentEditPart cfcfep= (CombinedFragmentCombinedFragmentCompartmentEditPart)ioep.getParent();
-				List childOps = cfcfep.getChildren();
 				
 				// CF에 Operand가 2개 이상 있을 경우 아래에 있는 Op도 이동 처리, 이동은 상대좌표로 처리함
 				if ( childOps.size() > 1 ) {
+					
 					Rectangle ioRect1 = ioFigure.getBounds().getCopy();
+					/*8
 					System.out
 							.println("InteractionCompartmentXYLayoutEditPolicy.apexResizeCombinedFragmentBoundsCommand(), line : "
 									+ Thread.currentThread().getStackTrace()[1]
 											.getLineNumber());
 					System.out.println("해당 IOEP Rect : " + ioRect1);
 					//ioFigure.translateToAbsolute(ioRect1);
+					//*/
 					Iterator it = childOps.iterator();
 					
 					while ( it.hasNext() ) {
 						InteractionOperandEditPart tempIoep = (InteractionOperandEditPart)it.next();
 						IFigure tempIoepFigure = tempIoep.getFigure();
 						Rectangle tempIoepRect = tempIoepFigure.getBounds().getCopy();
+						/*8
 						System.out.println("자식 IOEP Rect : " + tempIoepRect);
 												
 						//System.out.println("getLayoutConstraint() : " + OperandBoundsComputeHelper.getEditPartBounds(tempIoep));
 						
-						//tempIoepFigure.translateToAbsolute(tempIoepRect);						
+						//tempIoepFigure.translateToAbsolute(tempIoepRect);
+						*/						
 						
 						if ( tempIoepRect.y > ioRect1.y ) {
 							// 아래 -1은 이유는 모르나 빼주지 않으면 미세하게 OP의 x가 밀림
@@ -1030,16 +1074,34 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 							}														
 							
 							int headerHeight = OperandBoundsComputeHelper.computeCombinedFragementHeaderHeight(combinedFragmentEditPart);
+							/*8
 							System.out.println("변경 IOEP Rect : " + tempIoepRect);
 							System.out.println("상위 CFEP Rect : " + combinedFragmentEditPart.getFigure().getBounds().getCopy());
+							*/
 							// headerHeight에 -1해주는 이유는 모르겠으나 해주면 딱 맞음
 							tempIoepRect.translate(-combinedFragmentEditPart.getFigure().getBounds().getCopy().x, 
 									               -combinedFragmentEditPart.getFigure().getBounds().getCopy().y-headerHeight-OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER);
+							
+							//OperandBoundsComputeHelper.createIOEPResizeCommand(currentIOEP, heightDelta, compartEP, direction);
+	
+/*8
 							ICommand resizeBelowIOCommand = new SetBoundsCommand(editingDomain, 
 					                "Apex_BELOW_IO_Resize",
 					                tempIoep,
 					                tempIoepRect);
 							ccmd.add(new ICommandProxy(resizeBelowIOCommand));
+//*/
+//*8
+							/*8
+							System.out.println("OPUtil   Rect : " + tempIoepRect);
+							System.out.println("moveDelta.y   : " + moveDelta.y);
+							System.out.println("sizeDelta.h   : " + sizeDelta.height);
+							*/
+							 
+							ICommand moveBelowIOCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(tempIoep, tempIoepRect);
+//							Command resizeBelowIOCommand = OperandBoundsComputeHelper.createIOEPResizeCommand(ioep, siblingIoepHeight, cfcfep, direction);
+							ccmd.add(new ICommandProxy(moveBelowIOCommand));
+//*/
 						}
 					}
 				}
@@ -1143,12 +1205,14 @@ System.out.println("==========================================");
 			int topOfBeneathEditPart = ApexSequenceUtil.apexGetAbsolutePosition(beneathEditPart, SWT.TOP);
 
 			// beneathEditPart 보다 아래로 내릴 경우
+			/*8
 			System.out
 					.println("InteractionCompartmentXYLayoutEditPolicy.apexGetResizeOrMoveBelowItemsCommand(), line : "
 							+ Thread.currentThread().getStackTrace()[1]
 									.getLineNumber());
 			System.out.println("bottom               : " + bottom);
 			System.out.println("topOfBeneathEditPart : " + topOfBeneathEditPart);
+			//*/
 			if (bottom >= topOfBeneathEditPart) {
 
 				Iterator it = belowEditPartList.iterator();
