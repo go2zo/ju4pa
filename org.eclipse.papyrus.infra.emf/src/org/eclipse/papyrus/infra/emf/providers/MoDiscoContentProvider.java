@@ -17,6 +17,9 @@ import java.util.List;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.facet.infra.browser.uicore.CustomizableModelContentProvider;
+import org.eclipse.emf.facet.infra.browser.uicore.internal.model.LinkItem;
+import org.eclipse.emf.facet.infra.browser.uicore.internal.model.ModelElementItem;
+import org.eclipse.emf.validation.internal.modeled.model.validation.impl.ConstraintImpl;
 import org.eclipse.gmf.runtime.notation.Diagram;
 import org.eclipse.papyrus.infra.core.resource.ModelSet;
 import org.eclipse.papyrus.infra.core.resource.ModelUtils;
@@ -26,6 +29,13 @@ import org.eclipse.papyrus.infra.core.sasheditor.contentprovider.IPageMngr;
 import org.eclipse.papyrus.infra.core.sasheditor.di.contentprovider.DiSashModelMngr;
 import org.eclipse.papyrus.infra.core.services.ServicesRegistry;
 import org.eclipse.papyrus.infra.emf.Activator;
+import org.eclipse.uml2.uml.internal.impl.ActionExecutionSpecificationImpl;
+import org.eclipse.uml2.uml.internal.impl.BehaviorExecutionSpecificationImpl;
+import org.eclipse.uml2.uml.internal.impl.ExecutionOccurrenceSpecificationImpl;
+import org.eclipse.uml2.uml.internal.impl.LifelineImpl;
+import org.eclipse.uml2.uml.internal.impl.MessageImpl;
+import org.eclipse.uml2.uml.internal.impl.MessageOccurrenceSpecificationImpl;
+import org.eclipse.uml2.uml.internal.impl.TimeConstraintImpl;
 
 /**
  * the content provider that inherits of modisco properties
@@ -55,14 +65,87 @@ public class MoDiscoContentProvider extends CustomizableModelContentProvider {
 
 	@Override
 	public Object[] getChildren(final Object parentElement) {
-		ArrayList<Object> result = new ArrayList<Object>();
 
+		/* apex improved start */
+
+		// 무한호출 유발하는 요소는 제외된 List
+		ArrayList<Object> result = new ArrayList<Object>();
+		
+		// 무한호출 유발하는 요소 포함된 List, 추후 Filtering 시 활용
+		ArrayList<Object> fullResult = new ArrayList<Object>();
+
+		Object[] arrayObject = super.getChildren(parentElement);
+		
+/*8
+System.out.println("MoDiscoContentProvider.getChildren(), line : "
+		+ Thread.currentThread().getStackTrace()[1].getLineNumber());
+//*/
+		if (arrayObject != null) {
+			for (int i = 0; i < arrayObject.length; i++) {
+				boolean canBeAdded = true;
+				
+				/*8				
+System.out.println("\n** in super.getChildren loop, arrayObject["+i+"] being added : " + arrayObject[i]);
+//*/
+				if ( arrayObject[i] instanceof ModelElementItem) {
+					ModelElementItem mei = (ModelElementItem)arrayObject[i];
+/*8
+System.out.println("      mei.getEObject() being added : " + mei.getEObject());
+//*/
+				}
+				if ( arrayObject[i] instanceof LinkItem) {
+					LinkItem li = (LinkItem)arrayObject[i];
+
+/*8					
+System.out.println("      li.getText() : " + li.getText());
+System.out.println("      li.getReference() : " + li.getReference());	
+System.out.println("      li.getParent() : " + li.getParent());
+System.out.println("      li.getTreeParent() : " + li.getTreeParent());
+//*/
+					
+					
+					if (li.getReference().getName().startsWith("enclosing")) {
+						canBeAdded = false;
+					} else if (li.getParent() instanceof LifelineImpl ) {
+						canBeAdded = false;
+					} else if (li.getParent() instanceof MessageImpl ) {
+						canBeAdded = false;
+					} else if (li.getParent() instanceof MessageOccurrenceSpecificationImpl ) {
+						canBeAdded = false;
+					} else if (li.getParent() instanceof ExecutionOccurrenceSpecificationImpl ) {
+						canBeAdded = false;
+					} else if (li.getParent() instanceof BehaviorExecutionSpecificationImpl ) {
+						canBeAdded = false;
+					} else if (li.getParent() instanceof ActionExecutionSpecificationImpl ) {
+						canBeAdded = false;
+					} else if (li.getParent() instanceof ConstraintImpl && li.getReference().getName().equals("context") ) {
+						canBeAdded = false;
+					} else if (li.getParent() instanceof TimeConstraintImpl && li.getReference().getName().equals("context") ) {
+						canBeAdded = false;
+					}	
+					
+/*8
+if ( canBeAdded ) {
+	System.out.println("      li.getText() being added : " + li.getText());
+}
+*/
+				
+				}
+				if ( canBeAdded ) {						
+					result.add(arrayObject[i]);
+				}
+				fullResult.add(arrayObject[i]);
+			}
+		}
+		/* apex improved end */
+		/* apex replaced
 		Object[] arrayObject = super.getChildren(parentElement);
 		if(arrayObject != null) {
 			for(int i = 0; i < arrayObject.length; i++) {
 				result.add(arrayObject[i]);
 			}
 		}
+		*/
 		/**
 		 * Refactoring with bug 358732
 		 */
