@@ -1543,7 +1543,12 @@ public class LifelineEditPart extends NamedElementEditPart {
 			} else if (fFigureLifelineDotLineFigure != null) {
 				Rectangle bounds = fFigureLifelineDotLineFigure
 						.getDashLineRectangle().getBounds().getCopy();
+				/* apex improved start */
+				bounds.expand(10, 0);
+				/* apex improved end */
+				/* apex replaced
 				bounds.expand(4, 0);
+				 */
 				if (bounds.contains(x, y))
 					return true;
 			}

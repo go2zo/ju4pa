@@ -243,7 +243,7 @@ public class SequenceGraphicalNodeEditPolicy extends GraphicalNodeEditPolicy {
 
 		Point sourcePoint = (Point)request.getExtendedData().get(SequenceRequestConstant.SOURCE_LOCATION_DATA);
 		Point targetPoint = request.getLocation();
-
+		
 		// prevent uphill message (leave margin for horizontal messages)
 		if(sourcePoint == null || sourcePoint.y >= targetPoint.y + MARGIN) {
 			return UnexecutableCommand.INSTANCE;
