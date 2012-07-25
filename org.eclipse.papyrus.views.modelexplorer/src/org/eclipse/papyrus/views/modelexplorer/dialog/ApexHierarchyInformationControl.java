@@ -1,37 +1,24 @@
 package org.eclipse.papyrus.views.modelexplorer.dialog;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.jdt.core.IClassFile;
-import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.text.AbstractInformationControl;
 import org.eclipse.jdt.internal.ui.typehierarchy.HierarchyLabelProvider;
-import org.eclipse.jdt.internal.ui.typehierarchy.HierarchyViewerSorter;
-import org.eclipse.jdt.internal.ui.typehierarchy.SuperTypeHierarchyViewer.SuperTypeHierarchyContentProvider;
-import org.eclipse.jdt.internal.ui.typehierarchy.TraditionalHierarchyViewer.TraditionalHierarchyContentProvider;
 import org.eclipse.jdt.internal.ui.typehierarchy.TypeHierarchyContentProvider;
 import org.eclipse.jdt.internal.ui.typehierarchy.TypeHierarchyLifeCycle;
 import org.eclipse.jdt.internal.ui.typehierarchy.TypeHierarchyMessages;
-import org.eclipse.jdt.internal.ui.viewsupport.ColoringLabelProvider;
 import org.eclipse.jdt.ui.JavaElementLabels;
-import org.eclipse.jdt.ui.ProblemsLabelDecorator;
 import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -40,6 +27,7 @@ import org.eclipse.papyrus.infra.core.services.ServiceException;
 import org.eclipse.papyrus.infra.core.services.ServicesRegistry;
 import org.eclipse.papyrus.infra.core.utils.ServiceUtilsForActionHandlers;
 import org.eclipse.papyrus.infra.emf.providers.MoDiscoContentProvider;
+import org.eclipse.papyrus.infra.emf.providers.StandardEMFLabelProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -68,7 +56,7 @@ public class ApexHierarchyInformationControl extends
 	private TreeViewer treeViewer;
 	private ITreeContentProvider contentProvider;
 	private ServicesRegistry serviceRegistry;
-
+	
 	public ApexHierarchyInformationControl(Shell parent, int shellStyle, int treeStyle) {
 		super(parent, shellStyle, treeStyle, IJavaEditorActionDefinitionIds.OPEN_HIERARCHY, true);
 		fOtherExpandedElements= null;
@@ -121,7 +109,7 @@ public class ApexHierarchyInformationControl extends
 	 * @see org.eclipse.jdt.internal.ui.text.JavaOutlineInformationControl#createTreeViewer(org.eclipse.swt.widgets.Composite, int)
 	 */
 	@Override
-	protected TreeViewer createTreeViewer(Composite parent, int style) {
+	public TreeViewer createTreeViewer(Composite parent, int style) {
 		Tree tree= new Tree(parent, SWT.SINGLE | (style & ~SWT.MULTI));
 		GridData gd= new GridData(GridData.FILL_BOTH);
 		gd.heightHint= tree.getItemHeight() * 12;
@@ -141,10 +129,10 @@ public class ApexHierarchyInformationControl extends
 		contentProvider= new MoDiscoContentProvider();
 		//contentProvider.setMemberFilter(memberFilter);
 		treeViewer.setContentProvider(contentProvider);
-		System.out
-				.println("ApexHierarchyInformationControl.createTreeViewer(), line : "
-						+ Thread.currentThread().getStackTrace()[1]
-								.getLineNumber());
+//		System.out
+//				.println("ApexHierarchyInformationControl.createTreeViewer(), line : "
+//						+ Thread.currentThread().getStackTrace()[1]
+//								.getLineNumber());
 //		System.out.println("contentProvider.hasChildren() : " + contentProvider.hasChildren());
 		
 		EObject[] rootElements = null;
@@ -155,7 +143,7 @@ public class ApexHierarchyInformationControl extends
 			e.printStackTrace();
 		}
 		
-		/*
+		
 		for ( EObject eObj : rootElements ) {
 			System.out.println("rootElements : " + eObj);
 			TreeIterator treeIt = eObj.eAllContents();
@@ -164,12 +152,12 @@ public class ApexHierarchyInformationControl extends
 				System.out.println("treeItObj : " + obj);
 			}
 		}
-		*/
 		
-		setInput(rootElements);
+		
+
 		
 		/* apex added end */
-
+/*
 		treeViewer.setComparator(new HierarchyViewerSorter(fLifeCycle));
 		treeViewer.setAutoExpandLevel(AbstractTreeViewer.ALL_LEVELS);		
 
@@ -184,7 +172,9 @@ public class ApexHierarchyInformationControl extends
 		fLabelProvider.setTextFlags(JavaElementLabels.ALL_DEFAULT | JavaElementLabels.T_POST_QUALIFIED | JavaElementLabels.P_COMPRESSED);
 		fLabelProvider.addLabelDecorator(new ProblemsLabelDecorator(null));
 		treeViewer.setLabelProvider(new ColoringLabelProvider(fLabelProvider));
-
+*/
+		treeViewer.setLabelProvider(new StandardEMFLabelProvider());
+		
 		treeViewer.getTree().addKeyListener(getKeyAdapter());
 
 		return treeViewer;
@@ -323,17 +313,26 @@ public class ApexHierarchyInformationControl extends
 
 		fFocus= locked;
 */
-		if ( information instanceof EObject[]) {
-			EObject rootElement = ((EObject[])information)[0]; 
-				Object[] topLevelObjects= ((MoDiscoContentProvider)contentProvider).getRootElements(serviceRegistry);
-				if (topLevelObjects.length > 0 && contentProvider.getChildren(topLevelObjects[0]).length > 40) {
-					fDoFilter= false;
-				} else {
-					getTreeViewer().addFilter(new NamePatternFilter());
-				}	
+		if ( information instanceof ServicesRegistry) {
+			ServicesRegistry input = (ServicesRegistry)information;
+			Object[] topLevelObjects= ((MoDiscoContentProvider)contentProvider).getRootElements(input);
+			inputChanged(input, topLevelObjects[0]);
+			//EObject rootElement = ((EObject[])information)[0];
+/*
+			Object[] topLevelObjects= ((MoDiscoContentProvider)contentProvider).getRootElements(serviceRegistry);
+			if (topLevelObjects.length > 0 && contentProvider.getChildren(topLevelObjects[0]).length > 40) {
+				fDoFilter= false;
+			} else {
+				System.out.println("kkk");
+				getTreeViewer().addFilter(new NamePatternFilter());
+				EObject input = (EObject) topLevelObjects[0];
+				inputChanged(input, topLevelObjects[0]);
+			}
+*/	
 		}
-		
 
+		
+		
 		/* apex replaced 
 		Object[] topLevelObjects= contentProvider.getElements(fLifeCycle);
 		if (topLevelObjects.length > 0 && contentProvider.getChildren(topLevelObjects[0]).length > 40) {
@@ -349,14 +348,10 @@ public class ApexHierarchyInformationControl extends
 		} else if (topLevelObjects.length > 0) {
 			selection=  topLevelObjects[0];
 		}
-		*/
-		inputChanged(null, null);
-	}
-
-	@Override
-	protected void inputChanged(Object newInput, Object newSelection) {
+		//*/
 		
 	}
+
 	
 	@Override
 	protected TreeViewer getTreeViewer() {
@@ -416,6 +411,7 @@ public class ApexHierarchyInformationControl extends
 		}
 	}
 
+	/*
 	@Override
 	protected String getStatusFieldText() {
 		KeySequence[] sequences= getInvokingCommandKeySequences();
@@ -429,6 +425,7 @@ public class ApexHierarchyInformationControl extends
 			return Messages.format(TypeHierarchyMessages.HierarchyInformationControl_toggle_superhierarchy_label, keyName);
 		}
 	}
+	*/
 
 	/*
 	 * @see org.eclipse.jdt.internal.ui.text.AbstractInformationControl#getId()
@@ -456,5 +453,9 @@ public class ApexHierarchyInformationControl extends
 			}
 		}
 		return selectedElement;
+	}
+	
+	public Object getInput() {
+		return serviceRegistry;
 	}
 }

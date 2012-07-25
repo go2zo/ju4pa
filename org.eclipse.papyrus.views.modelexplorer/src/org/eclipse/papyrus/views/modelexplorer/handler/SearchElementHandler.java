@@ -13,13 +13,15 @@
  *****************************************************************************/
 package org.eclipse.papyrus.views.modelexplorer.handler;
 
-import java.util.ArrayList;
-
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.papyrus.infra.core.services.ServiceException;
+import org.eclipse.papyrus.infra.core.utils.ServiceUtilsForActionHandlers;
+import org.eclipse.papyrus.infra.emf.providers.MoDiscoContentProvider;
+import org.eclipse.papyrus.infra.emf.providers.StandardEMFLabelProvider;
 import org.eclipse.papyrus.views.modelexplorer.ModelExplorerView;
 import org.eclipse.papyrus.views.modelexplorer.core.ui.pagebookview.MultiViewPageBookView;
 import org.eclipse.papyrus.views.modelexplorer.dialog.ApexHierarchyInformationControl;
@@ -50,9 +52,15 @@ public class SearchElementHandler extends AbstractHandler {
 		Point loc = shell.getLocation();
 		loc.y+=300;
 		control.setLocation(loc);
-		TreeViewer treeViewer = new TreeViewer(shell);
 		
 		
+		try {
+			control.setInput(ServiceUtilsForActionHandlers.getInstance().getServiceRegistry());
+		} catch (ServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+				
 		control.open();
 		/* apex improved end */
 		/* apex replaced
