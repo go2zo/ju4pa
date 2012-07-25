@@ -63,6 +63,9 @@ public class MoDiscoContentProvider extends CustomizableModelContentProvider {
 		return getChildren(element).length > 0;
 	}
 
+	/**
+	 * apex updated
+	 */
 	@Override
 	public Object[] getChildren(final Object parentElement) {
 

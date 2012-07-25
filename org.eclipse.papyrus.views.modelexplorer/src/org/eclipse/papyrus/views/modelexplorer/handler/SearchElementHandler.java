@@ -13,6 +13,8 @@
  *****************************************************************************/
 package org.eclipse.papyrus.views.modelexplorer.handler;
 
+import java.util.ArrayList;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -20,7 +22,9 @@ import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.papyrus.views.modelexplorer.ModelExplorerView;
 import org.eclipse.papyrus.views.modelexplorer.core.ui.pagebookview.MultiViewPageBookView;
-import org.eclipse.papyrus.views.modelexplorer.dialog.NavigatorSearchDialog;
+import org.eclipse.papyrus.views.modelexplorer.dialog.ApexHierarchyInformationControl;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPart;
@@ -39,8 +43,22 @@ public class SearchElementHandler extends AbstractHandler {
 		if(shell == null) {
 			return null;
 		}
+		/* apex improved start */		
+		ApexHierarchyInformationControl control = new ApexHierarchyInformationControl(shell, SWT.RESIZE | SWT.BORDER, SWT.Collapse);
+		
+		control.setSize(400, 600);
+		Point loc = shell.getLocation();
+		loc.y+=300;
+		control.setLocation(loc);
+		TreeViewer treeViewer = new TreeViewer(shell);
+		
+		
+		control.open();
+		/* apex improved end */
+		/* apex replaced
 		NavigatorSearchDialog dialog = new NavigatorSearchDialog(shell, getSelectedTreeViewer(event));
 		dialog.open();
+		*/
 		return null;
 	}
 
