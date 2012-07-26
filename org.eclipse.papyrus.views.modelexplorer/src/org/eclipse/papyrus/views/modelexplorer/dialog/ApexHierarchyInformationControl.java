@@ -1,69 +1,40 @@
 package org.eclipse.papyrus.views.modelexplorer.dialog;
 
-import org.eclipse.emf.common.util.TreeIterator;
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IMethod;
-import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeHierarchy;
-import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.internal.corext.util.Messages;
-import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.text.AbstractInformationControl;
-import org.eclipse.jdt.internal.ui.typehierarchy.HierarchyLabelProvider;
-import org.eclipse.jdt.internal.ui.typehierarchy.TypeHierarchyContentProvider;
-import org.eclipse.jdt.internal.ui.typehierarchy.TypeHierarchyLifeCycle;
 import org.eclipse.jdt.internal.ui.typehierarchy.TypeHierarchyMessages;
-import org.eclipse.jdt.ui.JavaElementLabels;
 import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds;
-import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
-import org.eclipse.papyrus.infra.core.services.ServiceException;
 import org.eclipse.papyrus.infra.core.services.ServicesRegistry;
-import org.eclipse.papyrus.infra.core.utils.ServiceUtilsForActionHandlers;
 import org.eclipse.papyrus.infra.emf.providers.MoDiscoContentProvider;
-import org.eclipse.papyrus.infra.emf.providers.StandardEMFLabelProvider;
+import org.eclipse.papyrus.views.modelexplorer.provider.ApexUMLContentProvider;
+import org.eclipse.papyrus.views.modelexplorer.provider.ApexUMLLabelProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.keys.KeySequence;
 import org.eclipse.ui.keys.SWTKeySupport;
 
 public class ApexHierarchyInformationControl extends
 		AbstractInformationControl {
-	private TypeHierarchyLifeCycle fLifeCycle;
-	private HierarchyLabelProvider fLabelProvider;
 	private KeyAdapter fKeyAdapter;
-
-	private Object[] fOtherExpandedElements;
-	private TypeHierarchyContentProvider fOtherContentProvider;
-
-	private IMethod fFocus; // method to filter for or null if type hierarchy
-	private boolean fDoFilter;
-
-	private MethodOverrideTester fMethodOverrideTester;
 	
 	private TreeViewer treeViewer;
-	private ITreeContentProvider contentProvider;
 	private ServicesRegistry serviceRegistry;
+	private IContentProvider contentProvider;
 	
 	public ApexHierarchyInformationControl(Shell parent, int shellStyle, int treeStyle) {
-		super(parent, shellStyle, treeStyle, IJavaEditorActionDefinitionIds.OPEN_HIERARCHY, true);
-		fOtherExpandedElements= null;
-		fDoFilter= true;
-		fMethodOverrideTester= null;
+		super(parent, shellStyle, treeStyle, IJavaEditorActionDefinitionIds.OPEN_HIERARCHY, true);		
 	}
-
+	
 	private KeyAdapter getKeyAdapter() {
 		if (fKeyAdapter == null) {
 			fKeyAdapter= new KeyAdapter() {
@@ -78,7 +49,7 @@ public class ApexHierarchyInformationControl extends
 					for (int i= 0; i < sequences.length; i++) {
 						if (sequences[i].equals(keySequence)) {
 							e.doit= false;
-							toggleHierarchy();
+//							toggleHierarchy();
 							return;
 						}
 					}
@@ -91,31 +62,23 @@ public class ApexHierarchyInformationControl extends
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	protected boolean hasHeader() {
 		return true;
-	}
-
-	@Override
-	protected Text createFilterText(Composite parent) {
-		// text set later
-		Text text= super.createFilterText(parent);
-		text.addKeyListener(getKeyAdapter());
-		return text;
 	}
 
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.JavaOutlineInformationControl#createTreeViewer(org.eclipse.swt.widgets.Composite, int)
 	 */
-	@Override
-	public TreeViewer createTreeViewer(Composite parent, int style) {
-		Tree tree= new Tree(parent, SWT.SINGLE | (style & ~SWT.MULTI));
+	protected TreeViewer createTreeViewer(Composite parent, int style) {
+		
+		Tree tree= new Tree(parent, SWT.SINGLE);
 		GridData gd= new GridData(GridData.FILL_BOTH);
 		gd.heightHint= tree.getItemHeight() * 12;
 		tree.setLayoutData(gd);
 
 		treeViewer= new TreeViewer(tree);
+		
 		treeViewer.addFilter(new ViewerFilter() {
 			@Override
 			public boolean select(Viewer viewer, Object parentElement, Object element) {
@@ -123,18 +86,18 @@ public class ApexHierarchyInformationControl extends
 			}
 		});
 		
-		fLifeCycle= new TypeHierarchyLifeCycle(false);
+		contentProvider = new ApexUMLContentProvider();
 		
-		/* apex added start */
-		contentProvider= new MoDiscoContentProvider();
-		//contentProvider.setMemberFilter(memberFilter);
 		treeViewer.setContentProvider(contentProvider);
-//		System.out
-//				.println("ApexHierarchyInformationControl.createTreeViewer(), line : "
-//						+ Thread.currentThread().getStackTrace()[1]
-//								.getLineNumber());
-//		System.out.println("contentProvider.hasChildren() : " + contentProvider.hasChildren());
+
+		treeViewer.setLabelProvider(new ApexUMLLabelProvider());
 		
+		treeViewer.getTree().addKeyListener(getKeyAdapter());
+		
+//		treeViewer.setInput(null);
+
+		return treeViewer;
+		/*
 		EObject[] rootElements = null;
 		try {
 			serviceRegistry = ServiceUtilsForActionHandlers.getInstance().getServiceRegistry();
@@ -152,254 +115,11 @@ public class ApexHierarchyInformationControl extends
 				System.out.println("treeItObj : " + obj);
 			}
 		}
-		
-		
-
-		
-		/* apex added end */
-/*
-		treeViewer.setComparator(new HierarchyViewerSorter(fLifeCycle));
-		treeViewer.setAutoExpandLevel(AbstractTreeViewer.ALL_LEVELS);		
-
-		fLabelProvider= new HierarchyLabelProvider(fLifeCycle);
-		fLabelProvider.setFilter(new ViewerFilter() {
-			@Override
-			public boolean select(Viewer viewer, Object parentElement, Object element) {
-				return hasFocusMethod((IType) element);
-			}
-		});
-
-		fLabelProvider.setTextFlags(JavaElementLabels.ALL_DEFAULT | JavaElementLabels.T_POST_QUALIFIED | JavaElementLabels.P_COMPRESSED);
-		fLabelProvider.addLabelDecorator(new ProblemsLabelDecorator(null));
-		treeViewer.setLabelProvider(new ColoringLabelProvider(fLabelProvider));
-*/
-		treeViewer.setLabelProvider(new StandardEMFLabelProvider());
-		
-		treeViewer.getTree().addKeyListener(getKeyAdapter());
-
-		return treeViewer;
+		*/
 	}
-
-	protected boolean hasFocusMethod(IType type) {
-		if (fFocus == null) {
-			return true;
-		}
-		if (type.equals(fFocus.getDeclaringType())) {
-			return true;
-		}
-
-		try {
-			IMethod method= findMethod(fFocus, type);
-			if (method != null) {
-				// check visibility
-				IPackageFragment pack= (IPackageFragment) fFocus.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
-				if (JavaModelUtil.isVisibleInHierarchy(method, pack)) {
-					return true;
-				}
-			}
-		} catch (JavaModelException e) {
-			// ignore
-			JavaPlugin.log(e);
-		}
-		return false;
-
-	}
-
-	private IMethod findMethod(IMethod filterMethod, IType typeToFindIn) throws JavaModelException {
-		IType filterType= filterMethod.getDeclaringType();
-		if (filterType.equals(typeToFindIn)) {
-			return filterMethod;
-		}
-		
-		ITypeHierarchy hierarchy= fLifeCycle.getHierarchy();
-
-		boolean filterOverrides= JavaModelUtil.isSuperType(hierarchy, typeToFindIn, filterType);
-		IType focusType= filterOverrides ? filterType : typeToFindIn;
-
-		if (fMethodOverrideTester == null || !fMethodOverrideTester.getFocusType().equals(focusType)) {
-			fMethodOverrideTester= new MethodOverrideTester(focusType, hierarchy);
-		}
-
-		if (filterOverrides) {
-			return fMethodOverrideTester.findOverriddenMethodInType(typeToFindIn, filterMethod);
-		} else {
-			return fMethodOverrideTester.findOverridingMethodInType(typeToFindIn, filterMethod);
-		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setInput(Object information) {
-		/* apex replaced
-		if (!(information instanceof IJavaElement)) {
-			inputChanged(null, null);
-			return;
-		}
-		
-		IJavaElement input= null;
-		IMethod locked= null;
-		try {
-			IJavaElement elem= (IJavaElement) information;
-			switch (elem.getElementType()) {
-				case IJavaElement.LOCAL_VARIABLE :
-				case IJavaElement.TYPE_PARAMETER :
-					elem= elem.getParent();
-			}
-
-			switch (elem.getElementType()) {
-				case IJavaElement.JAVA_PROJECT :
-				case IJavaElement.PACKAGE_FRAGMENT_ROOT :
-				case IJavaElement.PACKAGE_FRAGMENT :
-				case IJavaElement.TYPE :
-					input= elem;
-					break;
-				case IJavaElement.COMPILATION_UNIT :
-					input= ((ICompilationUnit) elem).findPrimaryType();
-					break;
-				case IJavaElement.CLASS_FILE :
-					input= ((IClassFile) elem).getType();
-					break;
-				case IJavaElement.METHOD :
-					IMethod method= (IMethod) elem;
-					if (!method.isConstructor()) {
-						locked= method;
-					}
-					input= method.getDeclaringType();
-					break;
-				case IJavaElement.FIELD :
-				case IJavaElement.INITIALIZER :
-					input= ((IMember) elem).getDeclaringType();
-					break;
-				case IJavaElement.PACKAGE_DECLARATION :
-					input= elem.getParent().getParent();
-					break;
-				case IJavaElement.IMPORT_DECLARATION :
-					IImportDeclaration decl= (IImportDeclaration) elem;
-					if (decl.isOnDemand()) {
-						input= JavaModelUtil.findTypeContainer(decl.getJavaProject(), Signature.getQualifier(decl.getElementName()));
-					} else {
-						input= decl.getJavaProject().findType(decl.getElementName());
-					}
-					break;
-				default :
-					JavaPlugin.logErrorMessage("Element unsupported by the hierarchy: " + elem.getClass()); //$NON-NLS-1$
-					// input is null;
-			}
-		} catch (JavaModelException e) {
-			JavaPlugin.log(e);
-		}
-
-		super.setTitleText(getHeaderLabel(locked == null ? input : locked));
-		try {
-			fLifeCycle.ensureRefreshedTypeHierarchy(input, JavaPlugin.getActiveWorkbenchWindow());
-		} catch (InvocationTargetException e1) {
-			input= null;
-		} catch (InterruptedException e1) {
-			dispose();
-			return;
-		}
-		IMember[] memberFilter= locked != null ? new IMember[] { locked } : null;
-
-		
-		TraditionalHierarchyContentProvider contentProvider= new TraditionalHierarchyContentProvider(fLifeCycle);
-		contentProvider.setMemberFilter(memberFilter);
-		getTreeViewer().setContentProvider(contentProvider);
-		
-
-		fOtherContentProvider= new SuperTypeHierarchyContentProvider(fLifeCycle);
-		fOtherContentProvider.setMemberFilter(memberFilter);
-
-		fFocus= locked;
-*/
-		if ( information instanceof ServicesRegistry) {
-			ServicesRegistry input = (ServicesRegistry)information;
-			Object[] topLevelObjects= ((MoDiscoContentProvider)contentProvider).getRootElements(input);
-			inputChanged(input, topLevelObjects[0]);
-			//EObject rootElement = ((EObject[])information)[0];
-/*
-			Object[] topLevelObjects= ((MoDiscoContentProvider)contentProvider).getRootElements(serviceRegistry);
-			if (topLevelObjects.length > 0 && contentProvider.getChildren(topLevelObjects[0]).length > 40) {
-				fDoFilter= false;
-			} else {
-				System.out.println("kkk");
-				getTreeViewer().addFilter(new NamePatternFilter());
-				EObject input = (EObject) topLevelObjects[0];
-				inputChanged(input, topLevelObjects[0]);
-			}
-*/	
-		}
-
-		
-		
-		/* apex replaced 
-		Object[] topLevelObjects= contentProvider.getElements(fLifeCycle);
-		if (topLevelObjects.length > 0 && contentProvider.getChildren(topLevelObjects[0]).length > 40) {
-			fDoFilter= false;
-		} else {
-			getTreeViewer().addFilter(new NamePatternFilter());
-		}
-		
-
-		Object selection= null;
-		if (input instanceof IMember) {
-			selection=  input;
-		} else if (topLevelObjects.length > 0) {
-			selection=  topLevelObjects[0];
-		}
-		//*/
-		
-	}
-
-	
-	@Override
-	protected TreeViewer getTreeViewer() {
-		return treeViewer;
-	}
-	
-	@Override
-	protected void stringMatcherUpdated() {
-		if (fDoFilter) {
-			super.stringMatcherUpdated(); // refresh the view
-		} else {
-			selectFirstMatch();
-		}
-	}
-
-	protected void toggleHierarchy() {
-		TreeViewer treeViewer= getTreeViewer();
-
-		treeViewer.getTree().setRedraw(false);
-
-		Object[] expandedElements= treeViewer.getExpandedElements();
-		TypeHierarchyContentProvider contentProvider= (TypeHierarchyContentProvider) treeViewer.getContentProvider();
-		treeViewer.setContentProvider(fOtherContentProvider);
-
-		treeViewer.refresh();
-		if (fOtherExpandedElements != null) {
-			treeViewer.setExpandedElements(fOtherExpandedElements);
-		} else {
-			treeViewer.expandAll();
-		}
-
-		// reveal selection
-		Object selectedElement= getSelectedElement();
-		if (selectedElement != null)
-			getTreeViewer().reveal(selectedElement);
-		else
-			selectFirstMatch();
-
-		treeViewer.getTree().setRedraw(true);
-
-		fOtherContentProvider= contentProvider;
-		fOtherExpandedElements= expandedElements;
-
-		updateStatusFieldText();
-	}
-
 
 	private String getHeaderLabel(IJavaElement input) {
+		/*
 		if (input instanceof IMethod) {
 			String[] args= { JavaElementLabels.getElementLabel(input.getParent(), JavaElementLabels.ALL_DEFAULT), JavaElementLabels.getElementLabel(input, JavaElementLabels.ALL_DEFAULT) };
 			return Messages.format(TypeHierarchyMessages.HierarchyInformationControl_methodhierarchy_label, args);
@@ -409,6 +129,9 @@ public class ApexHierarchyInformationControl extends
 		} else {
 			return ""; //$NON-NLS-1$
 		}
+		*/
+		System.out.println(TypeHierarchyMessages.HierarchyInformationControl_hierarchy_label);
+		return "Type to filter";
 	}
 
 	/*
@@ -430,32 +153,32 @@ public class ApexHierarchyInformationControl extends
 	/*
 	 * @see org.eclipse.jdt.internal.ui.text.AbstractInformationControl#getId()
 	 */
-	@Override
 	protected String getId() {
 		return "org.eclipse.jdt.internal.ui.typehierarchy.QuickHierarchy"; //$NON-NLS-1$
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
-	protected Object getSelectedElement() {
-		Object selectedElement= super.getSelectedElement();
-		if (selectedElement instanceof IType && fFocus != null) {
-			IType type= (IType) selectedElement;
-			try {
-				IMethod method= findMethod(fFocus, type);
-				if (method != null) {
-					return method;
-				}
-			} catch (JavaModelException e) {
-				JavaPlugin.log(e);
-			}
+	public void setInput(Object information) {
+		Object[] rootElements = ((MoDiscoContentProvider)contentProvider).getRootElements(information);
+		if ( rootElements.length > 0 ) {
+			inputChanged(information, rootElements[0]);
+		} else {
+			inputChanged(information, null);
 		}
-		return selectedElement;
+			
 	}
 	
-	public Object getInput() {
-		return serviceRegistry;
+	@Override
+	protected String getStatusFieldText() {
+		return "Status Field Text";
 	}
+	
+	public TreeViewer getTreeViewer() {
+		return treeViewer;
+	}
+	
 }
+
+	
+
+	
