@@ -1242,14 +1242,14 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 			// LifelineEditPart.handleNotification()에서 호출되어 수행되므로 제외처리
 			// CombinedFragment의 경계 변경에 따른 해당 lifeline의 coveredBy는
 			// CombinedFragment의 covered에 의한 notification에 따라 맞게 수정됨
-			/* apex replaced
+			//* apex replaced
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
 					LifelineCoveredByUpdater updater = new LifelineCoveredByUpdater(); 
-					updater.update(CombinedFragmentEditPart.this, newBounds);
+					updater.update(CombinedFragmentEditPart.this);
 				}
 			});
-			*/
+			//*/
 		}		
 		/* apex improved end */
 		
