@@ -18,9 +18,15 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.papyrus.infra.core.services.ServiceException;
+import org.eclipse.papyrus.infra.core.services.ServicesRegistry;
+import org.eclipse.papyrus.infra.core.utils.ServiceUtilsForActionHandlers;
 import org.eclipse.papyrus.views.modelexplorer.ModelExplorerView;
 import org.eclipse.papyrus.views.modelexplorer.core.ui.pagebookview.MultiViewPageBookView;
-import org.eclipse.papyrus.views.modelexplorer.dialog.NavigatorSearchDialog;
+import org.eclipse.papyrus.views.modelexplorer.dialog.ApexHierarchyInformationControl;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPart;
@@ -39,8 +45,34 @@ public class SearchElementHandler extends AbstractHandler {
 		if(shell == null) {
 			return null;
 		}
+		/* apex improved start */		
+		/*
+		ApexModelFilterControl apexModelFilterControl = new ApexModelFilterControl(shell, true);
+		apexModelFilterControl.setBackgroundColor(new Color(shell.getDisplay(), 255, 0, 0));
+		//*/
+		//*
+		ApexHierarchyInformationControl control = new ApexHierarchyInformationControl(shell, SWT.RESIZE | SWT.BORDER, SWT.Collapse);		
+		control.setSize(800, 600);
+		Point loc = shell.getLocation();
+		loc.y+=300;
+		control.setLocation(loc);		
+		control.setBackgroundColor(new Color(control.getShell().getDisplay(), 220, 230, 255));
+		ServicesRegistry serviceRegistry = null;
+		try {
+			serviceRegistry = ServiceUtilsForActionHandlers.getInstance().getServiceRegistry();
+		} catch (ServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		control.setInput(serviceRegistry);
+		
+		control.open();
+		//*/
+		/* apex improved end */
+		/* apex replaced
 		NavigatorSearchDialog dialog = new NavigatorSearchDialog(shell, getSelectedTreeViewer(event));
 		dialog.open();
+		*/
 		return null;
 	}
 
