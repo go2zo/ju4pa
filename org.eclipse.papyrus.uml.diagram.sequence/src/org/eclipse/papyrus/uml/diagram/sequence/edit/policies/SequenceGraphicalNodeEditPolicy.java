@@ -312,7 +312,9 @@ public class SequenceGraphicalNodeEditPolicy extends GraphicalNodeEditPolicy {
 	@Override
 	protected Command getReconnectSourceCommand(ReconnectRequest request) {
 		if(isUphillMessage(request)) {
+			/* apex replaced
 			return UnexecutableCommand.INSTANCE;
+			 */
 		}
 		return super.getReconnectSourceCommand(request);
 	}
@@ -323,7 +325,9 @@ public class SequenceGraphicalNodeEditPolicy extends GraphicalNodeEditPolicy {
 	@Override
 	protected Command getReconnectTargetCommand(ReconnectRequest request) {
 		if(isUphillMessage(request)) {
+			/* apex replaced
 			return UnexecutableCommand.INSTANCE;
+			 */
 		}
 		return super.getReconnectTargetCommand(request);
 	}

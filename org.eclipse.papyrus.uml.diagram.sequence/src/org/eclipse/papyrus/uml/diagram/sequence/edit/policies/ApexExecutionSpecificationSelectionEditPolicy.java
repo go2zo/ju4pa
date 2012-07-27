@@ -53,7 +53,9 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 
 	@Override
 	protected Command getMoveCommand(ChangeBoundsRequest request) {
-		return null;
+		if (request.getMoveDelta() != null && request.getMoveDelta().x() != 0)
+			return null;
+		return super.getMoveCommand(request);
 	}
 
 }

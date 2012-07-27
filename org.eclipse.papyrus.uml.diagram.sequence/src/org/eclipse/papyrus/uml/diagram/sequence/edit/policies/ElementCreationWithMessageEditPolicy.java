@@ -39,8 +39,6 @@ import org.eclipse.gmf.runtime.emf.type.core.IElementType;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.command.PromptCreateElementAndNodeCommand;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.PackageEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
@@ -155,7 +153,7 @@ public class ElementCreationWithMessageEditPolicy extends LifelineChildGraphical
 		hints.add(((IHintedType)UMLElementTypes.Message_4003).getSemanticHint());
 		hints.add(((IHintedType)UMLElementTypes.Message_4004).getSemanticHint());
 		hints.add(((IHintedType)UMLElementTypes.Message_4005).getSemanticHint());
-//		hints.add(((IHintedType)UMLElementTypes.Message_4006).getSemanticHint());
+//		hints.add(((IHintedType)UMLElementTypes.Message_4006).getSemanticHint());	// Create Message
 		hints.add(((IHintedType)UMLElementTypes.Message_4007).getSemanticHint());
 		hints.add(((IHintedType)UMLElementTypes.Message_4008).getSemanticHint());
 		hints.add(((IHintedType)UMLElementTypes.Message_4009).getSemanticHint());

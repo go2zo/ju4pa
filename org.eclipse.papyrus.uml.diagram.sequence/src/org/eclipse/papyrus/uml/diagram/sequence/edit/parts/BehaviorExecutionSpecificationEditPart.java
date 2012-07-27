@@ -23,7 +23,9 @@ import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.RectangleFigure;
 import org.eclipse.draw2d.Shape;
 import org.eclipse.draw2d.geometry.Dimension;
+import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PrecisionPoint;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.gef.ConnectionEditPart;
 import org.eclipse.gef.EditPart;
@@ -38,6 +40,7 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.EditPolicyRoles;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeConnectionRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeRequest;
+import org.eclipse.gmf.runtime.draw2d.ui.figures.BaseSlidableAnchor;
 import org.eclipse.gmf.runtime.draw2d.ui.figures.FigureUtilities;
 import org.eclipse.gmf.runtime.emf.type.core.IElementType;
 import org.eclipse.gmf.runtime.gef.ui.figures.NodeFigure;
@@ -48,12 +51,14 @@ import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.papyrus.infra.gmfdiag.preferences.utils.GradientPreferenceConverter;
 import org.eclipse.papyrus.infra.gmfdiag.preferences.utils.PreferenceConstantHelper;
 import org.eclipse.papyrus.uml.diagram.common.draw2d.anchors.FixedAnchor;
+import org.eclipse.papyrus.uml.diagram.sequence.draw2d.anchors.ApexHorizontalAnchor;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ApexExecutionSpecificationSelectionEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.BehaviorExecutionSpecificationItemSemanticEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ElementCreationWithMessageEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ExecutionSpecificationComponentEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.figures.ApexCustomDefaultSizeNodeFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.swt.graphics.Color;
 
 /**
@@ -159,7 +164,7 @@ public class BehaviorExecutionSpecificationEditPart extends AbstractExecutionSpe
 			protected boolean isDefaultAnchorArea(PrecisionPoint p) {
 				return false;
 			}
-
+			
 		};
 		return result;
 	}
@@ -1013,7 +1018,7 @@ public class BehaviorExecutionSpecificationEditPart extends AbstractExecutionSpe
 		 */
 		public ExecutionSpecificationRectangleFigure() {
 			/* apex improved start */
-			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(50)));
+			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(25)));
 			/* apex improved end */
 			/* apex replaced
 			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(16), getMapMode().DPtoLP(60)));
@@ -1129,6 +1134,16 @@ public class BehaviorExecutionSpecificationEditPart extends AbstractExecutionSpe
 				// Reply Message
 				return new FixedAnchor(getFigure(), FixedAnchor.BOTTOM);
 			}
+			
+			/* apex added start */
+			// XXX delete
+//			Rectangle intendedBounds = (Rectangle)reconnectRequest.getExtendedData().get(SequenceRequestConstant.CHANGED_EXECUTION_SPECIFICATION_BOUNDS);
+//			if (intendedBounds != null) {
+//				Point p = reconnectRequest.getLocation().getCopy();
+//				PrecisionPoint pt = BaseSlidableAnchor.getAnchorRelativeLocation(p, intendedBounds);
+//				new ApexHorizontalAnchor(getNodeFigure(), pt);
+//			}
+			/* apex added end */
 		}
 		return super.getSourceConnectionAnchor(request);
 	}

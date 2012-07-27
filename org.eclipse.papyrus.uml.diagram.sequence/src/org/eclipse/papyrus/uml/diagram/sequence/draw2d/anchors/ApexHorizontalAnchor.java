@@ -28,40 +28,9 @@ public class ApexHorizontalAnchor extends SlidableAnchor {
 			}
 		}
 		
-		/*8
-		StackTraceElement[] traces = Thread.currentThread().getStackTrace();
-		for (int i = 1; i < 10; i++) {
-			StackTraceElement trace = traces[i];
-			System.out.println(trace.getClassName() + ":" + trace.getMethodName() + "(" + trace.getLineNumber() + ")");
-		}
-		System.out.println("------------------------------------------------------");
-		//*/
-		/*8
-		System.out.println("location=" + location + " reference=" + reference);
-		System.out.println("======================================================");
-		//*/
-		
 		// SEQ-LL-005
-		location.y = reference.y;
+//		location.y = reference.y;
 		return location;
-	}
-
-	@Override
-	public Point getReferencePoint() {
-		/*8
-		StackTraceElement[] traces = Thread.currentThread().getStackTrace();
-		for (int i = 1; i < 10; i++) {
-			StackTraceElement trace = traces[i];
-			System.out.println(trace.getClassName() + ":" + trace.getMethodName() + "(" + trace.getLineNumber() + ")");
-		}
-		System.out.println("======================================================");
-		//*/
-		Point reference = super.getReferencePoint();
-		/*8
-		System.out.println("reference=" + reference);
-		System.out.println("======================================================");
-		//*/
-		return reference;
 	}
 
 }

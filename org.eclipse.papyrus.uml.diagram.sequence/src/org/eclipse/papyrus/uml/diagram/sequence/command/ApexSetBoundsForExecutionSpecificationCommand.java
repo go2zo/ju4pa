@@ -24,6 +24,8 @@ import org.eclipse.gmf.runtime.notation.View;
 public class ApexSetBoundsForExecutionSpecificationCommand extends
 		AbstractTransactionalCommand {
 
+	protected final static String COMMAND_LABEL = "Resize height of Source Execution Specification";
+	
 	private final static int EXECUTION_BOTTOM_MARGIN = 10;
 	
 	private CreateElementAndNodeCommand createElementAndNodeCommand;
@@ -33,7 +35,7 @@ public class ApexSetBoundsForExecutionSpecificationCommand extends
 	
 	public ApexSetBoundsForExecutionSpecificationCommand(
 			TransactionalEditingDomain domain, CreateElementAndNodeCommand createElementAndNodeCommand, IAdaptable adapter) {
-		super(domain, "", null);
+		super(domain, COMMAND_LABEL, null);
 		Assert.isNotNull(adapter, "view cannot be null"); //$NON-NLS-1$
 		this.createElementAndNodeCommand = createElementAndNodeCommand;
 		this.adapter = adapter;
