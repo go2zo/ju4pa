@@ -135,133 +135,16 @@ public abstract class InteractionFragmentEditPart extends ShapeNodeEditPart {
 		((GraphicalEditPart)getParent()).setLayoutConstraint(this, getFigure(), new Rectangle(loc, size));
 	}
 
-
-	/* apex improved start */
 	/**
 	 * apex updated
-	 * Property 창에서 강제로 covereds에서 제외된 Lifeline은
-	 * CF 경계 변동 시(CF는 좌우이동 안되므로 Resize에만 해당)에도 covereds에 자동 포함 안되도록 개선 
-	 * 중첩된 CF에도 covered 제대로 반영되도록 수정 
-	 * 절대좌표로 바꾸면 오작동
+	 * 
+	 * CombinedFragmentEditPart.handleNotificationEvent()에서 호출되지 않아서 
+	 * 호출하도록 CombinedFragmentEditPart 수정
 	 * 
 	 * Update covered lifelines of a Interaction fragment
 	 * 
 	 * @param newBounds
 	 */
-	public void updateCoveredLifelines(Bounds newBounds) {
-		/* apex added start */
-		//Rectangle origRect = SequenceUtil.getAbsoluteBounds(this);
-		Rectangle origRect = this.getFigure().getBounds().getCopy();		
-		/* apex added end */		
-		
-		Rectangle newBound = new Rectangle(newBounds.getX(), newBounds.getY(), newBounds.getWidth(), newBounds.getHeight());
-		InteractionFragment combinedFragment = (InteractionFragment)resolveSemanticElement();
-		EList<Lifeline> coveredLifelines = combinedFragment.getCovereds();
-
-		List<Lifeline> coveredLifelinesToAdd = new ArrayList<Lifeline>();
-		List<Lifeline> coveredLifelinesToRemove = new ArrayList<Lifeline>();
-		
-		/* apex improved start */
-		List lifelineEditPartsToCheck = null;
-		
-		if ( origRect.equals(0, 0, 0, 0)) { // 새 CombinedFragment 생성하는 경우 Interaction 내 모든 Lifeline을 check
-			lifelineEditPartsToCheck = new ArrayList();
-			Set<Entry<Object, EditPart>> allEditPartEntries = getViewer().getEditPartRegistry().entrySet();
-			for(Entry<Object, EditPart> epEntry : allEditPartEntries) {
-				EditPart ep = epEntry.getValue();
-				if( ep instanceof LifelineEditPart ) {
-					lifelineEditPartsToCheck.add((LifelineEditPart)ep);
-				}
-			}
-		} else {
-			// width 축소 시 원래 경계 내에 있던 lifeline을 check
-			if (origRect.width >= newBound.width ) {
-				lifelineEditPartsToCheck = ApexSequenceUtil.apexGetPositionallyCoveredLifelineEditParts(origRect, this);	
-			} else { // width 확대 시 새 경계내에 있는 lifeline을 check
-				lifelineEditPartsToCheck = ApexSequenceUtil.apexGetPositionallyCoveredLifelineEditParts(newBound, this);
-			}				
-		}
-			
-		int i = 0;
-/*8
-System.out.println("in updateCoveredLifelines, lifelineEditPartsToCheck : " + lifelineEditPartsToCheck);
-//*/
-		for(Object child : lifelineEditPartsToCheck) {
-
-			LifelineEditPart lifelineEditPart = (LifelineEditPart)child;
-			Lifeline lifeline = (Lifeline)lifelineEditPart.resolveSemanticElement();
-			Rectangle lifelineRect = lifelineEditPart.getFigure().getBounds().getCopy();
-			//lifelineEditPart.getFigure().getParent().translateToAbsolute(lifelineRect);
-			
-//*8
-System.out.println("=================================== "+i++);
-System.out.println("InteractionFragmentEditPart.updateCoveredLifelines(), line : "+Thread.currentThread().getStackTrace()[1].getLineNumber());			
-System.out.println("in updateCoveredLifelines, orig.right()     : " + origRect.right());
-System.out.println("in updateCoveredLifelines, new.right()      : " + newBound.right());
-System.out.println("in updateCoveredLifelines, lifeline.x       : " + lifelineRect.x);
-//*/
-			
-			// 새 경계와 lifeline 경계가 교차되고
-			if(newBound.intersects(lifelineRect)) {
-/*8
-System.out.println("in updateCoveredLifelines, intersects");
-//*/
-				// 원래의 covered에 없던 lifeline이면
-				if(!coveredLifelines.contains(lifeline)) {
-					// 원래 CF에 포함되어 있으면서 coveredLifelines에 없는 것은
-					// Property창에서 수동으로 covereds에서 제외한 것이므로
-					// 원래 CF에 포함되지 않았던 경우에만 add
-					if (!origRect.intersects(lifelineEditPart.getFigure().getBounds())) {
-						coveredLifelinesToAdd.add(lifeline);							
-					}						
-				}
-			// 새 경계와 lifeline 경계가 교차되지 않고
-			// 원래 covered에 있던 lifeline은 remove
-			} else {
-				coveredLifelinesToRemove.add(lifeline);
-			}
-		}
-		
-/*8
-System.out.println("in updateCoveredLifelines, coveredLifelinesToAdd    : " + coveredLifelinesToAdd);
-System.out.println("in updateCoveredLifelines, coveredLifelinesToRemove : " + coveredLifelinesToRemove);
-//*
-		/* apex improved end */
-		
-		/* apex replaced
-		for(Object child : getParent().getChildren()) {
-			if(child instanceof LifelineEditPart) {
-				LifelineEditPart lifelineEditPart = (LifelineEditPart)child;
-				Lifeline lifeline = (Lifeline)lifelineEditPart.resolveSemanticElement();
-				if(newBound.intersects(lifelineEditPart.getFigure().getBounds())) {
-
-					if(!coveredLifelines.contains(lifeline)) {
-						coveredLifelinesToAdd.add(lifeline);										
-					}
-					
-				} else if(coveredLifelines.contains(lifeline)) {
-					coveredLifelinesToRemove.add(lifeline);
-				}
-			}
-		}
-		*/
-		if(!coveredLifelinesToAdd.isEmpty()) {
-			CommandHelper.executeCommandWithoutHistory(getEditingDomain(), AddCommand.create(getEditingDomain(), combinedFragment, UMLPackage.eINSTANCE.getInteractionFragment_Covered(), coveredLifelinesToAdd));
-		}
-		if(!coveredLifelinesToRemove.isEmpty()) {
-			CommandHelper.executeCommandWithoutHistory(getEditingDomain(), RemoveCommand.create(getEditingDomain(), combinedFragment, UMLPackage.eINSTANCE.getInteractionFragment_Covered(), coveredLifelinesToRemove));
-		}
-
-	}
-	/* apex improved end */
-	
-	
-	/**
-	 * Update covered lifelines of a Interaction fragment
-	 * 
-	 * @param newBounds
-	 */
-	/* apex replaced
 	public void updateCoveredLifelines(Bounds newBounds) {
 		Rectangle newBound = new Rectangle(newBounds.getX(), newBounds.getY(), newBounds.getWidth(), newBounds.getHeight());
 		InteractionFragment combinedFragment = (InteractionFragment)resolveSemanticElement();
@@ -271,6 +154,52 @@ System.out.println("in updateCoveredLifelines, coveredLifelinesToRemove : " + co
 		List<Lifeline> coveredLifelinesToRemove = new ArrayList<Lifeline>();
 		EditPart interactionCompartment = getInteractionCompartment();
 		if(interactionCompartment != null) {
+			/* apex improved start */			
+			Rectangle origRect = this.getFigure().getBounds().getCopy();
+			Rectangle newRect = newBound.getCopy();
+			this.getFigure().translateToAbsolute(origRect);
+			this.getFigure().translateToAbsolute(newRect);
+			
+			List lifelineEditPartsToCheck = null;
+			
+			if (origRect.width == 0 && origRect.height == 0) { // 새 CombinedFragment 생성하는 경우 Interaction 내 모든 Lifeline을 check
+				
+				Set<Entry<Object, EditPart>> allEditPartEntries = getViewer().getEditPartRegistry().entrySet();
+				
+				lifelineEditPartsToCheck = new ArrayList();
+				
+				for(Entry<Object, EditPart> epEntry : allEditPartEntries) {
+					EditPart ep = epEntry.getValue();
+					if( ep instanceof LifelineEditPart ) {
+						LifelineEditPart lifelineEditPart = (LifelineEditPart)ep;
+						lifelineEditPartsToCheck.add(lifelineEditPart);
+						coveredLifelinesToAdd.add((Lifeline)lifelineEditPart.resolveSemanticElement());
+					}
+				}
+			} else { // 새로 생성이 아닌 CF 경계 변경인 경우
+				
+				if (origRect.width > newRect.width ) { // width 축소 시 원래 경계 내에 있던 lifeline을 check
+					lifelineEditPartsToCheck = ApexSequenceUtil.apexGetPositionallyCoveredLifelineEditParts(origRect, this);	
+				} else if (origRect.width < newRect.width) { // width 확대 시 새 경계내에 있는 lifeline을 check
+					lifelineEditPartsToCheck = ApexSequenceUtil.apexGetPositionallyCoveredLifelineEditParts(newRect, this);
+				} else { // 확대/축소가 아닌 경우, 즉 상하이동의 경우
+					lifelineEditPartsToCheck = null;
+				}
+			}
+			
+			// 상하이동의 경우 covereds가 바뀔 일이 없으므로
+			// 상하이동이 아닌 경우만 updateCoveredLifelines 호출
+			if ( lifelineEditPartsToCheck != null ) { 
+				for(Object lifelineEditPartToCheck : lifelineEditPartsToCheck) {
+					if(lifelineEditPartToCheck instanceof LifelineEditPart) {
+						LifelineEditPart lifelineEditPart = (LifelineEditPart)lifelineEditPartToCheck;
+						updateCoveredLifelines(lifelineEditPart, newBound, coveredLifelinesToAdd, coveredLifelinesToRemove, coveredLifelines);
+					}
+				}	
+			}
+			
+			/* apex improved end */
+			/* apex replaced
 			this.getFigure().translateToAbsolute(newBound);
 			for(Object child : interactionCompartment.getChildren()) {
 				if(child instanceof LifelineEditPart) {
@@ -278,6 +207,7 @@ System.out.println("in updateCoveredLifelines, coveredLifelinesToRemove : " + co
 					updateCoveredLifelines(lifelineEditPart, newBound, coveredLifelinesToAdd, coveredLifelinesToRemove, coveredLifelines);
 				}
 			}
+			*/
 		}
 		if(!coveredLifelinesToAdd.isEmpty()) {
 			CommandHelper.executeCommandWithoutHistory(getEditingDomain(), AddCommand.create(getEditingDomain(), combinedFragment, UMLPackage.eINSTANCE.getInteractionFragment_Covered(), coveredLifelinesToAdd), true);
@@ -287,16 +217,57 @@ System.out.println("in updateCoveredLifelines, coveredLifelinesToRemove : " + co
 		}
 
 	}
-	*/
 
+	/**
+	 * apex updated
+	 * 
+	 * 0.9에서 추가된 메서드
+	 * check lifelines in PartDecomposition, see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=364813
+	 * 
+	 * @param lifelineEditPart
+	 * @param newCFBounds
+	 * @param coveredLifelinesToAdd
+	 * @param coveredLifelinesToRemove
+	 * @param coveredLifelines
+	 */
 	// check lifelines in PartDecomposition, see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=364813
-	private void updateCoveredLifelines(LifelineEditPart lifelineEditPart, Rectangle newBound, List<Lifeline> coveredLifelinesToAdd, List<Lifeline> coveredLifelinesToRemove, EList<Lifeline> coveredLifelines) {
+	private void updateCoveredLifelines(LifelineEditPart lifelineEditPart, Rectangle newCFBounds, List<Lifeline> coveredLifelinesToAdd, List<Lifeline> coveredLifelinesToRemove, EList<Lifeline> coveredLifelines) {
 		Lifeline lifeline = (Lifeline)lifelineEditPart.resolveSemanticElement();
 
 		LifelineDotLineCustomFigure dotLineFigure = lifelineEditPart.getPrimaryShape().getFigureLifelineDotLineFigure();
 		Rectangle dotLineBounds = dotLineFigure.getBounds().getCopy();
 		Rectangle centralLineBounds = new Rectangle(dotLineBounds.x() + dotLineBounds.width() / 2, dotLineBounds.y(), 1, dotLineBounds.height());
 		dotLineFigure.translateToAbsolute(centralLineBounds);
+		
+		/* apex improved start */
+		Rectangle origRect = this.getFigure().getBounds().getCopy();
+		Rectangle newRect = newCFBounds.getCopy();
+		this.getFigure().translateToAbsolute(origRect);
+		this.getFigure().translateToAbsolute(newRect);
+		
+		Rectangle lifelineRect = lifelineEditPart.getFigure().getBounds().getCopy();
+		lifelineEditPart.getFigure().translateToAbsolute(lifelineRect);
+		
+		// 새 경계와 lifeline 경계가 교차되고
+		if(newRect.intersects(lifelineRect)) {
+			
+			// 원래의 covered에 없던 lifeline이면
+			if(!coveredLifelines.contains(lifeline)) {
+				// 원래 CF에 포함되어 있으면서 coveredLifelines에 없는 것은
+				// Property창에서 수동으로 covereds에서 제외한 것이므로
+				// 원래 CF에 포함되지 않았던 경우에만 add
+				if (!origRect.intersects(lifelineRect)) {
+					coveredLifelinesToAdd.add(lifeline);
+				}						
+			}
+		// 새 경계와 lifeline 경계가 교차되지 않고
+		// 원래 covered에 있던 lifeline은 remove
+		} else {
+			coveredLifelinesToRemove.add(lifeline);			
+		}
+		/* apex improved end */
+		
+		/* apex replaced
 		if(newBound.intersects(centralLineBounds)) {
 			if(!coveredLifelines.contains(lifeline)) {
 				coveredLifelinesToAdd.add(lifeline);
@@ -304,13 +275,14 @@ System.out.println("in updateCoveredLifelines, coveredLifelinesToRemove : " + co
 		} else if(coveredLifelines.contains(lifeline)) {
 			coveredLifelinesToRemove.add(lifeline);
 		}
+		*/
 
 		PartDecomposition partDecomposition = lifeline.getDecomposedAs();
 		if(partDecomposition != null) {
 			List subLifelines = lifelineEditPart.getChildren();
 			for(Object child : subLifelines) {
 				if(child instanceof LifelineEditPart) {
-					updateCoveredLifelines((LifelineEditPart)child, newBound, coveredLifelinesToAdd, coveredLifelinesToRemove, coveredLifelines);
+					updateCoveredLifelines((LifelineEditPart)child, newRect, coveredLifelinesToAdd, coveredLifelinesToRemove, coveredLifelines);
 				}
 			}
 		}

@@ -43,6 +43,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragment2Edit
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ContinuationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractionCompartmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionUseEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
@@ -82,13 +83,13 @@ public class ApexSequenceUtil {
 			if ( editPart instanceof IGraphicalEditPart ) {
 				
 				IGraphicalEditPart agep1 = (IGraphicalEditPart)editPart;
-				
+					
 				int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
 
 				if ( yTopThisEP >= yBottomOfAgep
 						&& !belowEditPartMap.containsKey(agep1)) {
 					belowEditPartMap.put(agep1, yTopThisEP);
-				}
+				}	
 			}	
 		}
 		
@@ -108,7 +109,106 @@ public class ApexSequenceUtil {
 
 		return belowEditPartList;
 	}
+	
+	/**
+	 * 중첩되지 않고 Sibling 중에서
+	 * 해당 AbstractGraphicalEditPart 보다 y좌표가 아래에 있어
+	 * 하향 이동 시 함께 움직여줘야 할 EditPartList 반환 
+	 * 
+	 * @param agep   기준이 되는 AbstractGraphicalEditPart
+	 * @return aep보다 아래에 위치한 EditPart의 List
+	 */
+	public static List apexGetMovableEditPartList(IGraphicalEditPart agep) {
+					
+		Set<Entry<Object, EditPart>> wholeEditPartEntries = agep.getViewer().getEditPartRegistry().entrySet();
+		
+		Map<IGraphicalEditPart, Integer> belowEditPartMap = new HashMap<IGraphicalEditPart, Integer>();
 
+		int yBottomOfAgep = apexGetAbsolutePosition(agep, SWT.BOTTOM);
+	
+		for (Entry<Object, EditPart> aEPEntry : wholeEditPartEntries ) {
+			
+			EditPart editPart = aEPEntry.getValue();
+			if (editPart.equals(agep))
+				continue;
+			if (!(editPart instanceof INodeEditPart))
+				continue;
+			if ( editPart instanceof IGraphicalEditPart ) {
+				
+				IGraphicalEditPart agep1 = (IGraphicalEditPart)editPart;
+		
+				// parent가 interactionCompartment인 것(즉, 중첩되지 않은 것)
+				if ( agep1.getParent() instanceof InteractionInteractionCompartmentEditPart) {
+					
+					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
+	
+					if ( yTopThisEP >= yBottomOfAgep
+							&& !belowEditPartMap.containsKey(agep1)) {
+						belowEditPartMap.put(agep1, yTopThisEP);
+					}	
+				}				
+			}	
+		}
+		
+		// agep1의 sibling
+		List<IGraphicalEditPart> siblings = apexGetSiblingEditParts2(agep);
+		for ( IGraphicalEditPart ep : siblings ) {
+			if (ep.equals(agep))
+				continue;
+			if (!(ep instanceof INodeEditPart))
+				continue;
+			if ( ep instanceof IGraphicalEditPart ) {
+				
+				IGraphicalEditPart agep1 = (IGraphicalEditPart)ep;
+				
+				int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
+
+				if ( yTopThisEP >= yBottomOfAgep
+						&& !belowEditPartMap.containsKey(agep1)) {
+					belowEditPartMap.put(agep1, yTopThisEP);
+				}	
+				
+			}	
+		}
+		
+		
+		Collection<Entry<IGraphicalEditPart, Integer>> entrySet = belowEditPartMap.entrySet();
+		List<Entry<IGraphicalEditPart, Integer>> entryList = new ArrayList<Entry<IGraphicalEditPart, Integer>>(entrySet);
+		Collections.sort(entryList, new Comparator<Entry<IGraphicalEditPart, Integer>>() {
+			public int compare(Entry<IGraphicalEditPart, Integer> o1,
+					Entry<IGraphicalEditPart, Integer> o2) {
+				return o1.getValue().compareTo(o2.getValue());
+			}
+		});
+		
+		List<IGraphicalEditPart> belowEditPartList = new ArrayList<IGraphicalEditPart>(entryList.size());
+		for (Entry<IGraphicalEditPart, Integer> entry : entryList) {
+			belowEditPartList.add(entry.getKey());
+		}
+/*8
+		System.out
+				.println("ApexSequenceUtil.apexGetMovableEditPartList(), line : "
+						+ Thread.currentThread().getStackTrace()[1]
+								.getLineNumber());
+		for ( int i = 0 ; i < belowEditPartList.size() ; i++ ) {
+			System.out.println("["+i+"] " + belowEditPartList.get(i));
+		}
+//*/
+		return belowEditPartList;
+	}
+
+	
+	public static List<IGraphicalEditPart> apexGetSiblingEditParts2(IGraphicalEditPart gep) {
+		
+		List<IGraphicalEditPart> siblings = null;
+		EditPart ep = gep.getParent();
+		if ( ep instanceof InteractionInteractionCompartmentEditPart
+		     || ep instanceof InteractionOperandEditPart ) {
+			siblings = ep.getChildren();
+		}
+		return siblings;
+	}
+	
 	/**
 	 * 주어진 EditPartList를 검색하여
 	 * y좌표 기준 주어진 AbstractGraphicalEditPart의 바로 아래에 위치한 AbstractGraphicalEditPart 반환
@@ -119,6 +219,41 @@ public class ApexSequenceUtil {
 	 */
 	public static IGraphicalEditPart apexGetBeneathEditPart(IGraphicalEditPart agep, List belowEditPartList) {
 
+		int gap = Integer.MAX_VALUE;
+		IGraphicalEditPart beneathEditPart = null;
+
+		int yCF = apexGetAbsolutePosition(agep, SWT.BOTTOM);
+		
+		Iterator it = belowEditPartList.iterator();
+		
+		while( it.hasNext()) {
+			
+			IGraphicalEditPart sep = (IGraphicalEditPart)it.next();
+			
+			int yEP = apexGetAbsolutePosition(sep, SWT.TOP);
+			
+			int thisGap = yEP - yCF;
+			
+			if ( thisGap < gap ) {
+				gap = thisGap;
+				beneathEditPart = sep;
+			}
+		}
+		return beneathEditPart;
+	}
+	
+	/**
+	 * 주어진 EditPartList를 검색하여
+	 * y좌표 기준 주어진 AbstractGraphicalEditPart의 바로 아래에 위치한 AbstractGraphicalEditPart 반환
+	 * 
+	 * @param agep    기준이 되는 AbstractGraphicalEditPart
+	 * @param belowEditPartList    검색할 EditPart의 List
+	 * @return    y좌표 기준 agep의 바로 아래에 위치한 AbstractGraphicalEditPart
+	 */
+	public static IGraphicalEditPart apexGetBeneathEditPart(IGraphicalEditPart agep) {
+
+		List belowEditPartList = apexGetBelowEditPartList(agep);
+		
 		int gap = Integer.MAX_VALUE;
 		IGraphicalEditPart beneathEditPart = null;
 
@@ -263,7 +398,7 @@ public class ApexSequenceUtil {
 	 */
 	public static List apexGetHigherEditPartList(IGraphicalEditPart agep) {
 		
-apexTestCoordinateSystem(agep);
+//apexTestCoordinateSystem(agep);
 		
 		Set<Entry<Object, EditPart>> wholeEditPartEntries = agep.getViewer().getEditPartRegistry().entrySet();
 
@@ -349,6 +484,33 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			}
 		}
 		return aboveEditPart;
+	}
+	
+	/**
+	 * 주어진 EditPart List에서 bottom 기준 가장 아래에 있는 EditPart 반환
+	 * @param editPartList
+	 * @return
+	 */
+	public static IGraphicalEditPart apexGetLowestEditPartFromList(List<IGraphicalEditPart> editPartList) {
+		
+		int bottom = Integer.MIN_VALUE;
+		IGraphicalEditPart lowestEditPart = null;
+		
+		for (IGraphicalEditPart ep : editPartList) {	
+			
+			IFigure epFigure = ep.getFigure();
+			Rectangle epRect = epFigure.getBounds().getCopy();
+			epFigure.translateToAbsolute(epRect);
+			
+			int epBottom = epRect.bottom();
+			
+			if ( epBottom > bottom) {
+				lowestEditPart = ep;
+				bottom = epBottom;
+			}
+		}
+		
+		return lowestEditPart;
 	}
 	
 	/**
@@ -484,21 +646,35 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		Rectangle copyRect4 = thisFigure.getBounds().getCopy();
 		
 		System.out.println("----------------------");
+		System.out.println("agep.getNotationView() :                        : " + agep.resolveSemanticElement());
+		System.out.println("agep.getParent() :                              : " + agep.getParent());
+		System.out.println("agep.getParent().getFigure()                    : " + ((AbstractGraphicalEditPart)agep.getParent()).getFigure());
+		System.out.println("");
+		System.out.println("thisFigure                                      : " + thisFigure);
+		System.out.println("thisFigure.getParent()                          : " + thisFigure.getParent());
+		System.out.println("");
+		System.out.println("thisFigure.getInset() :                         : " + thisFigure.getInsets());
 		System.out.println("thisFigure.getBounds().getCopy()                : " + origRect);	
 		
 		thisFigure.translateFromParent(copyRect1);
-		System.out.println("thisFigure.translateFromParent(copyRect1)       : " + copyRect1);
+//		System.out.println("thisFigure.translateFromParent(copyRect1)       : " + copyRect1);		
+		
+		thisFigure.translateToParent(copyRect3);
+//		System.out.println("thisFigure.translateToParent(copyRect3)         : " + copyRect3);
 		
 		thisFigure.translateToAbsolute(copyRect2);
 		System.out.println("thisFigure.translateToAbsolute(copyRect2)       : " + copyRect2);
 		
-		thisFigure.translateToParent(copyRect3);
-		System.out.println("thisFigure.translateToParent(copyRect3)         : " + copyRect3);
-		
 		thisFigure.translateToRelative(copyRect4);
-		System.out.println("thisFigure.translateToRelative(copyRect4)       : " + copyRect4);
+//		System.out.println("thisFigure.translateToRelative(copyRect4)       : " + copyRect4);		
 		
-		System.out.println("thisFigure.getParent() : " + thisFigure.getParent());
+//		System.out.println("thisFigure.getParent().getClass()               : " + thisFigure.getParent().getClass());
+//		System.out.println("thisFigure.getParent().getInsets()              : " + thisFigure.getParent().getInsets());
+//		System.out.println("thisFigure.getParent().getBounds()              : " + thisFigure.getParent().getBounds());
+		Rectangle parentR = thisFigure.getParent().getBounds().getCopy();
+		thisFigure.getParent().translateToAbsolute(parentR);
+		
+		System.out.println("thisFigure.getParent().translateToAbs(parentF)  : " + parentR);
 		
 		Rectangle copyRect11 = thisFigure.getBounds().getCopy();
 		Rectangle copyRect21 = thisFigure.getBounds().getCopy();
@@ -506,16 +682,17 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		Rectangle copyRect41 = thisFigure.getBounds().getCopy();
 		
 		thisFigure.getParent().translateFromParent(copyRect11);
-		System.out.println("parentFigure.translateFromParent(copyRect11)    : " + copyRect11);
-		
-		thisFigure.getParent().translateToAbsolute(copyRect21);
-		System.out.println("parentFigure.translateToAbsolute(copyRect21)    : " + copyRect21);
+//		System.out.println("parentFigure.translateFromParent(copyRect11)    : " + copyRect11);
 		
 		thisFigure.getParent().translateToParent(copyRect31);
-		System.out.println("parentFigure.translateToParent(copyRect31)      : " + copyRect31);
+//		System.out.println("parentFigure.translateToParent(copyRect31)      : " + copyRect31);
+				
+		thisFigure.getParent().translateToAbsolute(copyRect21);
+		System.out.println("parentFigure.translateToAbsolute(copyRect21)    : " + copyRect21);
+
 		
 		thisFigure.getParent().translateToRelative(copyRect41);
-		System.out.println("parentFigure.translateToRelative(copyRect41)    : " + copyRect41);
+//		System.out.println("parentFigure.translateToRelative(copyRect41)    : " + copyRect41);
 		
 //		apexShowChildrenEditPart(agep);
 		List children = apexGetChildEditPartList(agep);
@@ -533,22 +710,31 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				Rectangle copyRect32 = childFigure.getBounds().getCopy();
 				Rectangle copyRect42 = childFigure.getBounds().getCopy();
 				
+//				System.out.println("cfep.getNotationView() :                        : " + cfep.resolveSemanticElement());
+//				System.out.println("cfep.getParent() :                              : " + cfep.getParent());
+//				System.out.println("cfep.getParent().getFigure()                    : " + ((InteractionOperandEditPart)cfep.getParent()).getFigure());
+//				System.out.println("");
+//				System.out.println("childFigure                                      : " + childFigure);
+//				System.out.println("childFigure.getParent()                          : " + childFigure.getParent());
+				
 				System.out.println("");
 				System.out.println("childFigure.getBounds().getCopy()           : " + origRect2);	
 				
 				childFigure.translateFromParent(copyRect12);
-				System.out.println("childFigure.translateFromParent(copyRect12) : " + copyRect12);
+//				System.out.println("childFigure.translateFromParent(copyRect12) : " + copyRect12);
+				
+				childFigure.translateToParent(copyRect32);
+//				System.out.println("childFigure.translateToParent(copyRect32)   : " + copyRect32);
 				
 				childFigure.translateToAbsolute(copyRect22);
 				System.out.println("childFigure.translateToAbsolute(copyRect22) : " + copyRect22);
 				
-				childFigure.translateToParent(copyRect32);
-				System.out.println("childFigure.translateToParent(copyRect32)   : " + copyRect32);
-				
 				childFigure.translateToRelative(copyRect42);
-				System.out.println("childFigure.translateToRelative(copyRect42) : " + copyRect42);
+//				System.out.println("childFigure.translateToRelative(copyRect42) : " + copyRect42);
 				
-				System.out.println("childFigure.getParent() : " + childFigure.getParent());
+//				System.out.println("childFigure.getParent().getClass()          : " + childFigure.getParent().getClass());
+//				System.out.println("childFigure.getParent().getInsets()         : " + childFigure.getParent().getInsets());
+				System.out.println("childFigure.getParent().getBounds()         : " + childFigure.getParent().getBounds());
 				
 				Rectangle copyRect13 = childFigure.getBounds().getCopy();
 				Rectangle copyRect23 = childFigure.getBounds().getCopy();
@@ -556,16 +742,16 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				Rectangle copyRect43 = childFigure.getBounds().getCopy();
 				
 				childFigure.getParent().translateFromParent(copyRect13);
-				System.out.println("parentFigure.translateFromParent(copyRect13): " + copyRect13);
+//				System.out.println("parentFigure.translateFromParent(copyRect13): " + copyRect13);
+				
+				childFigure.getParent().translateToParent(copyRect33);
+//				System.out.println("parentFigure.translateToParent(copyRect33)  : " + copyRect33);
 				
 				childFigure.getParent().translateToAbsolute(copyRect23);
 				System.out.println("parentFigure.translateToAbsolute(copyRect23): " + copyRect23);
 				
-				childFigure.getParent().translateToParent(copyRect33);
-				System.out.println("parentFigure.translateToParent(copyRect33)  : " + copyRect33);
-				
 				childFigure.getParent().translateToRelative(copyRect43);
-				System.out.println("parentFigure.translateToRelative(copyRect43): " + copyRect43);
+//				System.out.println("parentFigure.translateToRelative(copyRect43): " + copyRect43);
 			}
 		}
 		
@@ -649,13 +835,13 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * 해당 Rectangle에 intersect되는 모든 Lifeline 반환
 	 * 절대좌표로 비교
 	 * 
-	 * @param selectionRect
+	 * @param selectionRect 절대좌표화된 선택영역
 	 * @param hostEditPart
 	 * @return
 	 */
 	public static List apexGetPositionallyCoveredLifelineEditParts(Rectangle selectionRect, AbstractGraphicalEditPart hostEditPart) {
 		
-		hostEditPart.getFigure().translateToAbsolute(selectionRect);
+		//hostEditPart.getFigure().translateToAbsolute(selectionRect);
 		
 		List positionallyCoveredLifelineEditParts = new ArrayList();
 
@@ -665,9 +851,9 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			EditPart ep = epEntry.getValue();
 
 			if(ep instanceof LifelineEditPart) {
-				Rectangle figureBounds = SequenceUtil.getAbsoluteBounds((LifelineEditPart)ep);
+				Rectangle lifelineRect = ApexSequenceUtil.apexGetAbsoluteRectangle((LifelineEditPart)ep);
 
-				if(selectionRect.intersects(figureBounds)) {
+				if(selectionRect.intersects(lifelineRect)) {
 					positionallyCoveredLifelineEditParts.add(ep);
 				}
 			}

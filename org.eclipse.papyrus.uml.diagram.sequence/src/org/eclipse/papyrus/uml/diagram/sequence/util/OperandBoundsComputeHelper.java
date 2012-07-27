@@ -22,6 +22,7 @@ import org.eclipse.gmf.runtime.common.core.command.ICompositeCommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.commands.SetBoundsCommand;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.l10n.DiagramUIMessages;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
@@ -38,6 +39,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractio
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.UMLVisualIDRegistry;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
+import org.eclipse.swt.SWT;
 import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
 
@@ -493,6 +495,18 @@ public class OperandBoundsComputeHelper {
 		if ((direction & PositionConstants.NORTH) != 0) {
 			targetIOEP = OperandBoundsComputeHelper.findPreviousIOEP(compartEP,
 					currentIOEP);
+			
+			/* apex added start */
+			// previousOp의 Lowest bottom+1 보다 위로 resize 안되게 처리
+			List previousChildrenEditParts = targetIOEP.getChildren();
+			IGraphicalEditPart igep = ApexSequenceUtil.apexGetLowestEditPartFromList(previousChildrenEditParts);
+			
+			int bottomPrevLowestChild = ApexSequenceUtil.apexGetAbsolutePosition(igep, SWT.BOTTOM);
+			int topNewIoep = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.TOP) - Math.abs(heightDelta);
+			if ( topNewIoep < bottomPrevLowestChild + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) {
+				return null;
+			}
+			/* apex added end */
 		} else if ((direction & PositionConstants.SOUTH) != 0) {
 			targetIOEP = OperandBoundsComputeHelper.findLatterIOEP(compartEP,
 					currentIOEP);
@@ -500,6 +514,7 @@ public class OperandBoundsComputeHelper {
 		
 		CompositeCommand compositeCommand = new CompositeCommand(
 				"Resize Operand");
+		
 		// if last operand
 		if(targetIOEP == null){
 			if (heightDelta < 0) {
@@ -540,7 +555,7 @@ public class OperandBoundsComputeHelper {
 				if (targetIOEPBounds.getHeight() - heightDelta < OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT) {
 					return null;
 				}
-			} else {
+			} else {				
 				if (currentIOEPBounds.getHeight() - Math.abs(heightDelta) < OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT) {
 					return null;
 				}

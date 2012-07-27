@@ -76,6 +76,7 @@ import org.eclipse.gmf.runtime.gef.ui.figures.DefaultSizeNodeFigure;
 import org.eclipse.gmf.runtime.gef.ui.figures.NodeFigure;
 import org.eclipse.gmf.runtime.gef.ui.internal.parts.TextCellEditorEx;
 import org.eclipse.gmf.runtime.gef.ui.internal.parts.WrapTextCellEditor;
+import org.eclipse.gmf.runtime.notation.Bounds;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -1427,6 +1428,11 @@ AbstractBorderedShapeEditPart implements ITextAwareEditPart {
 				}
 			}
 		}
+		
+		// InteractionOperandEditPart에서
+		// if (notification.getNotifier() instanceof Bounds) { } 부분은 없음
+		// 경계 변경은 InteractionCompartmentXYLayoutEditPolicy.apexResizeCombinedFragmentBoundsCommand()에서
+		// CombinedFragment의 경계변경과 함께 처리됨
 		super.handleNotificationEvent(notification);
 	}
 

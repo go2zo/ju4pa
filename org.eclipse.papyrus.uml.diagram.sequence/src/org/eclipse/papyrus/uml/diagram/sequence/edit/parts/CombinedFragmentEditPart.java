@@ -21,6 +21,7 @@ import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.Shape;
 import org.eclipse.draw2d.StackLayout;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EStructuralFeature;
@@ -1140,6 +1141,8 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Handle for interaction operator, operator kind and covered lifelines
 	 */
 	protected void handleNotificationEvent(Notification notification) {
@@ -1228,6 +1231,29 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 			}
 		}
 		super.handleNotificationEvent(notification);
+		
+		/* apex improved start */
+		//fixed bug (id=364711) when bounds changed update coveredBys with the figure's bounds.		
+		if (notification.getNotifier() instanceof Bounds) {
+			final Bounds newBounds = (Bounds)notification.getNotifier();
+			updateCoveredLifelines(newBounds);
+			
+			// 아래 로직은 Lifeline의 경계 변경 시 해당 lifeline의 coveredBy를 수정하는 것으로
+			// LifelineEditPart.handleNotification()에서 호출되어 수행되므로 제외처리
+			// CombinedFragment의 경계 변경에 따른 해당 lifeline의 coveredBy는
+			// CombinedFragment의 covered에 의한 notification에 따라 맞게 수정됨
+			/* apex replaced
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					LifelineCoveredByUpdater updater = new LifelineCoveredByUpdater(); 
+					updater.update(CombinedFragmentEditPart.this, newBounds);
+				}
+			});
+			*/
+		}		
+		/* apex improved end */
+		
+		/* apex replaced
 		//fixed bug (id=364711) when bounds changed update coveredBys with the figure's bounds.
 		if (notification.getNotifier() instanceof Bounds) {
 			if (notification.getNotifier() instanceof Bounds) {
@@ -1239,6 +1265,7 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 				});
 			}
 		}
+		*/
 	}
 
 	/**
