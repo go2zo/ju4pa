@@ -360,9 +360,11 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 				Rectangle esBounds = esPart.getFigure().getBounds();
 				int esYBottom = esBounds.y + esBounds.height;
 				if(esPart != oldParent) {
+					/* apex replaced
 					if(((oldBounds.y + oldBounds.height) <= esBounds.y && (newBounds.y + newBounds.height) >= esBounds.y) || (oldBounds.y >= esYBottom && newBounds.y <= esYBottom)) {
 						return null;
 					}
+					 */
 				}
 			}
 		}

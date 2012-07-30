@@ -42,8 +42,6 @@ import org.eclipse.gmf.runtime.diagram.ui.util.SelectInDiagramHelper;
 import org.eclipse.gmf.runtime.gef.ui.internal.editpolicies.LineMode;
 import org.eclipse.papyrus.uml.diagram.sequence.draw2d.routers.MessageRouter.RouterKind;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
@@ -98,8 +96,8 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 			cbRequest.setMoveDelta(moveDalta);
 			cbRequest.setLocation(location);
 
-//			return apexGetMoveConnectionCommand(cbRequest, connectionPart, true, false, false, false);
-			return apexGetMoveConnectionCommand2(cbRequest, connectionPart, false);
+			Command result = apexGetMoveConnectionCommand(cbRequest, connectionPart, false);
+			return result;
 			/* apex added end */
 			/* apex replaced
 //			ConnectionNodeEditPart connectionPart = (ConnectionNodeEditPart)getHost();
@@ -157,8 +155,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 	 * @param force
 	 * @return
 	 */
-	public static Command apexGetMoveConnectionCommand(ChangeBoundsRequest request, ConnectionNodeEditPart connectionPart,
-			boolean moveNext, boolean flexiblePrev, boolean changedSequence, boolean force) {
+	public static Command apexGetMoveConnectionCommand(ChangeBoundsRequest request, ConnectionNodeEditPart connectionPart, boolean moveAlone) {
 		EObject message = connectionPart.resolveSemanticElement();
 		if(message instanceof Message) {
 			MessageEnd send = ((Message)message).getSendEvent();
@@ -182,7 +179,6 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 				List<EditPart> empty = Collections.emptyList();
 				
 				int minY = Integer.MIN_VALUE, maxY = Integer.MAX_VALUE;
-				
 				int realMinY = Integer.MIN_VALUE;
 				IGraphicalEditPart realPrevPart = null;	// ExecutionSpecificationEditPart 포함하여 가장 하위
 				List<IGraphicalEditPart> prevParts = ApexSequenceUtil.apexGetPrevSiblingEditParts(connectionPart);
@@ -197,7 +193,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 						ConnectionNodeEditPart prevConnPart = (ConnectionNodeEditPart)part;
 						EditPart prevSourcePart = prevConnPart.getSource();
 						EditPart prevTargetPart = prevConnPart.getTarget();
-						if ((prevSourcePart instanceof ActionExecutionSpecificationEditPart || prevSourcePart instanceof BehaviorExecutionSpecificationEditPart)
+						if ((prevSourcePart instanceof AbstractExecutionSpecificationEditPart)
 								&& !prevSourcePart.equals(srcPart)) {
 							int tMinY = ApexSequenceUtil.apexGetAbsolutePosition((IGraphicalEditPart)prevTargetPart, SWT.BOTTOM) + MARGIN;
 							if (realMinY < tMinY) {
@@ -205,7 +201,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 								realPrevPart = (IGraphicalEditPart)prevTargetPart;
 							}
 						}
-						if ((prevTargetPart instanceof ActionExecutionSpecificationEditPart || prevTargetPart instanceof BehaviorExecutionSpecificationEditPart)
+						if ((prevTargetPart instanceof AbstractExecutionSpecificationEditPart)
 								&& !prevTargetPart.equals(srcPart)) {
 							int ty = ApexSequenceUtil.apexGetAbsolutePosition((IGraphicalEditPart)prevTargetPart, SWT.BOTTOM) + MARGIN;
 							if (realMinY < ty) {
@@ -216,95 +212,169 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 					}
 				}
 				
-				// 상단의 activation이 줄어들수 있는가?
-				minY = flexiblePrev ? Math.min(minY - MARGIN + PADDING, realMinY) : Math.max(minY - MARGIN + PADDING, realMinY);
+				if (prevParts.size() == 0) {
+					IFigure dotLine = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
+					Rectangle dotLineBounds = dotLine.getBounds().getCopy();
+					dotLine.translateToAbsolute(dotLineBounds);
+					minY = dotLineBounds.y() + MARGIN;
+					realMinY = minY;
+				}
 				
-				IGraphicalEditPart realNextPart = null;
+				if (flexiblePrev && realPrevPart instanceof AbstractExecutionSpecificationEditPart) {
+					Dimension minimumSize = realPrevPart.getFigure().getMinimumSize();
+					int minimumBottom = ApexSequenceUtil.apexGetAbsolutePosition(realPrevPart, SWT.TOP) + minimumSize.height();
+					minY = Math.max(minY, minimumBottom);
+				}
+				else {
+					minY = realMinY;
+				}
+				
 				List<IGraphicalEditPart> nextParts = ApexSequenceUtil.apexGetNextSiblingEditParts(connectionPart);
 				for (IGraphicalEditPart part : nextParts) {
 					int ty = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.TOP) - MARGIN;
-					if (ty < maxY) {
-						realNextPart = part;
+					if (maxY > ty) {
+						maxY = ty;
 					}
-					maxY = Math.min(maxY, ty);
 				}
 
-				int easyY = Math.min(maxY, Math.max(minY, y));
-				if (!force && (moveDeltaY < 0 || !moveNext)) {
-					y = easyY;
-				}
-				moveDeltaY = y - oldLocation.y();
-
-				if (flexiblePrev && realPrevPart != null && realMinY > y - MARGIN) {
-					EObject execSpec = realPrevPart.resolveSemanticElement();
-					if (execSpec instanceof ExecutionSpecification) {
-						OccurrenceSpecification finish = ((ExecutionSpecification)execSpec).getFinish();
-						LifelineEditPart lifelinePart = SequenceUtil.getParentLifelinePart(realPrevPart);
-						compoudCmd.add(OccurrenceSpecificationMoveHelper
-								.getMoveOccurrenceSpecificationsCommand(finish, null, y - MARGIN, -1, lifelinePart, empty));
-					}					
-				}
-
-				Command srcCmd = null;
-				Command tgtCmd = null;
-
-				if (srcPart instanceof ActionExecutionSpecificationEditPart || srcPart instanceof BehaviorExecutionSpecificationEditPart) {
-					IGraphicalEditPart srcExecSpecEP = (IGraphicalEditPart)srcPart;
-					EObject execSpec = srcExecSpecEP.resolveSemanticElement();
-					
-					if (execSpec instanceof ExecutionSpecification) {
-						OccurrenceSpecification finish = ((ExecutionSpecification)execSpec).getFinish();
-						int newBottom = ApexSequenceUtil.apexGetAbsolutePosition(srcExecSpecEP, SWT.BOTTOM) + moveDeltaY;
-						srcCmd = OccurrenceSpecificationMoveHelper.getMoveOccurrenceSpecificationsCommand(finish, null, newBottom, -1, srcLifelinePart, empty);
+				if (moveAlone) {
+					// Target인 Activation의 Minimumsize 이하로 줄어들 수 없음
+					if (tgtPart instanceof AbstractExecutionSpecificationEditPart) {
+						List sourceConnections = ((IGraphicalEditPart)tgtPart).getSourceConnections();
+						if (sourceConnections == null || sourceConnections.size() == 0) {
+							int minimumHeight = ((IGraphicalEditPart)tgtPart).getFigure().getMinimumSize().height();
+							int bottom = ApexSequenceUtil.apexGetAbsolutePosition((IGraphicalEditPart)tgtPart, SWT.BOTTOM);
+							maxY = bottom - minimumHeight;
+						}
 					}
-				} else {
-//					srcCmd = OccurrenceSpecificationMoveHelper.getMoveOccurrenceSpecificationsCommand((OccurrenceSpecification)send, null, y, -1, srcLifelinePart, empty);
-				}
-				
-				if (tgtPart instanceof ActionExecutionSpecificationEditPart || tgtPart instanceof BehaviorExecutionSpecificationEditPart) {
-					IGraphicalEditPart tgtExecSpecEP = (IGraphicalEditPart)tgtPart;
-					EObject execSpec = tgtExecSpecEP.resolveSemanticElement();
+					y = Math.min(maxY, Math.max(minY, y));
+					moveDeltaY = y - oldLocation.y();
 					
-					Point nextMoveDelta = new Point(moveDelta.x(), moveDeltaY);
+					if (srcPart instanceof AbstractExecutionSpecificationEditPart) {
+						IGraphicalEditPart executionSpecificationEP = (IGraphicalEditPart)srcPart;
+						Rectangle oldBounds = ApexSequenceUtil.apexGetAbsoluteRectangle(executionSpecificationEP);
+						if (oldBounds != null && oldBounds.bottom() < y + PADDING) {
+							ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(REQ_RESIZE);
+							cbRequest.setSizeDelta(new Dimension(0, y + PADDING - oldBounds.bottom()));
+							cbRequest.setResizeDirection(PositionConstants.SOUTH);
+							
+							compoudCmd.add( executionSpecificationEP.getCommand(cbRequest) );
+						}
+					}
+					else {
+						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
+						Rectangle bounds = figure.getBounds().getCopy();
+						figure.translateToAbsolute(bounds);
+						
+						ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(REQ_RESIZE);
+						cbRequest.setSizeDelta(new Dimension(0, y + PADDING - bounds.bottom()));
+						cbRequest.setResizeDirection(PositionConstants.SOUTH);
+						
+						Command cmd = srcLifelinePart.getCommand(cbRequest);
+						compoudCmd.add(cmd);
+					}
+					compoudCmd.add( OccurrenceSpecificationMoveHelper
+							.getMoveOccurrenceSpecificationsCommand((OccurrenceSpecification)send, null, y, -1, srcLifelinePart, empty) );
+					
+					if (tgtPart instanceof AbstractExecutionSpecificationEditPart) {
+						IGraphicalEditPart executionSpecificationEP = (IGraphicalEditPart)tgtPart;
+						EObject semanticElement = executionSpecificationEP.resolveSemanticElement();
+						
+						if (semanticElement instanceof ExecutionSpecification) {
+							ExecutionSpecification executionSpecification = (ExecutionSpecification)semanticElement;
+							OccurrenceSpecification start = executionSpecification.getStart();
+							compoudCmd.add( OccurrenceSpecificationMoveHelper
+									.getMoveOccurrenceSpecificationsCommand(start, null, y, -1, tgtLifelinePart, empty) );
+						}
+					}
+				}
+				else {
+					if (moveDeltaY < 0) {
+						y = Math.min(maxY, Math.max(minY, y));
+						moveDeltaY = y - oldLocation.y();
+					}
+					
+					// 상당 ExecutionSpecification의 크기 줄임
+					if (flexiblePrev && realPrevPart instanceof AbstractExecutionSpecificationEditPart && realMinY > y - MARGIN) {
+						EObject semanticElement = realPrevPart.resolveSemanticElement();
+						if (semanticElement instanceof ExecutionSpecification) {
+							OccurrenceSpecification finish = ((ExecutionSpecification)semanticElement).getFinish();
+							LifelineEditPart lifelinePart = SequenceUtil.getParentLifelinePart(realPrevPart);
+							compoudCmd.add( OccurrenceSpecificationMoveHelper
+									.getMoveOccurrenceSpecificationsCommand(finish, null, y - MARGIN, -1, lifelinePart, empty) );
+						}					
+					}
 
-					if (execSpec instanceof ExecutionSpecification) {
-						OccurrenceSpecification start = ((ExecutionSpecification)execSpec).getStart();
-						OccurrenceSpecification finish = ((ExecutionSpecification)execSpec).getFinish();
-						int top = moveDeltaY + ApexSequenceUtil.apexGetAbsolutePosition(tgtExecSpecEP, SWT.TOP);
-						int bottom = moveDeltaY + ApexSequenceUtil.apexGetAbsolutePosition(tgtExecSpecEP, SWT.BOTTOM);
+					compoudCmd.add( OccurrenceSpecificationMoveHelper
+							.getMoveOccurrenceSpecificationsCommand((OccurrenceSpecification)send, null, y, -1, srcLifelinePart, empty) );
+					if (srcPart instanceof AbstractExecutionSpecificationEditPart) {
+						IGraphicalEditPart executionSpecificationEP = (IGraphicalEditPart)srcPart;
 
-						if (!moveNext) {	// 하단이동 안함
-							bottom = -1;
-							finish = null;
+						int top = ApexSequenceUtil.apexGetAbsolutePosition(connectionPart, SWT.TOP);
+						boolean isLastSourceConnection = true;
+						List sourceConnections = executionSpecificationEP.getSourceConnections();
+						for (Object obj : sourceConnections) {
+							if (obj instanceof ConnectionNodeEditPart && !connectionPart.equals(obj)) {
+								ConnectionNodeEditPart conn = (ConnectionNodeEditPart)obj;
+								int tmp = ApexSequenceUtil.apexGetAbsolutePosition(conn, SWT.TOP);
+								if (top < tmp) {
+									isLastSourceConnection = false;
+									break;
+								}
+							}
 						}
 						
-						tgtCmd = OccurrenceSpecificationMoveHelper.getMoveOccurrenceSpecificationsCommand(start, finish, top, bottom, tgtLifelinePart, empty);
+						if (isLastSourceConnection) {
+							ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(REQ_RESIZE);
+							cbRequest.setSizeDelta(new Dimension(0, moveDeltaY));
+							cbRequest.setResizeDirection(PositionConstants.SOUTH);
+
+							compoudCmd.add( executionSpecificationEP.getCommand(cbRequest) );
+						}
 					}
 					
-					if (moveNext && moveDeltaY > 0) {
-						ChangeBoundsRequest nextRequest = new ChangeBoundsRequest(REQ_MOVE);
-						nextRequest.setMoveDelta(nextMoveDelta);
-						if (realNextPart instanceof ConnectionNodeEditPart)
-							compoudCmd.add(apexGetMoveConnectionCommand(nextRequest, (ConnectionNodeEditPart)realNextPart, moveNext, false, false, true));
-						else if (realNextPart != null)
-							compoudCmd.add(apexGetResizeOrMoveBelowItemsCommand(nextRequest, realNextPart));
+					List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, false, true, false);
+					for (IGraphicalEditPart linkedPart : linkedParts) {
+						EObject semantic = linkedPart.resolveSemanticElement();
+						LifelineEditPart linkedLifelinePart = SequenceUtil.getParentLifelinePart(linkedPart);
+						if (semantic instanceof ExecutionSpecification) {
+							OccurrenceSpecification start = ((ExecutionSpecification)semantic).getStart();
+							OccurrenceSpecification finish = ((ExecutionSpecification)semantic).getFinish();
+							int top = moveDeltaY + ApexSequenceUtil.apexGetAbsolutePosition(linkedPart, SWT.TOP);
+							int bottom = moveDeltaY + ApexSequenceUtil.apexGetAbsolutePosition(linkedPart, SWT.BOTTOM);
+							compoudCmd.add( OccurrenceSpecificationMoveHelper
+									.getMoveOccurrenceSpecificationsCommand(start, finish, top, bottom, linkedLifelinePart, empty) );
+						}
 					}
-				} else {
-//					tgtCmd = OccurrenceSpecificationMoveHelper.getMoveOccurrenceSpecificationsCommand((OccurrenceSpecification)rcv, null, y, -1, tgtLifelinePart, empty);
-				}
-				
-				if(oldLocation != null) {
-					int oldY = oldLocation.y;
+					
+					if (moveDeltaY > 0) {
+						linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, true, false, false);
+						nextParts.removeAll(linkedParts);
+						IGraphicalEditPart realNextPart = null;
+						int top = Integer.MAX_VALUE;
+						for (IGraphicalEditPart part : nextParts) {
+							int tmp = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.TOP);
+							if (top > tmp) {
+								top = tmp;
+								realNextPart = part;
+							}
+						}
 
-					if(oldY < y) {
-						compoudCmd.add(tgtCmd);
-						compoudCmd.add(srcCmd);
-					} else {
-						compoudCmd.add(srcCmd);
-						compoudCmd.add(tgtCmd);
+						Point newMoveDelta = new Point(0, moveDeltaY);
+						ChangeBoundsRequest newRequest = new ChangeBoundsRequest(REQ_MOVE);
+						newRequest.setMoveDelta(newMoveDelta);
+
+						if (realNextPart instanceof ConnectionNodeEditPart) {
+							compoudCmd.add( apexGetMoveConnectionCommand(newRequest,
+									(ConnectionNodeEditPart) realNextPart, false) );
+						}
+						else if (realNextPart != null) {
+							compoudCmd.add( apexGetResizeOrMoveBelowItemsCommand(newRequest, realNextPart) );
+						}
 					}
-					return compoudCmd;
 				}
+
+				return compoudCmd;
 			}
 		}
 		
@@ -359,6 +429,8 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 				}
 				
 				IGraphicalEditPart nextPart = getNextSiblingPart(connectionPart);
+				IGraphicalEditPart realNextPart = getRealNextSiblingPart(connectionPart);
+
 				int maxY = getApproachHight(nextPart, SWT.TOP);
 				
 //				Command srcCmd = OccurrenceSpecificationMoveHelper.getMoveOccurrenceSpecificationsCommand((OccurrenceSpecification)send, null, y, -1, srcLifelinePart, empty);
@@ -419,7 +491,8 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 					}
 
 					srcCmd = OccurrenceSpecificationMoveHelper.getMoveOccurrenceSpecificationsCommand((OccurrenceSpecification)send, null, y, -1, srcLifelinePart, empty);
-					if (srcPart instanceof AbstractExecutionSpecificationEditPart) {
+					if ( srcPart instanceof AbstractExecutionSpecificationEditPart && realNextPart instanceof ConnectionNodeEditPart
+							&& !srcPart.equals(((ConnectionNodeEditPart)realNextPart).getSource()) ) {
 						IGraphicalEditPart srcGEP = (IGraphicalEditPart)srcPart;
 
 						ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(REQ_RESIZE);
@@ -443,7 +516,6 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 						}
 					}
 					
-					IGraphicalEditPart realNextPart = getRealNextSiblingPart(connectionPart);
 					if (moveDeltaY > 0 && realNextPart != null) {
 						IGraphicalEditPart bottomPart = connectionPart;
 						int bottom = ApexSequenceUtil.apexGetAbsolutePosition(bottomPart, SWT.BOTTOM);
@@ -487,7 +559,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 //					return compoudCmd;
 //				}
 			}
-			
+			System.out.println(compoudCmd.canExecute());
 			return compoudCmd;
 		}
 		
@@ -593,7 +665,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 		IGraphicalEditPart result = null;
 		List<IGraphicalEditPart> parts = ApexSequenceUtil.apexGetNextSiblingEditParts(editPart);
 		for (IGraphicalEditPart part : parts) {
-			int tmp = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.BOTTOM);
+			int tmp = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.TOP);
 			if (y > tmp) {
 				y = tmp;
 				result = part;
@@ -609,7 +681,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 		List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(editPart, true, false, false);
 		parts.removeAll(linkedParts);
 		for (IGraphicalEditPart part : parts) {
-			int tmp = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.BOTTOM);
+			int tmp = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.TOP);
 			if (y > tmp) {
 				y = tmp;
 				result = part;
