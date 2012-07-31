@@ -171,7 +171,7 @@ System.out.println("      mei.getEObject() being added : " + mei.getEObject());
 //*/
 
 					if (mei.getEObject().getClass().toString().endsWith("SpecificationImpl")) {
-						canBeAdded = false;
+//						canBeAdded = false;
 					} 
 
 				} else if ( arrayObject[i] instanceof LinkItem) {
