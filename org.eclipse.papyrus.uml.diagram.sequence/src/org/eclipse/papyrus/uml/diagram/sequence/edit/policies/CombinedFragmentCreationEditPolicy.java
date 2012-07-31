@@ -36,6 +36,7 @@ import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescrip
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.OperandBoundsComputeHelper;
@@ -43,8 +44,10 @@ import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.uml2.uml.ActionExecutionSpecification;
 import org.eclipse.uml2.uml.BehaviorExecutionSpecification;
+import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
+import org.eclipse.uml2.uml.InteractionOperatorKind;
 import org.eclipse.uml2.uml.Lifeline;
 
 /**
@@ -126,7 +129,25 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 				if (coveredInteractionFragments == null) {
 					return UnexecutableCommand.INSTANCE;
 				}								
-			}			
+			}
+			
+			// InteractionOperand의 경우 Operand가 alt가 아닌 경우는 X 표시
+			EditPart targetEditPart = getTargetEditPart(request);
+			if ( targetEditPart instanceof InteractionOperandEditPart ) {
+				InteractionOperandEditPart ioep = (InteractionOperandEditPart)targetEditPart;				
+				CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)ioep.getParent().getParent();
+				CombinedFragment cf = (CombinedFragment)cfep.resolveSemanticElement();
+				InteractionOperatorKind ioKind = cf.getInteractionOperator();
+				// Operator가 ALT와 같지 않으면
+			    System.out.println("ioKind.compareTo(ioKind.ALT_LITERAL) : " + ioKind.compareTo(ioKind.ALT_LITERAL));
+				if ( ioKind.compareTo(ioKind.ALT_LITERAL) != 0 ) {
+					// UnexecutableCommand.INSTANCE 리턴해도 X 표시 되지 않음 ㅠㅜ
+					return UnexecutableCommand.INSTANCE;
+				}				
+			}
+			
+		    
+			
 			
 			// 아래는 0.9에서 추가된 로직
 			// Add updating bounds command for Combined fragment createment
