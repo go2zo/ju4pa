@@ -48,7 +48,7 @@ public class ApexOccurrenceSpecificationMoveHelper {
 	 * @return command to move all edit parts linked to the occurrence specifications or null
 	 */
 
-	public static Command apexGetMoveMessageOccurrenceSpecificationsCommand(OccurrenceSpecification movedOccurrenceSpecification, int yLocation, Rectangle newBounds, LifelineEditPart lifelinePart, List<EditPart> notToMoveEditParts) {
+	public static Command getMoveMessageOccurrenceSpecificationsCommand(OccurrenceSpecification movedOccurrenceSpecification, int yLocation, Rectangle newBounds, LifelineEditPart lifelinePart, List<EditPart> notToMoveEditParts) {
 		// the global command which shall be completed and returned
 		CompoundCommand command = new CompoundCommand();
 		

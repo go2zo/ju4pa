@@ -24,7 +24,6 @@ import org.eclipse.draw2d.PolylineConnection;
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
-import org.eclipse.draw2d.geometry.PrecisionPoint;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.gef.EditPart;
@@ -289,7 +288,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 							newBounds.height = y + MARGIN - oldBounds.y;
 						}
 					}
-					compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.apexGetMoveMessageOccurrenceSpecificationsCommand(
+					compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
 							(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
 //					compoudCmd.add( OccurrenceSpecificationMoveHelper
 //							.getMoveOccurrenceSpecificationsCommand((OccurrenceSpecification)send, null, y, -1, srcLifelinePart, empty) );
@@ -304,13 +303,6 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 						cbRequest.setMoveDelta(new Point(0, y - oldBounds.y));
 						cbRequest.setResizeDirection(PositionConstants.NORTH);
 						compoudCmd.add( executionSpecificationEP.getCommand(cbRequest) );
-//						EObject semanticElement = executionSpecificationEP.resolveSemanticElement();
-//						if (semanticElement instanceof ExecutionSpecification) {
-//							ExecutionSpecification executionSpecification = (ExecutionSpecification)semanticElement;
-//							OccurrenceSpecification start = executionSpecification.getStart();
-//							compoudCmd.add( OccurrenceSpecificationMoveHelper
-//									.getMoveOccurrenceSpecificationsCommand(start, null, y, -1, tgtLifelinePart, empty) );
-//						}
 					}
 				}
 				else {
@@ -325,13 +317,6 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 						cbRequest.setSizeDelta(new Dimension(0, y - realMinY));
 						cbRequest.setResizeDirection(PositionConstants.SOUTH);
 						compoudCmd.add( realPrevPart.getCommand(cbRequest) );
-//						EObject semanticElement = realPrevPart.resolveSemanticElement();
-//						if (semanticElement instanceof ExecutionSpecification) {
-//							OccurrenceSpecification finish = ((ExecutionSpecification)semanticElement).getFinish();
-//							LifelineEditPart lifelinePart = SequenceUtil.getParentLifelinePart(realPrevPart);
-//							compoudCmd.add( OccurrenceSpecificationMoveHelper
-//									.getMoveOccurrenceSpecificationsCommand(finish, null, y - MARGIN, -1, lifelinePart, empty) );
-//						}					
 					}
 
 					if (srcPart instanceof AbstractExecutionSpecificationEditPart) {
@@ -355,48 +340,48 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 									int tmp = SequenceUtil.findLocationOfMessageOccurrence(executionSpecificationEP, (MessageOccurrenceSpecification) messageEnd).y;
 									
 									if (oldLocationY < tmp || connectionPart.equals(sourceConnection)) {
-										compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.apexGetMoveMessageOccurrenceSpecificationsCommand(
+										compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
 												(OccurrenceSpecification)messageEnd, tmp + moveDeltaY, newBounds, srcLifelinePart, empty) );
-//
-//										List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(
-//												(IGraphicalEditPart) sourceConnection, false, true, false);
-//										
-//										for (IGraphicalEditPart linkedPart : linkedParts) {
-//											EObject semanticElement2 = linkedPart.resolveSemanticElement();
-//											LifelineEditPart linkedLifelinePart = SequenceUtil.getParentLifelinePart(linkedPart);
-//											if (semanticElement2 instanceof ExecutionSpecification) {
-//												OccurrenceSpecification start = ((ExecutionSpecification)semanticElement2).getStart();
-//												OccurrenceSpecification finish = ((ExecutionSpecification)semanticElement2).getFinish();
-//												int yLocation1 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) start).y + moveDeltaY;
-//												int yLocation2 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) finish).y + moveDeltaY;
-//												compoudCmd.add( OccurrenceSpecificationMoveHelper
-//														.getMoveOccurrenceSpecificationsCommand(start, finish, yLocation1, yLocation2, linkedLifelinePart, empty) );
-//											}
-//										}
+
+										List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(
+												(IGraphicalEditPart) sourceConnection, false, true, false);
+										
+										for (IGraphicalEditPart linkedPart : linkedParts) {
+											EObject semanticElement2 = linkedPart.resolveSemanticElement();
+											LifelineEditPart linkedLifelinePart = SequenceUtil.getParentLifelinePart(linkedPart);
+											if (semanticElement2 instanceof ExecutionSpecification) {
+												OccurrenceSpecification start = ((ExecutionSpecification)semanticElement2).getStart();
+												OccurrenceSpecification finish = ((ExecutionSpecification)semanticElement2).getFinish();
+												int yLocation1 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) start).y + moveDeltaY;
+												int yLocation2 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) finish).y + moveDeltaY;
+												compoudCmd.add( OccurrenceSpecificationMoveHelper
+														.getMoveOccurrenceSpecificationsCommand(start, finish, yLocation1, yLocation2, linkedLifelinePart, empty) );
+											}
+										}
 									}
 								}
 							}
 						}
 
-						List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(executionSpecificationEP, false, true, false);
-						for (IGraphicalEditPart linkedPart : linkedParts) {
-							if (linkedPart.equals(executionSpecificationEP))
-								continue;
-							
-							EObject semanticElement = linkedPart.resolveSemanticElement();
-							LifelineEditPart linkedLifelinePart = SequenceUtil.getParentLifelinePart(linkedPart);
-							if (semanticElement instanceof ExecutionSpecification) {
-								OccurrenceSpecification start = ((ExecutionSpecification)semanticElement).getStart();
-								OccurrenceSpecification finish = ((ExecutionSpecification)semanticElement).getFinish();
-								int yLocation1 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) start).y + moveDeltaY;
-								int yLocation2 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) finish).y + moveDeltaY;
-								compoudCmd.add( OccurrenceSpecificationMoveHelper
-										.getMoveOccurrenceSpecificationsCommand(start, finish, yLocation1, yLocation2, linkedLifelinePart, empty) );
-							}
-						}
+//						List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(executionSpecificationEP, false, true, false);
+//						for (IGraphicalEditPart linkedPart : linkedParts) {
+//							if (linkedPart.equals(executionSpecificationEP))
+//								continue;
+//							
+//							EObject semanticElement = linkedPart.resolveSemanticElement();
+//							LifelineEditPart linkedLifelinePart = SequenceUtil.getParentLifelinePart(linkedPart);
+//							if (semanticElement instanceof ExecutionSpecification) {
+//								OccurrenceSpecification start = ((ExecutionSpecification)semanticElement).getStart();
+//								OccurrenceSpecification finish = ((ExecutionSpecification)semanticElement).getFinish();
+//								int yLocation1 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) start).y + moveDeltaY;
+//								int yLocation2 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) finish).y + moveDeltaY;
+//								compoudCmd.add( OccurrenceSpecificationMoveHelper
+//										.getMoveOccurrenceSpecificationsCommand(start, finish, yLocation1, yLocation2, linkedLifelinePart, empty) );
+//							}
+//						}
 						
 						if (moveDeltaY > 0) {
-							linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(executionSpecificationEP, true, false, false);
+							List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(executionSpecificationEP, true, false, false);
 							nextParts.removeAll(linkedParts);
 							IGraphicalEditPart realNextPart = null;
 							int top = Integer.MAX_VALUE;
@@ -433,23 +418,27 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 
 							compoudCmd.add( srcLifelinePart.getCommand(cbRequest) );
 						}
+						
+						Rectangle newBounds = oldBounds.getCopy();
+						newBounds.height = y + MARGIN - newBounds.y;
+						
+						compoudCmd.add( OccurrenceSpecificationMoveHelper.getMoveOccurrenceSpecificationsCommand(
+								(OccurrenceSpecification)send, null, y, -1, srcLifelinePart, empty) );
 					}
-//					compoudCmd.add( OccurrenceSpecificationMoveHelper
-//							.getMoveOccurrenceSpecificationsCommand((OccurrenceSpecification)send, null, y, -1, srcLifelinePart, empty) );
 					
-//					List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, false, true, false);
-//					for (IGraphicalEditPart linkedPart : linkedParts) {
-//						EObject semanticElement = linkedPart.resolveSemanticElement();
-//						LifelineEditPart linkedLifelinePart = SequenceUtil.getParentLifelinePart(linkedPart);
-//						if (semanticElement instanceof ExecutionSpecification) {
-//							OccurrenceSpecification start = ((ExecutionSpecification)semanticElement).getStart();
-//							OccurrenceSpecification finish = ((ExecutionSpecification)semanticElement).getFinish();
-//							int yLocation1 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) start).y + moveDeltaY;
-//							int yLocation2 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) finish).y + moveDeltaY;
-//							compoudCmd.add( OccurrenceSpecificationMoveHelper
-//									.getMoveOccurrenceSpecificationsCommand(start, finish, yLocation1, yLocation2, linkedLifelinePart, empty) );
-//						}
-//					}
+					List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, false, true, false);
+					for (IGraphicalEditPart linkedPart : linkedParts) {
+						EObject semanticElement = linkedPart.resolveSemanticElement();
+						LifelineEditPart linkedLifelinePart = SequenceUtil.getParentLifelinePart(linkedPart);
+						if (semanticElement instanceof ExecutionSpecification) {
+							OccurrenceSpecification start = ((ExecutionSpecification)semanticElement).getStart();
+							OccurrenceSpecification finish = ((ExecutionSpecification)semanticElement).getFinish();
+							int yLocation1 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) start).y + moveDeltaY;
+							int yLocation2 = SequenceUtil.findLocationOfExecutionOccurrence(linkedLifelinePart, (ExecutionOccurrenceSpecification) finish).y + moveDeltaY;
+							compoudCmd.add( OccurrenceSpecificationMoveHelper
+									.getMoveOccurrenceSpecificationsCommand(start, finish, yLocation1, yLocation2, linkedLifelinePart, empty) );
+						}
+					}
 					
 //					if (moveDeltaY > 0) {
 //						List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, true, false, false);
@@ -860,6 +849,7 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 		return false;
 	}
 
+	/* apex deleted
 	final private static char TERMINAL_START_CHAR = '(';
 
 	final private static char TERMINAL_DELIMITER_CHAR = ',';
@@ -875,6 +865,6 @@ public class MessageConnectionLineSegEditPolicy extends ConnectionBendpointEditP
 		s.append(TERMINAL_END_CHAR); // 1 char
 		return s.toString(); // 24 chars max (+1 for safety, i.e. for string termination)
 	}
-
+	 */
 
 }

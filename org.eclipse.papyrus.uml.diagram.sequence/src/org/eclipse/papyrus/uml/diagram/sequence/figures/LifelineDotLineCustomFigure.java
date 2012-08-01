@@ -13,13 +13,9 @@
  *****************************************************************************/
 package org.eclipse.papyrus.uml.diagram.sequence.figures;
 
-import org.eclipse.draw2d.Figure;
-import org.eclipse.draw2d.FlowLayout;
 import org.eclipse.draw2d.Graphics;
-import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.LayoutManager;
 import org.eclipse.draw2d.XYLayout;
-import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.papyrus.uml.diagram.common.draw2d.LifelineDotLineFigure;
 
 /**
