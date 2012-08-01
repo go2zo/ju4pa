@@ -45,7 +45,11 @@ public class ApexInteractionOperandCreationEditPolicy extends
 		    Point location = request.getLocation();
 		    System.out.println("location : " + location);
 			
-		    if ( ioKind.compareTo(ioKind.ALT_LITERAL) != 0 ) {
+		    if ( InteractionOperatorKind.OPT_LITERAL.equals(ioKind) 
+		    		|| InteractionOperatorKind.LOOP_LITERAL.equals(ioKind) 
+		    		|| InteractionOperatorKind.BREAK_LITERAL.equals(ioKind) 
+		    		|| InteractionOperatorKind.NEG_LITERAL.equals(ioKind)
+		       ) {
 				// UnexecutableCommand.INSTANCE 리턴해도 X 표시 되지 않음 ㅠㅜ
 				return UnexecutableCommand.INSTANCE;
 			}				
