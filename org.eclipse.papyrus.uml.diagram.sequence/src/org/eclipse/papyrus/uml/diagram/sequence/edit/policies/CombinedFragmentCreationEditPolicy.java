@@ -66,8 +66,16 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 	@Override
 	protected Command getCreateElementAndViewCommand(CreateViewAndElementRequest request) {
 		/* apex improved start */
+		
 		Command createElementAndViewCmd = super.getCreateElementAndViewCommand(request);
 
+		EditPart targetEditPart1 = getTargetEditPart(request);
+		System.out
+				.println("CombinedFragmentCreationEditPolicy.getCreateElementAndViewCommand(), line : "
+						+ Thread.currentThread().getStackTrace()[1]
+								.getLineNumber());
+		System.out.println("targetEditPart1 : " + targetEditPart1);
+		
 		if(isDerivedCombinedFragment(request.getViewAndElementDescriptor().getSemanticHint())) {
 
 			Rectangle selectionRect = getSelectionRectangle(request);
@@ -130,24 +138,6 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 					return UnexecutableCommand.INSTANCE;
 				}								
 			}
-			
-			// InteractionOperand의 경우 Operand가 alt가 아닌 경우는 X 표시
-			EditPart targetEditPart = getTargetEditPart(request);
-			if ( targetEditPart instanceof InteractionOperandEditPart ) {
-				InteractionOperandEditPart ioep = (InteractionOperandEditPart)targetEditPart;				
-				CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)ioep.getParent().getParent();
-				CombinedFragment cf = (CombinedFragment)cfep.resolveSemanticElement();
-				InteractionOperatorKind ioKind = cf.getInteractionOperator();
-				// Operator가 ALT와 같지 않으면
-			    System.out.println("ioKind.compareTo(ioKind.ALT_LITERAL) : " + ioKind.compareTo(ioKind.ALT_LITERAL));
-				if ( ioKind.compareTo(ioKind.ALT_LITERAL) != 0 ) {
-					// UnexecutableCommand.INSTANCE 리턴해도 X 표시 되지 않음 ㅠㅜ
-					return UnexecutableCommand.INSTANCE;
-				}				
-			}
-			
-		    
-			
 			
 			// 아래는 0.9에서 추가된 로직
 			// Add updating bounds command for Combined fragment createment
