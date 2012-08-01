@@ -397,7 +397,7 @@
       <browserCustomization file="resources/PapyrusEcoreBrowser.uiCustom"/>
       <browserCustomization
             file="resources/ApexModelExplorerCustomization.uiCustom"
-            loadByDefault="true">
+            loadByDefault="false">
       </browserCustomization>
    </extension>
 </plugin>

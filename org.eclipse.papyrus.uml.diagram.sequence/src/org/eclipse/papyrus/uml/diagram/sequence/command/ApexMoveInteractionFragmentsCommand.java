@@ -1,102 +1,177 @@
 package org.eclipse.papyrus.uml.diagram.sequence.command;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.draw2d.PositionConstants;
+import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
 import org.eclipse.gef.EditPartViewer;
+import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.commands.CompoundCommand;
+import org.eclipse.gef.requests.ChangeBoundsRequest;
 import org.eclipse.gmf.runtime.common.core.command.CommandResult;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.commands.SetBoundsCommand;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
+import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
 import org.eclipse.gmf.runtime.emf.commands.core.command.AbstractTransactionalCommand;
+import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.ExecutionOccurrenceSpecification;
 import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.Interaction;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
+import org.eclipse.uml2.uml.Message;
+import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
 
 public class ApexMoveInteractionFragmentsCommand extends
 		AbstractTransactionalCommand {
 
 	protected final static String COMMAND_LABEL = "Move InteractionFragments";
 	
-	private EditPartViewer viewer;
-	private InteractionFragment fragment;
-	private Point location;
-	private int moveDaltaY;
+	protected EditPartViewer viewer;
+	protected ViewDescriptor descriptor;
+	protected InteractionFragment fragment;
+	protected Point location;
+	protected Point moveDelta;
 
 	private CompoundCommand command;
+	
+	protected Collection<EObject> notToMoveEObject;
 
 	
 	public ApexMoveInteractionFragmentsCommand(
-			TransactionalEditingDomain domain, InteractionFragment fragment, Point location, int moveDeltaY) {
+			TransactionalEditingDomain domain, ViewDescriptor descriptor, EditPartViewer viewer, InteractionFragment fragment, Point location, Point moveDelta) {
 		super(domain, COMMAND_LABEL, null);
+		this.viewer = viewer;
+		this.descriptor = descriptor;
 		this.fragment = fragment;
 		this.location = location;
-		this.moveDaltaY = moveDeltaY;
+		this.moveDelta = moveDelta;
 		
 		command = new CompoundCommand();
+		notToMoveEObject = new HashSet<EObject>();
 	}
 
 	@Override
 	protected CommandResult doExecuteWithResult(IProgressMonitor monitor,
 			IAdaptable info) throws ExecutionException {
 		
-		List<InteractionFragment> underFragments = getUnderInteractionFragments(fragment, location);
+		View view = (View)descriptor.getAdapter(View.class);
+		if (view != null) {
+			EObject eObject = view.getElement();
+			if (eObject instanceof Message) {
+				Message message = (Message)eObject;
+				notToMoveEObject.add(message.getSendEvent());
+				notToMoveEObject.add(message.getReceiveEvent());
+			}
+		}
 		
+		Collection<InteractionFragment> underFragments = getUnderInteractionFragments(fragment, location);
 		for (InteractionFragment underFragment : underFragments) {
-			IGraphicalEditPart editPart = getEditPart(underFragment);
-			Rectangle bounds = editPart.getFigure().getBounds().getCopy();
-			editPart.getFigure().translateToAbsolute(bounds);
-			
 			if (underFragment instanceof ExecutionOccurrenceSpecification) {
-				bounds.setHeight(bounds.height + moveDaltaY);
+				ExecutionSpecification execution = ((ExecutionOccurrenceSpecification)underFragment).getExecution();
+				IGraphicalEditPart editPart = getEditPart(execution);
+				Point moveDelta = getMoveDelta();
+				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+				request.setResizeDirection(PositionConstants.SOUTH);
+				request.setSizeDelta(new Dimension(0, moveDelta.y));
+				command.add(editPart.getCommand(request));
 			}
 			else if (underFragment instanceof ExecutionSpecification ||
 					underFragment instanceof CombinedFragment) {
-				bounds.setY(bounds.y + moveDaltaY);
+				IGraphicalEditPart editPart = getEditPart(underFragment);
+				Point moveDelta = getMoveDelta();
+				Rectangle bounds = editPart.getFigure().getBounds().getCopy();
+				editPart.getFigure().translateToAbsolute(bounds);
+				bounds.setY(bounds.y + moveDelta.y);
+				editPart.getFigure().translateToRelative(bounds);
+				
+				SetBoundsCommand sbCmd = new SetBoundsCommand(getEditingDomain(), "", editPart, bounds);
+				command.add(new ICommandProxy(sbCmd));
 			}
-			else {
-				bounds.setY(bounds.y + moveDaltaY);
-				continue;
-			}
-			
-			editPart.getFigure().translateToRelative(bounds);
-			
-			SetBoundsCommand sbCmd = new SetBoundsCommand(getEditingDomain(), "", editPart, bounds);
-			command.add(new ICommandProxy(sbCmd));
 		}
 		
 		command.execute();
 		
-		return null;
+		return CommandResult.newOKCommandResult();
 	}
-
-	private List<InteractionFragment> getUnderInteractionFragments(InteractionFragment fragment, Point location) {
-		List<InteractionFragment> list = new ArrayList<InteractionFragment>();
+	
+	public Point getMoveDelta() {
+		return moveDelta;
+	}
+	
+	public void setMoveDelta(Point moveDelta) {
+		this.moveDelta = moveDelta;
+	}
+	
+	private Collection<InteractionFragment> getUnderInteractionFragments(InteractionFragment fragment, Point location) {
+		Set<InteractionFragment> set = new HashSet<InteractionFragment>();
 		
-		List<InteractionFragment> allFragments = new ArrayList<InteractionFragment>();
-		if (fragment.getEnclosingOperand() != null) {
-			InteractionOperand operand = fragment.getEnclosingOperand();
-			allFragments.addAll(operand.getFragments());
+		Set<InteractionFragment> allFragments = new HashSet<InteractionFragment>();
+		if (fragment instanceof Interaction) {
+			allFragments.addAll(((Interaction)fragment).getFragments());
 		}
-		else if (fragment.getEnclosingInteraction() != null) {
-			Interaction interaction = fragment.getEnclosingInteraction();
-			allFragments.addAll(interaction.getFragments());
+		else if (fragment instanceof InteractionOperand) {
+			allFragments.addAll(((InteractionOperand)fragment).getFragments());
+		}
+		else {
+			if (fragment.getEnclosingOperand() != null) {
+				InteractionOperand operand = fragment.getEnclosingOperand();
+				allFragments.addAll(operand.getFragments());
+			}
+			else if (fragment.getEnclosingInteraction() != null) {
+				Interaction interaction = fragment.getEnclosingInteraction();
+				allFragments.addAll(interaction.getFragments());
+			}
 		}
 		
+		for (InteractionFragment ift : allFragments) {
+			if (notToMoveEObject.contains(ift))
+				continue;
+			
+			if (ift instanceof MessageOccurrenceSpecification) {
+				continue;
+			}
+			else if (ift instanceof ExecutionOccurrenceSpecification) {
+				ExecutionSpecification execution = ((ExecutionOccurrenceSpecification)ift).getExecution();
+				IGraphicalEditPart editPart = getEditPart(execution);
+				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
+				Point loc = null;
+				if (ift.equals(execution.getStart())) {
+					loc = bounds.getTop();
+					ift = execution;
+				}
+				else if (ift.equals(execution.getFinish())) {
+					loc = bounds.getBottom();
+				}
+				
+				if (loc.y > location.y) {
+					set.add(ift);
+				}
+			}
+			else {
+				IGraphicalEditPart editPart = getEditPart(ift);
+				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
+				Point loc = bounds.getTop();
+				if (loc.y > location.y) {
+					set.add(ift);
+				}
+			}
+		}
 		
-		
-		return list;
+		return set;
 	}
 	
 	private IGraphicalEditPart getEditPart(InteractionFragment fragment) {

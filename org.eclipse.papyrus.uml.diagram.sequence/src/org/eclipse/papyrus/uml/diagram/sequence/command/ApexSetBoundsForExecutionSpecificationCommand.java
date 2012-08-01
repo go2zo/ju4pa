@@ -26,7 +26,7 @@ public class ApexSetBoundsForExecutionSpecificationCommand extends
 
 	protected final static String COMMAND_LABEL = "Resize height of Source Execution Specification";
 	
-	private final static int EXECUTION_BOTTOM_MARGIN = 10;
+	private final static int EXECUTION_BOTTOM_PADDING = 10;
 	
 	private CreateElementAndNodeCommand createElementAndNodeCommand;
 	private IAdaptable adapter;
@@ -62,7 +62,7 @@ public class ApexSetBoundsForExecutionSpecificationCommand extends
 		location.y = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getLocation_Y());
 		size.width = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getSize_Width());
 		size.height = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getSize_Height());
-		int bottom = Math.max(oldBounds.getBottom().y, location.y + size.height + EXECUTION_BOTTOM_MARGIN);
+		int bottom = Math.max(oldBounds.getBottom().y, location.y + size.height + EXECUTION_BOTTOM_PADDING);
 		
 		bounds = new Rectangle(oldBounds);
 		bounds.height = bottom - oldBounds.y;
