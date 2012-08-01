@@ -78,76 +78,8 @@ public class MoDiscoContentProvider extends CustomizableModelContentProvider {
 		// 무한호출 유발하는 요소 포함된 List, 추후 Filtering 시 활용
 		ArrayList<Object> fullResult = new ArrayList<Object>();
 
-		/*
-		// fragment (#) 에서 요소인 Specification가 제외된 #가 표시되도록 하기 위해
-		// CustomizableModelContentProvider.getChildren() 과 ModelElementItem.getChildren() 조합
-		if (parentElement instanceof ModelElementItem) {
-			final ModelElementItem modelElementItem = (ModelElementItem) parentElement;
-			return modelElementItem.getChildren().toArray();
-			
-			final ArrayList<Object> children = new ArrayList<Object>();
-
-			// show a link for the container
-			if (modelElementItem.appearanceConfiguration.isShowContainer()) {
-				addContainer(modelElementItem.fModelElement, children);
-			}
-
-			// show a virtual attribute for the URI
-			if (this.appearanceConfiguration.isShowURI()) {
-				addURIAttribute(children);
-			}
-
-			addVirtualElements(children);
-
-			if (this.appearanceConfiguration.isShowAttributes()) {
-				final List<AttributeItem> attributes = createAttributes();
-				// sort attributes by name
-				// TODO: separate preference for attributes?
-				if (this.appearanceConfiguration.isSortLinks()) {
-					sortAttributes(attributes);
-				}
-				children.addAll(attributes);
-			}
-
-			final ArrayList<Object> elementsInCollapsedLinks = new ArrayList<Object>();
-			final ArrayList<LinkItem> links = createLinks(elementsInCollapsedLinks);
-				final CustomizationEngine customizationEngine = this.appearanceConfiguration
-						.getCustomizationEngine();
-				// filter out invisible elements
-				// cf Bug 329037 - [UICustom] "Collapse Link" option does not
-				// exploit the "Visible" option
-				ListIterator<Object> listIterator = elementsInCollapsedLinks.listIterator();
-				while (listIterator.hasNext()) {
-					Object next = listIterator.next();
-					if (next instanceof ModelElementItem) {
-						ModelElementItem modelElementItem = (ModelElementItem) next;
-						EObject eObject = modelElementItem.getEObject();
-						if (!customizationEngine.isTypeVisible(eObject.eClass(), eObject)) {
-							listIterator.remove();
-						}
-					}
-				}
-			if (this.appearanceConfiguration.isSortInstances()) {
-				BigListItem.sortElements(elementsInCollapsedLinks);
-			}
-			children.addAll(elementsInCollapsedLinks);
-
-			// sort links by name
-			if (this.appearanceConfiguration.isSortLinks()) {
-				sortLinks(links);
-			}
-			if (this.appearanceConfiguration.isSortLinksByType()) {
-				// counting on the fact that sorting preserves the order of equal
-				// elements
-				sortLinksByType(links);
-			}
-			children.addAll(links);
-
-			return children;
-		}
-		*/
 		Object[] arrayObject = super.getChildren(parentElement);
-//*8
+/*8
 System.out.println("MoDiscoContentProvider.getChildren(), line : "
 		+ Thread.currentThread().getStackTrace()[1].getLineNumber());
 System.out.println("parentElement : " + parentElement);
@@ -166,37 +98,20 @@ System.out.println("\n** in super.getChildren loop, arrayObject["+i+"] being add
 //*/
 				if ( arrayObject[i] instanceof ModelElementItem) {
 					ModelElementItem mei = (ModelElementItem)arrayObject[i];
-//*8
+/*8
 System.out.println("      mei.getEObject() being added : " + mei.getEObject());
 //*/
-
-					if (mei.getEObject().getClass().toString().endsWith("SpecificationImpl")) {
-//						canBeAdded = false;
-					} 
 
 				} else if ( arrayObject[i] instanceof LinkItem) {
 					LinkItem li = (LinkItem)arrayObject[i];
 
-//*8					
+/*8					
 System.out.println("      li.getText() : " + li.getText());
 System.out.println("      li.getReference() : " + li.getReference());	
 System.out.println("      li.getParent() : " + li.getParent());
 System.out.println("      li.getParent().getClass().toString() : " + li.getParent().getClass().toString());
 System.out.println("      li.getTreeParent() : " + li.getTreeParent());
 //*/
-					if ( li.getText().startsWith("fragment ") ) {
-						Object[] tmpArray = super.getChildren(li);
-						int numOfCombinedFragments = 0;
-						System.out.println("size of fragment : " + tmpArray.length);
-						for ( int j = 0 ; j < tmpArray.length ; j++ ) {
-							Object tmpObj = tmpArray[j];
-							System.out.println("tmpArray["+j+"] : " + tmpObj);
-							if ( tmpObj instanceof CombinedFragmentImpl) {
-								numOfCombinedFragments++;
-							}							
-						}
-						
-					}
 					
 					if (li.getReference().getName().startsWith("enclosing")) {
 						canBeAdded = false;
