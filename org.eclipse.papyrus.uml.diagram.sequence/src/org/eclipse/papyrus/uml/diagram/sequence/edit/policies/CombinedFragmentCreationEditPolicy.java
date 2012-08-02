@@ -74,7 +74,9 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 				.println("CombinedFragmentCreationEditPolicy.getCreateElementAndViewCommand(), line : "
 						+ Thread.currentThread().getStackTrace()[1]
 								.getLineNumber());
-		System.out.println("targetEditPart1 : " + targetEditPart1);
+		System.out.println("targetEditPart1       : " + targetEditPart1.getClass());
+		System.out.println("request.getLocation()          : " + request.getLocation());
+		System.out.println("getSelectionRectangle(request) : " + getSelectionRectangle(request));
 		
 		if(isDerivedCombinedFragment(request.getViewAndElementDescriptor().getSemanticHint())) {
 

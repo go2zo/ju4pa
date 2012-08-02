@@ -23,8 +23,13 @@ public class ApexInteractionOperandCreationEditPolicy extends
 	protected Command getCreateElementAndViewCommand(CreateViewAndElementRequest request) {
 		/* apex improved start */
 		EditPart targetEditPart = getTargetEditPart(request);
+/*8
+		System.out
+				.println("ApexInteractionOperandCreationEditPolicy.getCreateElementAndViewCommand(), line : "
+						+ Thread.currentThread().getStackTrace()[1]
+								.getLineNumber());
 		System.out.println("targetEditPart : " + targetEditPart);
-		
+/*/
 		Command createElementAndViewCmd = super.getCreateElementAndViewCommand(request);
 
 		
@@ -36,7 +41,7 @@ public class ApexInteractionOperandCreationEditPolicy extends
 			CombinedFragment cf = (CombinedFragment)cfep.resolveSemanticElement();
 			InteractionOperatorKind ioKind = cf.getInteractionOperator();
 			// Operator가 ALT와 같지 않으면
-
+/*8
 			System.out
 					.println("ApexInteractionOperandCreationEditPolicy.getCreateElementAndViewCommand(), line : "
 							+ Thread.currentThread().getStackTrace()[1]
@@ -44,7 +49,9 @@ public class ApexInteractionOperandCreationEditPolicy extends
 		    System.out.println("ioKind.compareTo(ioKind.ALT_LITERAL) : " + ioKind.compareTo(ioKind.ALT_LITERAL));
 		    Point location = request.getLocation();
 		    System.out.println("location : " + location);
-			
+//*/			
+			Point location = request.getLocation();
+		    System.out.println("location : " + location);
 		    if ( InteractionOperatorKind.OPT_LITERAL.equals(ioKind) 
 		    		|| InteractionOperatorKind.LOOP_LITERAL.equals(ioKind) 
 		    		|| InteractionOperatorKind.BREAK_LITERAL.equals(ioKind) 
