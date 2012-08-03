@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.gef.Handle;
+import org.eclipse.gef.Request;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.ResizableShapeEditPolicy;
@@ -40,8 +41,11 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 	@Override
 	protected void showChangeBoundsFeedback(ChangeBoundsRequest request) {
 		/* apex added start */
-		if (getHost() instanceof AbstractExecutionSpecificationEditPart) {
+		if (getHost() instanceof AbstractExecutionSpecificationEditPart
+				&& (request.getResizeDirection() & PositionConstants.NORTH) != 0) {
+			// north로 resize할 경우에도 south 방향으로 resize되도록 변경 해주는 기능
 			request.getMoveDelta().y = 0;
+			request.setResizeDirection(PositionConstants.SOUTH);
 		}
 		/* apex added end */
 		super.showChangeBoundsFeedback(request);
@@ -52,6 +56,11 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 		if (request.getMoveDelta() != null && request.getMoveDelta().x() != 0)
 			return null;
 		return super.getMoveCommand(request);
+	}
+
+	@Override
+	protected Command getResizeCommand(ChangeBoundsRequest request) {
+		return super.getResizeCommand(request);
 	}
 
 }

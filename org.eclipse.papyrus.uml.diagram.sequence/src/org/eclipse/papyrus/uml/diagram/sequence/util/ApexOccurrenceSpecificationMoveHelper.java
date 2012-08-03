@@ -78,7 +78,8 @@ public class ApexOccurrenceSpecificationMoveHelper {
 								if (childToReconnectTo instanceof LifelineEditPart) {
 									figure = ((LifelineEditPart)childToReconnectTo).getNodeFigure();
 								}
-								ConnectionAnchor sourceAnchor = new ApexHorizontalAnchor(figure, pt);
+								
+								ConnectionAnchor sourceAnchor = new ApexHorizontalAnchor(figure, pt, yLocation - newBounds.y);
 								scaCmd.setEdgeAdaptor(new EObjectAdapter(view));
 								scaCmd.setNewSourceTerminal(((INodeEditPart)part).mapConnectionAnchorToTerminal(sourceAnchor));
 								command.add(new ICommandProxy(scaCmd));

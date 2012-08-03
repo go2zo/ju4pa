@@ -85,4 +85,11 @@ public class ApexCustomDefaultSizeNodeFigure extends DefaultSizeNodeFigure {
 		 */
 	}
 
+	@Override
+	public String getConnectionAnchorTerminal(ConnectionAnchor c) {
+		if (c instanceof ApexHorizontalAnchor) {
+			return ((ApexHorizontalAnchor) c).getTerminal();
+		}
+		return super.getConnectionAnchorTerminal(c);
+	}
 }

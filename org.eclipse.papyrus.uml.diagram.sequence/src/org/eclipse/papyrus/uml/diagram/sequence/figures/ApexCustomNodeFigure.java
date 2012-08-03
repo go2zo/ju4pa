@@ -1,5 +1,7 @@
 package org.eclipse.papyrus.uml.diagram.sequence.figures;
 
+import java.util.Iterator;
+
 import org.eclipse.draw2d.ConnectionAnchor;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PrecisionPoint;
@@ -77,4 +79,11 @@ public class ApexCustomNodeFigure extends NodeFigure {
 		 */
 	}
 	
+	@Override
+	public String getConnectionAnchorTerminal(ConnectionAnchor c) {
+		if (c instanceof ApexHorizontalAnchor) {
+			return ((ApexHorizontalAnchor) c).getTerminal();
+		}
+		return super.getConnectionAnchorTerminal(c);
+	}
 }
