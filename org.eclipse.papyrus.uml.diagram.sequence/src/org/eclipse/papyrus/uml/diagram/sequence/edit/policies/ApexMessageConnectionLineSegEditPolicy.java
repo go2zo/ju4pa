@@ -262,6 +262,7 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 							if (semanticElement instanceof Message) {
 								MessageEnd sendEvent = ((Message)semanticElement).getSendEvent();
 								Point location = SequenceUtil.findLocationOfMessageOccurrence((GraphicalEditPart) srcExecSpecEP, (MessageOccurrenceSpecification) sendEvent);
+//								Point location = ApexSequenceUtil.apexGetAbsoluteRectangle(srcConnPart).getLocation();
 								if (lastY < location.y) {
 									lastY = location.y;
 									lastConnPart = srcConnPart;
@@ -467,15 +468,21 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 	protected void showMoveLineSegFeedback(BendpointRequest request) {
 		/* apex added start */
 		ConnectionNodeEditPart host = (ConnectionNodeEditPart)getHost();
+		Connection connection = host.getConnectionFigure();
 		
 		Point location = request.getLocation().getCopy();
-		host.getFigure().translateToRelative(location);
+		connection.translateToRelative(location);
 		
-		Connection connection = host.getConnectionFigure();
-		Point start = connection.getSourceAnchor().getReferencePoint();
-		Point end = connection.getTargetAnchor().getReferencePoint();
+		Point srcAnchorPoint = connection.getSourceAnchor().getReferencePoint();
+		Point tgtAnchorPoint = connection.getTargetAnchor().getReferencePoint();
+		Point start = connection.getSourceAnchor().getLocation(tgtAnchorPoint);
+		Point end = connection.getTargetAnchor().getLocation(srcAnchorPoint);
+//		Point start = connection.getSourceAnchor().getReferencePoint();
+//		Point end = connection.getTargetAnchor().getReferencePoint();
 //		Point start = SequenceUtil.getAbsoluteEdgeExtremity(host, true);
 //		Point end = SequenceUtil.getAbsoluteEdgeExtremity(host, false);
+		connection.translateToRelative(start);
+		connection.translateToRelative(end);
 		start.setY(location.y());
 		end.setY(location.y());
 		
