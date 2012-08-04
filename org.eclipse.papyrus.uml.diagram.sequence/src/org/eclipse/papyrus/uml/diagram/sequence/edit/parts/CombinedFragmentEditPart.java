@@ -1147,7 +1147,7 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 	 */
 	protected void handleNotificationEvent(Notification notification) {
 		Object feature = notification.getFeature();
-
+		System.out.println("notification.getNotifier() : "+notification.getNotifier());
 		if(UMLPackage.eINSTANCE.getCombinedFragment_InteractionOperator().equals(feature)) {
 			CombinedFragment combinedFragment = (CombinedFragment)resolveSemanticElement();
 			String newStringValue = notification.getNewStringValue();
@@ -1237,6 +1237,29 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 		if (notification.getNotifier() instanceof Bounds) {
 			final Bounds newBounds = (Bounds)notification.getNotifier();
 			updateCoveredLifelines(newBounds);
+			
+			//*8
+			System.out
+					.println("CombinedFragmentEditPart.handleNotificationEvent(), line : "
+							+ Thread.currentThread().getStackTrace()[1]
+									.getLineNumber());
+			System.out.println("newBounds          : " + newBounds);
+			Rectangle rect = new Rectangle(newBounds.getX(),
+					                       newBounds.getY(),
+					                       newBounds.getWidth(),
+					                       newBounds.getHeight());
+			System.out.println("rect before abs    : " + rect);
+			figure.translateToAbsolute(rect);
+			System.out.println("rect after abs     : " + rect);
+			figure.translateToRelative(rect);
+			System.out.println("rect after rel     : " + rect);
+			figure.translateToParent(rect);
+			System.out.println("rect after toParent: " + rect);
+			figure.translateFromParent(rect);
+			System.out.println("rect from toParent : " + rect);
+			
+			System.out.println("figure.getBounds() : " + figure.getBounds().getCopy());
+			//*/
 			
 			// 아래 로직은 Lifeline의 경계 변경 시 해당 lifeline의 coveredBy를 수정하는 것으로
 			// LifelineEditPart.handleNotification()에서 호출되어 수행되므로 제외처리

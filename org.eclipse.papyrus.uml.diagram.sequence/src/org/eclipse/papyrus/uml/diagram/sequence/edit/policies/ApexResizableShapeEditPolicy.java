@@ -104,12 +104,12 @@ public class ApexResizableShapeEditPolicy extends ResizableShapeEditPolicy {
 	@Override
 	public Command getCommand(Request request) {
 		/* apex improved start */
-		if (RequestConstants.REQ_AUTOSIZE.equals(request.getType()) /*&& autoSizeEnabled*/) {
+		if (RequestConstants.REQ_AUTOSIZE.equals(request.getType()) && autoSizeEnabled) {
 
 			return getAutoSizeCommand(request);
 		}
 			
-		if (RequestConstants.REQ_MOVE_DEFERRED.equals(request.getType()) /*&& moveDeferredEnabled*/) {
+		if (RequestConstants.REQ_MOVE_DEFERRED.equals(request.getType()) && moveDeferredEnabled) {
 
 			return getMoveDeferredCommand((ChangeBoundsDeferredRequest) request);
 		}
@@ -125,176 +125,7 @@ public class ApexResizableShapeEditPolicy extends ResizableShapeEditPolicy {
 		return super.getCommand(request);
 		*/
 	}
-	
-	/**
-	 * apex updated
-	 * 
-	 * Cfreates a new AutoSize comamnd
-	 * 
-	 * @param request
-	 * @return command
-	 */
-	@Override
-	protected Command getAutoSizeCommand(Request request) {
-		/* apex improved start */
-		int width = -1;
-		
-		int height = -1;
 
-		if ( getHost() instanceof CombinedFragmentEditPart) {
-			
-			CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)getHost();
-			Rectangle thisRect = cfep.getFigure().getBounds().getCopy();
-/*8
-System.out.println("before toAbsolute : " + thisRect);
-//*/
-			// 절대좌표로 변환
-			cfep.getFigure().getParent().translateToAbsolute(thisRect);
-/*8
-System.out.println("after  toAbsolute : " + thisRect);
-//*/
-			int buffer = 30;
-			
-			int thisWidth = thisRect.width;
-			int thisRight = thisRect.right();
-			int maxChildRight = thisRight;
-			
-			int thisHeight = thisRect.height;
-			int thisBottom = thisRect.bottom();
-			int maxChildBottom = thisBottom;
-			
-			List<EditPart> childrenList = ApexSequenceUtil.apexGetChildEditPartList(cfep);
-
-			for ( EditPart ep : childrenList) {
-				if ( ep instanceof CombinedFragmentEditPart) {
-					AbstractGraphicalEditPart agep = (AbstractGraphicalEditPart)ep;
-					Rectangle childRect = agep.getFigure().getBounds().getCopy();
-					// 절대좌표로 변환
-					agep.getFigure().getParent().translateToAbsolute(childRect);
-					int childRight = childRect.right();
-					int childBottom = childRect.bottom();
-
-					// 절대값으로 비교
-					if (childRight > maxChildRight)
-						maxChildRight = childRight;						
-					if (childBottom > maxChildBottom)
-						maxChildBottom = childBottom;
-				}
-			}						
-			
-			if (maxChildRight > thisRight)
-				width = thisWidth + (maxChildRight-thisRight) + buffer;
-			else
-				width = thisWidth;
-			
-			if (maxChildBottom > thisBottom)
-				height = thisHeight + (maxChildBottom-thisBottom) + buffer;
-			else
-				height = thisHeight;					
-/*8
-System.out.println("////////////");
-System.out.println("request.getType()      : " + request.getType());
-if ( request instanceof ChangeBoundsRequest)
-	System.out.println("request.sizeDelta  : " + ((ChangeBoundsRequest)request).getSizeDelta());
-//*/
-/*8
-System.out.println("ApexResizableShapeEditPolicy.getAutoSizeCommand(), line : "+Thread.currentThread().getStackTrace()[1].getLineNumber());
-
-System.out.println("thisWidth     : " + thisWidth);
-System.out.println("thisRight     : " + thisRight);
-System.out.println("maxChildRight : " + maxChildRight);
-System.out.println("result width  : " + width);
-
-System.out.println("thisHeight    : " + thisHeight);
-System.out.println("thisBottom    : " + thisBottom);
-System.out.println("maxChildBottom: " + maxChildBottom);
-System.out.println("result height : " + height);
-//*/
-		}
-//*/
-		
-		TransactionalEditingDomain editingDomain = ((IGraphicalEditPart) getHost()).getEditingDomain();
-		ICommand resizeCommand = new SetBoundsCommand(editingDomain, 
-			DiagramUIMessages.SetAutoSizeCommand_Label,
-			new EObjectAdapter((View) getHost().getModel()), new Dimension(width, height));
-
-		return new ICommandProxy(resizeCommand);
-		/* apex improved end */
-		
-		/* apex replaced
-		TransactionalEditingDomain editingDomain = ((IGraphicalEditPart) getHost()).getEditingDomain();
-		ICommand resizeCommand = new SetBoundsCommand(editingDomain, 
-			DiagramUIMessages.SetAutoSizeCommand_Label,
-			new EObjectAdapter((View) getHost().getModel()), new Dimension(-1,
-				-1));
-		return new ICommandProxy(resizeCommand);
-    	*/
-	}
-
-	/**
-	 * Method getMoveDeferredCommand.
-	 * 
-	 * @param request
-	 * @return Command
-	 */
-	protected Command getMoveDeferredCommand(ChangeBoundsDeferredRequest request) {
-System.out.println("moveDeferred");
-		final class SetDeferredPropertyCommand
-			extends AbstractTransactionalCommand {
-
-			private IAdaptable newValue;
-
-			private IAdaptable viewAdapter;
-
-			/**
-			 * constructor
-			 * 
-             * @param editingDomain
-             * the editing domain through which model changes are made
-			 * @param label
-			 * @param viewAdapter
-			 * @param newValue
-			 */
-			public SetDeferredPropertyCommand(TransactionalEditingDomain editingDomain, String label,
-					IAdaptable viewAdapter, IAdaptable newValue) {
-				super(editingDomain, label, null);
-				this.viewAdapter = viewAdapter;
-				this.newValue = newValue;
-			}
-
-			protected CommandResult doExecuteWithResult(
-                    IProgressMonitor progressMonitor, IAdaptable info)
-                throws ExecutionException {
-                
-				if (null == viewAdapter || null == newValue)
-					return CommandResult.newCancelledCommandResult();
-
-				View view = (View) viewAdapter.getAdapter(View.class);
-				Point p = (Point) newValue
-					.getAdapter(IPropertyValueDeferred.class);
-				ViewUtil.setStructuralFeatureValue(view, NotationPackage.eINSTANCE.getLocation_X(),
-						Integer.valueOf(p.x));
-				ViewUtil.setStructuralFeatureValue(view, NotationPackage.eINSTANCE.getLocation_Y(),
-						Integer.valueOf(p.y));
-
-				// clear for garbage collection
-				viewAdapter = null;
-				newValue = null;
-				return CommandResult.newOKCommandResult();
-			}
-		}
-        View view = (View) getHost().getModel();
-        
-        TransactionalEditingDomain editingDomain = ((IGraphicalEditPart) getHost())
-            .getEditingDomain();
-        
-        SetDeferredPropertyCommand cmd = new SetDeferredPropertyCommand(editingDomain,
-			DiagramUIMessages.ResizableShapeEditPolicy_MoveDeferredCommand_label,
-			new EObjectAdapter(view), request
-				.getLocationAdapter());
-		return new ICommandProxy(cmd);
-	}
-	
 	/**
 	 * Returns the direction the figure is being moved. Possible values are
 	 * <ul>
