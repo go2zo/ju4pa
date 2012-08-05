@@ -138,8 +138,35 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 
 				if (coveredInteractionFragments == null) {
 					return UnexecutableCommand.INSTANCE;
-				}								
-			}
+				}				
+				
+				if ( targetEditPart instanceof InteractionOperandEditPart ) {
+					InteractionOperandEditPart ioep = (InteractionOperandEditPart)targetEditPart;				
+					CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)ioep.getParent().getParent();
+					CombinedFragment cf = (CombinedFragment)cfep.resolveSemanticElement();
+					InteractionOperatorKind ioKind = cf.getInteractionOperator();
+					// Operator가 ALT와 같지 않으면
+		/*8
+					System.out
+							.println("ApexInteractionOperandCreationEditPolicy.getCreateElementAndViewCommand(), line : "
+									+ Thread.currentThread().getStackTrace()[1]
+											.getLineNumber());
+				    System.out.println("ioKind.compareTo(ioKind.ALT_LITERAL) : " + ioKind.compareTo(ioKind.ALT_LITERAL));
+				    Point location = request.getLocation();
+				    System.out.println("location : " + location);
+		//*/			
+					Point location = request.getLocation();
+				    System.out.println("location : " + location);
+				    if ( InteractionOperatorKind.OPT_LITERAL.equals(ioKind) 
+				    		|| InteractionOperatorKind.LOOP_LITERAL.equals(ioKind) 
+				    		|| InteractionOperatorKind.BREAK_LITERAL.equals(ioKind) 
+				    		|| InteractionOperatorKind.NEG_LITERAL.equals(ioKind)
+				       ) {
+						// UnexecutableCommand.INSTANCE 리턴해도 X 표시 되지 않음 ㅠㅜ
+						return UnexecutableCommand.INSTANCE;
+					}				
+				}
+			}			
 			
 			// 아래는 0.9에서 추가된 로직
 			// Add updating bounds command for Combined fragment createment
