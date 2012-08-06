@@ -12,6 +12,7 @@ import org.eclipse.draw2d.PolylineConnection;
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.PointList;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
@@ -314,7 +315,9 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 								compoudCmd.add(nextCmd);
 							}
 							else {
-								apexGetResizeOrMoveBelowItemsCommand(request, nextSiblingEditPart);
+								Command nextCmd = nextSiblingEditPart.getCommand(request);
+								compoudCmd.add(nextCmd);
+//								apexGetResizeOrMoveBelowItemsCommand(request, nextSiblingEditPart);
 							}
 						}
 					}
@@ -408,8 +411,8 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 	 */
 	private static Command apexGetResizeOrMoveBelowItemsCommand(ChangeBoundsRequest request, IGraphicalEditPart gep) {
 		CompoundCommand command = new CompoundCommand();
-//		command.add(InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(request, (GraphicalEditPart)gep));
-//		InteractionCompartmentXYLayoutEditPolicy.apexGetResizeOrMoveBelowItemsCommand(request, (GraphicalEditPart)gep, command);
+		gep.getCommand(request);
+		command.add(InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(request, (GraphicalEditPart)gep));
 		return command;
 	}
 	
@@ -455,9 +458,14 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 	@Override
 	public void showSourceFeedback(Request request) {
 		if(request instanceof BendpointRequest) {
+			/* apex improved start */
+			super.showSourceFeedback(request);
+			/* apex improved end */
+			/* apex replaced
 			if(isHorizontal()) {
 				super.showSourceFeedback(request);
 			}
+			*/
 		}
 	}
 	
@@ -473,22 +481,31 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 		Point location = request.getLocation().getCopy();
 		connection.translateToRelative(location);
 		
-		Point srcAnchorPoint = connection.getSourceAnchor().getReferencePoint();
-		Point tgtAnchorPoint = connection.getTargetAnchor().getReferencePoint();
-		Point start = connection.getSourceAnchor().getLocation(tgtAnchorPoint);
-		Point end = connection.getTargetAnchor().getLocation(srcAnchorPoint);
-//		Point start = connection.getSourceAnchor().getReferencePoint();
-//		Point end = connection.getTargetAnchor().getReferencePoint();
-//		Point start = SequenceUtil.getAbsoluteEdgeExtremity(host, true);
-//		Point end = SequenceUtil.getAbsoluteEdgeExtremity(host, false);
-		connection.translateToRelative(start);
-		connection.translateToRelative(end);
-		start.setY(location.y());
-		end.setY(location.y());
+//		Point srcAnchorPoint = connection.getSourceAnchor().getReferencePoint();
+//		Point tgtAnchorPoint = connection.getTargetAnchor().getReferencePoint();
+//		Point start = connection.getSourceAnchor().getLocation(tgtAnchorPoint);
+//		Point end = connection.getTargetAnchor().getLocation(srcAnchorPoint);
+////		Point start = connection.getSourceAnchor().getReferencePoint();
+////		Point end = connection.getTargetAnchor().getReferencePoint();
+////		Point start = SequenceUtil.getAbsoluteEdgeExtremity(host, true);
+////		Point end = SequenceUtil.getAbsoluteEdgeExtremity(host, false);
+//		connection.translateToRelative(start);
+//		connection.translateToRelative(end);
+//		start.setY(location.y());
+//		end.setY(location.y());
+		
+		PointList pl = connection.getPoints().getCopy();
+		int dy = location.y - pl.getFirstPoint().y;
+		for (int i = 0; i < pl.size(); i++) {
+			Point p = pl.getPoint(i);
+			p.y += dy;
+			pl.setPoint(p, i);
+		}
 		
 		PolylineConnection feedbackConnection = getDragSourceFeedbackFigure();
-		feedbackConnection.setStart(start);
-		feedbackConnection.setEnd(end);
+//		feedbackConnection.setStart(start);
+//		feedbackConnection.setEnd(end);
+		feedbackConnection.setPoints(pl);
 		/* apex added end */
 	}
 
