@@ -7,6 +7,7 @@ import org.eclipse.draw2d.ConnectionLocator;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.gef.DragTracker;
 import org.eclipse.gef.EditPart;
+import org.eclipse.gef.EditPolicy;
 import org.eclipse.gef.Request;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.notation.Diagram;
@@ -85,6 +86,15 @@ public abstract class AbstractMessageEditPart extends ConnectionNodeEditPart {
 		receiveEventPart.rebuildLinks(diagram);
 	}
 
+	/**
+	 * apex updated
+	 */
+	@Override
+	protected void createDefaultEditPolicies() {
+		super.createDefaultEditPolicies();
+		removeEditPolicy(EditPolicy.CONNECTION_BENDPOINTS_ROLE);
+	}
+	
 	/**
 	 * apex updated
 	 */
