@@ -36,6 +36,7 @@ import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescrip
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.OperandBoundsComputeHelper;
@@ -43,8 +44,10 @@ import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.uml2.uml.ActionExecutionSpecification;
 import org.eclipse.uml2.uml.BehaviorExecutionSpecification;
+import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
+import org.eclipse.uml2.uml.InteractionOperatorKind;
 import org.eclipse.uml2.uml.Lifeline;
 
 /**
@@ -63,8 +66,18 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 	@Override
 	protected Command getCreateElementAndViewCommand(CreateViewAndElementRequest request) {
 		/* apex improved start */
+		
 		Command createElementAndViewCmd = super.getCreateElementAndViewCommand(request);
 
+		EditPart targetEditPart1 = getTargetEditPart(request);
+		System.out
+				.println("CombinedFragmentCreationEditPolicy.getCreateElementAndViewCommand(), line : "
+						+ Thread.currentThread().getStackTrace()[1]
+								.getLineNumber());
+		System.out.println("targetEditPart1       : " + targetEditPart1.getClass());
+		System.out.println("request.getLocation()          : " + request.getLocation());
+		System.out.println("getSelectionRectangle(request) : " + getSelectionRectangle(request));
+		
 		if(isDerivedCombinedFragment(request.getViewAndElementDescriptor().getSemanticHint())) {
 
 			Rectangle selectionRect = getSelectionRectangle(request);
@@ -125,7 +138,34 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 
 				if (coveredInteractionFragments == null) {
 					return UnexecutableCommand.INSTANCE;
-				}								
+				}				
+				
+				if ( targetEditPart instanceof InteractionOperandEditPart ) {
+					InteractionOperandEditPart ioep = (InteractionOperandEditPart)targetEditPart;				
+					CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)ioep.getParent().getParent();
+					CombinedFragment cf = (CombinedFragment)cfep.resolveSemanticElement();
+					InteractionOperatorKind ioKind = cf.getInteractionOperator();
+					// Operator가 ALT와 같지 않으면
+		/*8
+					System.out
+							.println("ApexInteractionOperandCreationEditPolicy.getCreateElementAndViewCommand(), line : "
+									+ Thread.currentThread().getStackTrace()[1]
+											.getLineNumber());
+				    System.out.println("ioKind.compareTo(ioKind.ALT_LITERAL) : " + ioKind.compareTo(ioKind.ALT_LITERAL));
+				    Point location = request.getLocation();
+				    System.out.println("location : " + location);
+		//*/			
+					Point location = request.getLocation();
+				    System.out.println("location : " + location);
+				    if ( InteractionOperatorKind.OPT_LITERAL.equals(ioKind) 
+				    		|| InteractionOperatorKind.LOOP_LITERAL.equals(ioKind) 
+				    		|| InteractionOperatorKind.BREAK_LITERAL.equals(ioKind) 
+				    		|| InteractionOperatorKind.NEG_LITERAL.equals(ioKind)
+				       ) {
+						// UnexecutableCommand.INSTANCE 리턴해도 X 표시 되지 않음 ㅠㅜ
+						return UnexecutableCommand.INSTANCE;
+					}				
+				}
 			}			
 			
 			// 아래는 0.9에서 추가된 로직

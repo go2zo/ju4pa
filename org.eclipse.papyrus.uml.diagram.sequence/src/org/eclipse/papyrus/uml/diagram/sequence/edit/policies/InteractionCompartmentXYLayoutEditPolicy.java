@@ -531,7 +531,22 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 					}
 					
 				}
-
+				
+				List childEditPartList = combinedFragmentEditPart.getChildren();
+				
+				if ( childEditPartList.size() > 0 ) {
+					for ( int i = 0 ; i < childEditPartList.size() ; i++ ) {
+						IGraphicalEditPart childEditPart = (IGraphicalEditPart)childEditPartList.get(i);
+						int yBottomChild = ApexSequenceUtil.apexGetAbsolutePosition(childEditPart, SWT.BOTTOM);
+						if ( yAfterMove <= yBottomChild ) {
+							System.out
+									.println("InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(), line : "
+											+ Thread.currentThread()
+													.getStackTrace()[1]
+													.getLineNumber());
+						}
+					}					
+				}
 			}
 			/* apex added end */
 		// 이동 끝
@@ -953,7 +968,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 	 */
 	public static CompoundCommand apexResizeCombinedFragmentBoundsCommand(ChangeBoundsRequest request, CombinedFragmentEditPart combinedFragmentEditPart, CombinedFragmentEditPart childCombinedFragmentEditPart, boolean isResizeByChildMove) {
 				
-		CompoundCommand ccmd = new CompoundCommand();
+		CompoundCommand ccmd = new CompoundCommand();		
 		
 		// request 에서 size 뽑아서 처리
 		IFigure cfFigure = combinedFragmentEditPart.getFigure();
@@ -985,9 +1000,14 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 					return ccmd;
 				}
 				// child.bottom보다 작으면 X
-				if ( origCFBounds.bottom() <= childRect.bottom() ) {					
-					ccmd.add(UnexecutableCommand.INSTANCE);
-					return ccmd;
+				if ( origCFBounds.bottom() <= childRect.bottom() ) {
+					// request 가 resize인 경우에만 unexecutable
+					// request 가 move인 경우 child의 bottom 보다 위로 올려도 문제 없음
+					if ( request.getType().equals(REQ_RESIZE)
+						 || request.getType().equals(REQ_RESIZE_CHILDREN) ) {
+						ccmd.add(UnexecutableCommand.INSTANCE);
+						return ccmd;	
+					}					
 				}
 			}			
 		}
@@ -1523,10 +1543,7 @@ System.out.println("request.getType() " + request.getType());
 				}
 			}	
 		} else {
-
-System.out.println("return of getCFResizeChildrenCommand is neither UnexecutableCommand nor CompoundCommand : " + cpCmd);
 			return UnexecutableCommand.INSTANCE;
-
 		}
 		
 		return ccmd;
