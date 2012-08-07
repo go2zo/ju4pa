@@ -58,7 +58,11 @@ public interface SequenceRequestConstant {
 	/** connectable element create command */
 	public static final String CONNECTABLE_ELEMENT_CREATE_COMMAND = "Connectable Element Create Command"; //$NON-NLS-1$
 	
-	/** update connectable element's type reference*/
+	/** update connectable element's type reference */
 	public static final String CONNECTABLE_ELEMENT_TYPE = "Connectable Element Type"; //$NON-NLS-1$
+	
+	// XXX delete
+	/** changed execution specification bounds */
+//	public static final String CHANGED_EXECUTION_SPECIFICATION_BOUNDS = "Changed Execution Specification Bounds"; //$NON-NLS-1$
 	/* apex added end */
 }

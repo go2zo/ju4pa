@@ -519,11 +519,11 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * @param agep
 	 * @param findConnection	Whether to find Message or not 
 	 * @param findExecSpec		Whether to find ExecutionSpec or not 
-	 * @param findFromStart
+	 * @param findFront
 	 * @return
 	 */
-	public static List apexGetLinkedEditPartList(IGraphicalEditPart agep, boolean findConnection, boolean findExecSpec, boolean findFromStart) {
-		return apexGetLinkedEditPartList(agep, findConnection, findExecSpec, findFromStart, new ArrayList());
+	public static List<IGraphicalEditPart> apexGetLinkedEditPartList(IGraphicalEditPart agep, boolean findConnection, boolean findExecSpec, boolean findFront) {
+		return apexGetLinkedEditPartList(agep, findConnection, findExecSpec, findFront, new ArrayList());
 	}
 	
 	/**
@@ -532,64 +532,38 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * @param agep Message or ExecutionSpecification
 	 * @param findConnection
 	 * @param findExecSpec
-	 * @param findFromStart
+	 * @param findFront
 	 * @param list
 	 * @return
 	 */
-	public static List apexGetLinkedEditPartList(IGraphicalEditPart agep, boolean findConnection, boolean findExecSpec, boolean findFromStart, List list) {
-		if (findFromStart) {
-			if (agep instanceof ConnectionNodeEditPart) {
-				ConnectionNodeEditPart cep = (ConnectionNodeEditPart)agep;
-				IGraphicalEditPart srcEditPart = (IGraphicalEditPart)cep.getSource();
-				if ( !(srcEditPart instanceof LifelineEditPart) ) {
-					return apexGetLinkedEditPartList(srcEditPart, findConnection, findExecSpec, findFromStart, list);
-				}
-			}
-			if (agep instanceof ActionExecutionSpecificationEditPart || agep instanceof BehaviorExecutionSpecificationEditPart) {
-				List tgtConnections = agep.getTargetConnections();
-				Iterator iter = tgtConnections.iterator();
-				while (iter.hasNext()) {
-					ConnectionNodeEditPart tgtConnection = (ConnectionNodeEditPart)iter.next();
-					apexGetLinkedEditPartList((ConnectionNodeEditPart)tgtConnection, findConnection, findExecSpec, findFromStart, list);
-					if ( !list.isEmpty() ) {
-						return list;
-					}
-				}
-			}
-		}
-		
+	public static List<IGraphicalEditPart> apexGetLinkedEditPartList(IGraphicalEditPart agep, boolean findConnection, boolean findExecSpec, boolean findFront, List list) {
 		if (agep instanceof ConnectionNodeEditPart) {
 			ConnectionNodeEditPart cep = (ConnectionNodeEditPart)agep;
 			if (findConnection)
-				list.add(0, cep);
-			IGraphicalEditPart tgtEditPart = (IGraphicalEditPart)cep.getTarget();
-			apexGetLinkedEditPartList(tgtEditPart, findConnection, findExecSpec, false, list);
-		}
-		else if (agep instanceof ActionExecutionSpecificationEditPart || agep instanceof BehaviorExecutionSpecificationEditPart) {
-			if (findExecSpec)
-				list.add(0, agep);
-			List srcConnections = agep.getSourceConnections();
-			Iterator iter = srcConnections.iterator();
-			while (iter.hasNext()) {
-				ConnectionNodeEditPart srcConnection = (ConnectionNodeEditPart)iter.next();
-				apexGetLinkedEditPartList((ConnectionNodeEditPart)srcConnection, findConnection, findExecSpec, false, list);
-			}
-		}
-		else if (agep instanceof LifelineEditPart) {
-			LifelineEditPart lep = (LifelineEditPart)agep;
-			IFigure lLFigure = lep.getFigure();
-			Rectangle origLLBounds = lLFigure.getBounds().getCopy();
-			lLFigure.getParent().translateToAbsolute(origLLBounds);
+				list.add(cep);
 			
-			List editParts = apexGetBelowEditPartList(lep);
-			Iterator iter = editParts.iterator();
-			while (iter.hasNext()) {
-				IGraphicalEditPart editPart = (IGraphicalEditPart)iter.next();
-				IFigure figure = editPart.getFigure();
-				Rectangle bounds = figure.getBounds().getCopy();
-				figure.getParent().translateToAbsolute(bounds);
-				if (origLLBounds.contains(bounds)) {
-					apexGetLinkedEditPartList(editPart, findConnection, findExecSpec, false, list);
+			IGraphicalEditPart nextEditPart = null;
+			if (!findFront)
+				nextEditPart = (IGraphicalEditPart)cep.getTarget();
+			else
+				nextEditPart = (IGraphicalEditPart)cep.getSource();
+			apexGetLinkedEditPartList(nextEditPart, findConnection, findExecSpec, findFront, list);
+		}
+		else if (agep instanceof AbstractExecutionSpecificationEditPart) {
+			if (findExecSpec)
+				list.add(agep);
+			
+			List connections = null;
+			if (!findFront)
+				connections = agep.getSourceConnections();
+			else
+				connections = agep.getTargetConnections();
+			
+			if (connections != null) {
+				Iterator iter = connections.iterator();
+				while (iter.hasNext()) {
+					ConnectionNodeEditPart srcConnection = (ConnectionNodeEditPart)iter.next();
+					apexGetLinkedEditPartList((ConnectionNodeEditPart)srcConnection, findConnection, findExecSpec, findFront, list);
 				}
 			}
 		}
@@ -1014,6 +988,15 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		
 		result.removeAll(removeList);
+		
+		Collections.sort(result, new Comparator<IGraphicalEditPart>() {
+			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
+				int i1 = apexGetAbsolutePosition(o1, SWT.TOP);
+				int i2 = apexGetAbsolutePosition(o2, SWT.TOP);
+				return i1 - i2;
+			}
+		});
+		
 		return result;
 	}
 	
@@ -1029,6 +1012,15 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		
 		result.removeAll(removeList);
+		
+		Collections.sort(result, new Comparator<IGraphicalEditPart>() {
+			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
+				int i1 = apexGetAbsolutePosition(o1, SWT.BOTTOM);
+				int i2 = apexGetAbsolutePosition(o2, SWT.BOTTOM);
+				return i1 - i2;
+			}
+		});
+		
 		return result;
 	}
 }

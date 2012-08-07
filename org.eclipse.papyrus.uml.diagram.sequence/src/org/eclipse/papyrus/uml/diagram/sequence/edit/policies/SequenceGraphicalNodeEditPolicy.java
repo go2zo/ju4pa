@@ -243,7 +243,7 @@ public class SequenceGraphicalNodeEditPolicy extends GraphicalNodeEditPolicy {
 
 		Point sourcePoint = (Point)request.getExtendedData().get(SequenceRequestConstant.SOURCE_LOCATION_DATA);
 		Point targetPoint = request.getLocation();
-
+		
 		// prevent uphill message (leave margin for horizontal messages)
 		if(sourcePoint == null || sourcePoint.y >= targetPoint.y + MARGIN) {
 			return UnexecutableCommand.INSTANCE;
@@ -312,7 +312,9 @@ public class SequenceGraphicalNodeEditPolicy extends GraphicalNodeEditPolicy {
 	@Override
 	protected Command getReconnectSourceCommand(ReconnectRequest request) {
 		if(isUphillMessage(request)) {
+			/* apex replaced
 			return UnexecutableCommand.INSTANCE;
+			 */
 		}
 		return super.getReconnectSourceCommand(request);
 	}
@@ -323,7 +325,9 @@ public class SequenceGraphicalNodeEditPolicy extends GraphicalNodeEditPolicy {
 	@Override
 	protected Command getReconnectTargetCommand(ReconnectRequest request) {
 		if(isUphillMessage(request)) {
+			/* apex replaced
 			return UnexecutableCommand.INSTANCE;
+			 */
 		}
 		return super.getReconnectTargetCommand(request);
 	}

@@ -14,6 +14,7 @@
 package org.eclipse.papyrus.uml.diagram.common.draw2d.anchors;
 
 import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PrecisionPoint;
 import org.eclipse.gmf.runtime.gef.ui.figures.SlidableAnchor;
 

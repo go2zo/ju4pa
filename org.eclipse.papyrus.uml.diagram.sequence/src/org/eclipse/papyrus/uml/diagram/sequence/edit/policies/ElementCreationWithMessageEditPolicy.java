@@ -153,7 +153,7 @@ public class ElementCreationWithMessageEditPolicy extends LifelineChildGraphical
 		hints.add(((IHintedType)UMLElementTypes.Message_4003).getSemanticHint());
 		hints.add(((IHintedType)UMLElementTypes.Message_4004).getSemanticHint());
 		hints.add(((IHintedType)UMLElementTypes.Message_4005).getSemanticHint());
-//		hints.add(((IHintedType)UMLElementTypes.Message_4006).getSemanticHint());
+//		hints.add(((IHintedType)UMLElementTypes.Message_4006).getSemanticHint());	// Create Message
 		hints.add(((IHintedType)UMLElementTypes.Message_4007).getSemanticHint());
 		hints.add(((IHintedType)UMLElementTypes.Message_4008).getSemanticHint());
 		hints.add(((IHintedType)UMLElementTypes.Message_4009).getSemanticHint());

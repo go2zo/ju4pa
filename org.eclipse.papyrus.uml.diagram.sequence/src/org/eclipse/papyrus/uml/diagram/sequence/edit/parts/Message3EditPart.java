@@ -33,6 +33,7 @@ import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.editpolicies.AppliedStereotypeLinkLabelDisplayEditPolicy;
 import org.eclipse.papyrus.uml.diagram.common.figure.edge.UMLEdgeFigure;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractMessageEditPart.MessageFigure;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ApexMessageConnectionLineSegEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.CreationOnMessageEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.LifelineChildGraphicalNodeEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.Message3ItemSemanticEditPolicy;
@@ -97,7 +98,12 @@ implements ITreeBranchEditPart {
 		installEditPolicy(EditPolicyRoles.CREATION_ROLE, new CreationOnMessageEditPolicy());
 		installEditPolicy(EditPolicy.CONNECTION_ROLE, new MessageConnectionEditPolicy());
 		installEditPolicy(AppliedStereotypeLinkLabelDisplayEditPolicy.STEREOTYPE_LABEL_POLICY, new AppliedStereotypeLinkLabelDisplayEditPolicy());
+		/* apex improved start */
+		installEditPolicy(EditPolicy.CONNECTION_BENDPOINTS_ROLE, new ApexMessageConnectionLineSegEditPolicy());
+		/* apex improved end */
+		/* apex replaced
 		installEditPolicy(EditPolicy.CONNECTION_BENDPOINTS_ROLE, new MessageConnectionLineSegEditPolicy());
+		*/
 	}
 
 	/**

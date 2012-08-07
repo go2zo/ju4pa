@@ -6,6 +6,7 @@ import java.util.List;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
@@ -31,7 +32,6 @@ import org.eclipse.papyrus.uml.diagram.sequence.part.UMLVisualIDRegistry;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.InteractionFragment;
 
 public class PromptCreateElementAndNodeCommand extends
@@ -95,14 +95,15 @@ public class PromptCreateElementAndNodeCommand extends
 		/* apex added start */
 		// jiho - Source인 ExecSpec의 Bounds, Connection의 Anchor을 자동변경하는 Command 생성
 		if (sourceEP instanceof AbstractExecutionSpecificationEditPart) {
-			View view = (View)sourceEP.getModel();
+			AbstractExecutionSpecificationEditPart execuSpecEP = (AbstractExecutionSpecificationEditPart)sourceEP;
+			View view = (View)execuSpecEP.getModel();
 			ApexSetBoundsForExecutionSpecificationCommand setBoundsCommand = new ApexSetBoundsForExecutionSpecificationCommand(
 					editingDomain, createExecutionSpecificationCommand, new EObjectAdapter(view));
 			
 			command.add(new ICommandProxy(setBoundsCommand));
 
-			command.add(new ICommandProxy(new ApexPreserveAnchorsPositionCommand(
-					(ShapeNodeEditPart)sourceEP, setBoundsCommand, ApexPreserveAnchorsPositionCommand.PRESERVE_Y)));
+			command.add(new ICommandProxy(new ApexSetBoundsAndPreserveAnchorsPositionCommand( execuSpecEP, setBoundsCommand,
+					ApexPreserveAnchorsPositionCommand.PRESERVE_Y, execuSpecEP.getFigure(), PositionConstants.SOUTH) ));
 		}
 		/* apex added end */
 		
