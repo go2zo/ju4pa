@@ -5,7 +5,9 @@ import java.util.List;
 
 import org.eclipse.draw2d.ConnectionLocator;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.gef.DragTracker;
 import org.eclipse.gef.EditPart;
+import org.eclipse.gef.Request;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.notation.Diagram;
 import org.eclipse.gmf.runtime.notation.View;
@@ -82,4 +84,19 @@ public abstract class AbstractMessageEditPart extends ConnectionNodeEditPart {
 		sendEventPart.rebuildLinks(diagram);
 		receiveEventPart.rebuildLinks(diagram);
 	}
+
+	/**
+	 * apex updated
+	 */
+	@Override
+	public DragTracker getDragTracker(Request req) {
+		/* apex improved start */
+		return new ApexSelectConnectionEditPartTracker(this);
+		/* apex improved end */
+		/* apex replaced
+		return super.getDragTracker(req);
+		 */
+	}
+	
+	
 }
