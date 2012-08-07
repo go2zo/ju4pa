@@ -497,15 +497,17 @@ public class OperandBoundsComputeHelper {
 					currentIOEP);
 			
 			/* apex added start */
-			// previousOp의 Lowest bottom+1 보다 위로 resize 안되게 처리
+			// previousOp의 Lowest bottom + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER 보다 위로 resize 안되게 처리
 			List previousChildrenEditParts = targetIOEP.getChildren();
 			IGraphicalEditPart igep = ApexSequenceUtil.apexGetLowestEditPartFromList(previousChildrenEditParts);
 			
-			int bottomPrevLowestChild = ApexSequenceUtil.apexGetAbsolutePosition(igep, SWT.BOTTOM);
-			int topNewIoep = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.TOP) - Math.abs(heightDelta);
-			if ( topNewIoep < bottomPrevLowestChild + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) {
-				return null;
-			}
+			if ( igep != null ) {
+				int bottomPrevLowestChild = ApexSequenceUtil.apexGetAbsolutePosition(igep, SWT.BOTTOM);
+				int topNewIoep = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.TOP) - Math.abs(heightDelta);
+				if ( topNewIoep < bottomPrevLowestChild + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) {
+					return null;
+				}	
+			}			
 			/* apex added end */
 		} else if ((direction & PositionConstants.SOUTH) != 0) {
 			targetIOEP = OperandBoundsComputeHelper.findLatterIOEP(compartEP,
@@ -559,6 +561,20 @@ public class OperandBoundsComputeHelper {
 				if (currentIOEPBounds.getHeight() - Math.abs(heightDelta) < OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT) {
 					return null;
 				}
+				/* apex added start */
+				// currentIOEP 의 lowest child 의 new bound의 bottom 이 targetIOEP의 bottom 보다 아래로 내려가지 않도록 처리
+				
+				Rectangle absCurrentIOEPRect = ApexSequenceUtil.apexGetAbsoluteRectangle(currentIOEP);
+				
+				IGraphicalEditPart lowestChildEP = ApexSequenceUtil.apexGetLowestEditPartFromList(currentIOEP.getChildren());
+				if ( lowestChildEP != null ) {
+					Rectangle absLowestChildEPRect = ApexSequenceUtil.apexGetAbsoluteRectangle(lowestChildEP);
+					Rectangle newLowestChildBounds = absLowestChildEPRect.translate(0, Math.abs(heightDelta));
+					if ( newLowestChildBounds.bottom() > absCurrentIOEPRect.bottom() ) {
+						return null;
+					}	
+				}				
+				/* apex added end */
 			}
 			Rectangle targetIOEPRect = OperandBoundsComputeHelper
 					.fillRectangle(targetIOEPBounds);
