@@ -76,7 +76,7 @@ public class PromptCreateElementAndNodeCommand extends
 			throws ExecutionException {
 		sourceEP.eraseSourceFeedback(request);
 		targetEP.eraseSourceFeedback(request);
-		
+
 		CommandResult cmdResult = super.doExecuteWithResult(progressMonitor,
 				info);
 		if (!cmdResult.getStatus().isOK()) {
@@ -99,14 +99,14 @@ public class PromptCreateElementAndNodeCommand extends
 			View view = (View)execuSpecEP.getModel();
 			ApexSetBoundsForExecutionSpecificationCommand setBoundsCommand = new ApexSetBoundsForExecutionSpecificationCommand(
 					editingDomain, createExecutionSpecificationCommand, new EObjectAdapter(view));
-			
+
 			command.add(new ICommandProxy(setBoundsCommand));
 
 			command.add(new ICommandProxy(new ApexSetBoundsAndPreserveAnchorsPositionCommand( execuSpecEP, setBoundsCommand,
 					ApexPreserveAnchorsPositionCommand.PRESERVE_Y, execuSpecEP.getFigure(), PositionConstants.SOUTH) ));
 		}
 		/* apex added end */
-		
+
 		// put the anchor at the top of the figure
 		ChangeEdgeTargetCommand changeTargetCommand = new ChangeEdgeTargetCommand(
 				editingDomain, createExecutionSpecificationCommand, descriptor,
@@ -114,7 +114,7 @@ public class PromptCreateElementAndNodeCommand extends
 		command.add(new ICommandProxy(changeTargetCommand));
 
 		command.execute();
-		
+
 		return CommandResult.newOKCommandResult(descriptor);
 	}
 

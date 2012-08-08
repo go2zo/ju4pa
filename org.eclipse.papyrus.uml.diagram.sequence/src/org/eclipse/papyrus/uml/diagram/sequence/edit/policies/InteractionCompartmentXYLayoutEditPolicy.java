@@ -715,6 +715,10 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			/* apex added end */
 		}
 
+		/* apex replaced
+		// CombinedFragmentCombinedFragmentCompartmentItemSemanticEditPolicy 에서
+		// operand가 복수인 경우에 대한 validation이 있으므로
+		// operand가 복수일 경우 무조건 Warning 하는 아래 로직은 불필요하여 주석 처리		
 		// Print a user notification when we are not sure the command is appropriated
 		EObject combinedFragment = combinedFragmentEditPart.resolveSemanticElement();
 		if(combinedFragment instanceof CombinedFragment && !sizeDelta.equals(0, 0)) {
@@ -738,6 +742,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				}
 			}
 		}
+		//*/
 		// return null instead of unexecutable empty compound command
 		if(compoundCmd.isEmpty()) {
 			return null;
