@@ -284,40 +284,32 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				compoundCmd.add(command);
 			} 
 		}
-	}
+	}	
 	
 	/**
 	 * apex updated
 	 * 
 	 * Handle the owning of interaction fragments when moving or resizing a CF.
 	 * 
-	 * @param compoundCmd
-	 *        The command
-	 * @param moveDelta
-	 *        The move delta (given by the request).
-	 * @param sizeDelta
-	 *        The size delta (given by the request).
+	 * @param request
 	 * @param combinedFragmentEditPart
-	 *        The CF edit part.
+	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	public static Command getCombinedFragmentResizeChildrenCommand(ChangeBoundsRequest request, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart combinedFragmentEditPart) {
 		return getCombinedFragmentResizeChildrenCommand(request, combinedFragmentEditPart, null, 0);
 	}
-	
+
 	/**
 	 * apex updated
 	 * 
 	 * Handle the owning of interaction fragments when moving or resizing a CF.
 	 * 
-	 * @param compoundCmd
-	 *        The command
-	 * @param moveDelta
-	 *        The move delta (given by the request).
-	 * @param sizeDelta
-	 *        The size delta (given by the request).
+	 * @param request
 	 * @param combinedFragmentEditPart
-	 *        The CF edit part.
+	 * @param childCombinedFragmentEditPart
+	 * @param depth
+	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	public static Command getCombinedFragmentResizeChildrenCommand(ChangeBoundsRequest request, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart combinedFragmentEditPart, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart childCombinedFragmentEditPart, int depth) {
