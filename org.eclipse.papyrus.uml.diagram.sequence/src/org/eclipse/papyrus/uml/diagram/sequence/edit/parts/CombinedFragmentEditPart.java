@@ -1147,7 +1147,13 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 	 */
 	protected void handleNotificationEvent(Notification notification) {
 		Object feature = notification.getFeature();
+		/*8
+		System.out
+				.println("CombinedFragmentEditPart.handleNotificationEvent(), line : "
+						+ Thread.currentThread().getStackTrace()[1]
+								.getLineNumber());
 		System.out.println("notification.getNotifier() : "+notification.getNotifier());
+		//*/
 		if(UMLPackage.eINSTANCE.getCombinedFragment_InteractionOperator().equals(feature)) {
 			CombinedFragment combinedFragment = (CombinedFragment)resolveSemanticElement();
 			String newStringValue = notification.getNewStringValue();
@@ -1238,7 +1244,7 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 			final Bounds newBounds = (Bounds)notification.getNotifier();
 			updateCoveredLifelines(newBounds);
 			
-			//*8
+			/*8
 			System.out
 					.println("CombinedFragmentEditPart.handleNotificationEvent(), line : "
 							+ Thread.currentThread().getStackTrace()[1]

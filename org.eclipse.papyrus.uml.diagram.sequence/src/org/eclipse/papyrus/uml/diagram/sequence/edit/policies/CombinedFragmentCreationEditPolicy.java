@@ -70,6 +70,7 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 		Command createElementAndViewCmd = super.getCreateElementAndViewCommand(request);
 
 		EditPart targetEditPart1 = getTargetEditPart(request);
+		/*8
 		System.out
 				.println("CombinedFragmentCreationEditPolicy.getCreateElementAndViewCommand(), line : "
 						+ Thread.currentThread().getStackTrace()[1]
@@ -77,7 +78,7 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 		System.out.println("targetEditPart1       : " + targetEditPart1.getClass());
 		System.out.println("request.getLocation()          : " + request.getLocation());
 		System.out.println("getSelectionRectangle(request) : " + getSelectionRectangle(request));
-		
+		//*/
 		if(isDerivedCombinedFragment(request.getViewAndElementDescriptor().getSemanticHint())) {
 
 			Rectangle selectionRect = getSelectionRectangle(request);
@@ -156,7 +157,6 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 				    System.out.println("location : " + location);
 		//*/			
 					Point location = request.getLocation();
-				    System.out.println("location : " + location);
 				    if ( InteractionOperatorKind.OPT_LITERAL.equals(ioKind) 
 				    		|| InteractionOperatorKind.LOOP_LITERAL.equals(ioKind) 
 				    		|| InteractionOperatorKind.BREAK_LITERAL.equals(ioKind) 
