@@ -335,7 +335,11 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			
 			/* apex added start */
 			//this CF, IO의 bound Resize
-			CompoundCommand ccmd = apexResizeCombinedFragmentBoundsCommand(request, (CombinedFragmentEditPart)combinedFragmentEditPart, (CombinedFragmentEditPart)childCombinedFragmentEditPart, true);
+			boolean isResizeByChild = false;
+			if ( childCombinedFragmentEditPart != null ) {
+				isResizeByChild = true;
+			}
+			CompoundCommand ccmd = apexResizeCombinedFragmentBoundsCommand(request, (CombinedFragmentEditPart)combinedFragmentEditPart, (CombinedFragmentEditPart)childCombinedFragmentEditPart, isResizeByChild);
 			List<Command> resizeCmds = ccmd.getCommands();
 			for ( Command cmd : resizeCmds ) {
 				if ( !cmd.canExecute() ) {
@@ -466,21 +470,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 					
 				// belowEditPart, beneathEditPart를 구성하여 beneathEditPart보다 아래로 이동하는 경우 belowEditPart 모두 이동
 				apexGetResizeOrMoveBelowItemsCommand(request, combinedFragmentEditPart, compoundCmd);
-//				CompoundCommand belowProcessedCmd = (CompoundCommand)apexGetResizeOrMoveBelowItemsCommand(request, combinedFragmentEditPart, compoundCmd);
-/*
-				// 반환 받은 CompoundCmd를 분해하여 compoundCmd에 추가
-				List belowProcessedCmdList = belowProcessedCmd.getCommands();
-				Iterator it = belowProcessedCmdList.iterator();
-				while(it.hasNext()) {
-					Command moveCommand = (Command)it.next();
-					if(moveCommand != null && !moveCommand.canExecute()) {
-						// forbid move if the es can't be moved correctly
-						return UnexecutableCommand.INSTANCE;
-					} else if(moveCommand != null) {
-						compoundCmd.add(moveCommand);
-					}
-				}
-*/
+
 				// 중첩된 child CF의 이동 결과 Parent CF의 경계를 넘는 경우 Parent Resize 처리
 				apexResizeParentCombinedFragments(request, combinedFragmentEditPart, compoundCmd, depth);
 
@@ -518,34 +508,18 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 					// aboveEditPart보다 또는 IOEP보다위로 올릴 경우					
 					if ( yAfterMove <= yAbove ) {
 						return UnexecutableCommand.INSTANCE;
-					}
-					
-				}
-				
-				/*
-				List childEditPartList = combinedFragmentEditPart.getChildren();
-				
-				if ( childEditPartList.size() > 0 ) {
-					for ( int i = 0 ; i < childEditPartList.size() ; i++ ) {
-						IGraphicalEditPart childEditPart = (IGraphicalEditPart)childEditPartList.get(i);
-						int yBottomChild = ApexSequenceUtil.apexGetAbsolutePosition(childEditPart, SWT.BOTTOM);
-						if ( yAfterMove <= yBottomChild ) {
-							System.out
-									.println("InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(), line : "
-											+ Thread.currentThread()
-													.getStackTrace()[1]
-													.getLineNumber());
-						}
 					}					
-				}
-				*/
+				}				
 			}
 			/* apex added end */
 		// 이동 끝
 		} else { // resize 시작
 			// calculate the new CF bounds
 			Rectangle newBoundsCF = origCFBounds.getCopy();
+			// 아래 translate는 moveDelta가 늘 0이므로 수행할 필요 없음
+			/* apex replaced
 			newBoundsCF.translate(moveDelta);
+			*/
 			
 			/* apex added start */
 			//this CF, IO의 bound Resize
@@ -960,10 +934,10 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 	 * Child CF의 right, bottom 보다 작게 Resize 방지
 	 * 
 	 * @param combinedFragmentEditPart
-	 * @param isResizeByChildMove       Child CF의 Move에 의한 Resize인지 구별
+	 * @param isResizeByChild       Child CF의 Move에 의한 Resize인지 구별
 	 * @return
 	 */
-	public static CompoundCommand apexResizeCombinedFragmentBoundsCommand(ChangeBoundsRequest request, CombinedFragmentEditPart combinedFragmentEditPart, CombinedFragmentEditPart childCombinedFragmentEditPart, boolean isResizeByChildMove) {
+	public static CompoundCommand apexResizeCombinedFragmentBoundsCommand(ChangeBoundsRequest request, CombinedFragmentEditPart combinedFragmentEditPart, CombinedFragmentEditPart childCombinedFragmentEditPart, boolean isResizeByChild) {
 				
 		CompoundCommand ccmd = new CompoundCommand();		
 		
@@ -974,8 +948,9 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		
 		Point moveDelta = request.getMoveDelta();
 		
-		Dimension sizeDelta = isResizeByChildMove ? new Dimension(0, moveDelta.y) : request.getSizeDelta();
+		Dimension sizeDelta = isResizeByChild ? new Dimension(0, moveDelta.y) : request.getSizeDelta();
 
+		origCFBounds.translate(moveDelta);
 		origCFBounds.resize(sizeDelta);
 
 		// childCombinedFragment가 있고, child의 right 보다 작게 resize 안되게
@@ -1010,11 +985,16 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		}
 		
 		// CF 경계 변경 실제 처리 부분 - 중첩된 CF의 move/resize에 의한 포함하는 CF의 경계 resize 처리 
+		cfFigure.translateToRelative(origCFBounds);
 		TransactionalEditingDomain editingDomain = combinedFragmentEditPart.getEditingDomain();
-		ICommand resizeCFCommand = new SetBoundsCommand(editingDomain, 
-			                                          "Apex_CF_Resize",
-			                                          new EObjectAdapter((View) combinedFragmentEditPart.getModel()),
-			                                          new Dimension(origCFBounds.width, origCFBounds.height));
+		ICommand resizeCFCommand = isResizeByChild ? new SetBoundsCommand(editingDomain, 
+			                                                                  "Apex_CF_Resize",
+			                                                                  new EObjectAdapter((View) combinedFragmentEditPart.getModel()),
+			                                                                  new Dimension(origCFBounds.width, origCFBounds.height))
+		                                               : new SetBoundsCommand(editingDomain, 
+                                                                              "Apex_CF_Move",
+                                                                              new EObjectAdapter((View) combinedFragmentEditPart.getModel()),
+                                                                              origCFBounds);
 		ccmd.add(new ICommandProxy(resizeCFCommand));
 
 		// CF의 해당 IO의 경계 변경 실제 처리 부분
@@ -1168,8 +1148,11 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 
 			if ( belowEditPartList.size() > 0 ) {
 				// 이동할 위치
-				Point moveDelta = request.getMoveDelta();
-				Dimension sizeDelta = request.getSizeDelta();
+				//Point moveDelta = request.getMoveDelta();
+				// 다른 element의 move에 의한 경우 moveDelta에서,
+				// 다른 element의 resize에 의한 경우 sizeDelta에서 이동값 획득
+				Point moveDelta = request.getMoveDelta().y != 0 ? request.getMoveDelta() : new Point(0, request.getSizeDelta().height);
+				//Dimension sizeDelta = request.getSizeDelta();
 
 				IFigure thisFigure = abstractGraphicalEditPart.getFigure();
 				Rectangle origCFBounds = thisFigure.getBounds().getCopy();
@@ -1191,13 +1174,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 	*/
 
 				// 넘겨받은 AbstractGraphicalEditPart 의 이동/Resize 후 bottom 위치
-				int bottom = 0;
-				if ( moveDelta.y != 0 ) {
-					bottom = origCFBounds.getBottom().y+moveDelta.y;	
-				} else {
-					bottom = origCFBounds.getBottom().y+sizeDelta.height;
-				}
-				
+				int bottom = origCFBounds.getBottom().y+moveDelta.y;				
 
 				// 넘겨받은 AbstractGraphicalEditPart 바로 아래의 EditPart 구성
 				IGraphicalEditPart beneathEditPart  = ApexSequenceUtil.apexGetBeneathEditPart(abstractGraphicalEditPart);
@@ -1264,7 +1241,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 									esRequest.setEditParts(sep);
 									esRequest.setMoveDelta(moveDelta);
 
-									Command moveESCommand = getCombinedFragmentResizeChildrenCommand(request, sep);
+									Command moveESCommand = getCombinedFragmentResizeChildrenCommand(esRequest, sep);
 
 									if(moveESCommand != null && !moveESCommand.canExecute()) {
 										// forbid move if the es can't be moved correctly
