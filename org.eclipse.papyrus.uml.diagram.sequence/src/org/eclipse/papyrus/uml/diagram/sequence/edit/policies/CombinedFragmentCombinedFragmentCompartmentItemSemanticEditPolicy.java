@@ -41,6 +41,8 @@ public class CombinedFragmentCombinedFragmentCompartmentItemSemanticEditPolicy e
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Generated not for limit InteractionOperand number. {@inheritDoc}
 	 * 
 	 * @generated NOT

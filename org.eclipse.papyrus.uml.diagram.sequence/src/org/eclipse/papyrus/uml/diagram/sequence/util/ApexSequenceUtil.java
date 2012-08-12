@@ -30,7 +30,13 @@ import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.gef.EditPart;
+import org.eclipse.gef.commands.Command;
+import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.editparts.AbstractGraphicalEditPart;
+import org.eclipse.gmf.runtime.common.core.command.CompositeCommand;
+import org.eclipse.gmf.runtime.common.core.command.ICommand;
+import org.eclipse.gmf.runtime.common.core.command.UnexecutableCommand;
+import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.INodeEditPart;
@@ -190,21 +196,23 @@ public class ApexSequenceUtil {
 		
 		// agep1의 sibling
 		List<IGraphicalEditPart> siblings = apexGetSiblingEditParts2(agep);
-		for ( IGraphicalEditPart ep : siblings ) {
-			if (ep.equals(agep))
-				continue;
-			if ( ep instanceof IGraphicalEditPart ) {
-				
-				IGraphicalEditPart agep1 = (IGraphicalEditPart)ep;
-				
-				int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
+		if ( siblings != null) {
+			for ( IGraphicalEditPart ep : siblings ) {
+				if (ep.equals(agep))
+					continue;
+				if ( ep instanceof IGraphicalEditPart ) {
+					
+					IGraphicalEditPart agep1 = (IGraphicalEditPart)ep;
+					
+					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
 
-				if ( yTopThisEP >= yBottomOfAgep
-						&& !belowEditPartMap.containsKey(agep1)) {
-					belowEditPartMap.put(agep1, yTopThisEP);
+					if ( yTopThisEP >= yBottomOfAgep
+							&& !belowEditPartMap.containsKey(agep1)) {
+						belowEditPartMap.put(agep1, yTopThisEP);
+					}	
+					
 				}	
-				
-			}	
+			}			
 		}		
 		
 		Collection<Entry<IGraphicalEditPart, Integer>> entrySet = belowEditPartMap.entrySet();
@@ -1064,7 +1072,45 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			return fullName.substring(fullName.lastIndexOf('.')+1);	
 		} else {
 			return null;
+		}		
+	}
+	
+	/**
+	 * compoundCommand를 분해해서 compositeCommand에 add해주는 메서드
+	 * 
+	 * @param compoundCommand
+	 * @param compositeCommand
+	 */
+	public static void apexCompoundCommandToCompositeCommand(CompoundCommand compoundCommand, CompositeCommand compositeCommand) {
+		List cmdList = compoundCommand.getCommands();
+		Iterator itCmd = cmdList.iterator();
+		while ( itCmd.hasNext() ) {
+			Command aCommand = (Command)itCmd.next();
+			if ( aCommand != null && !aCommand.canExecute()) {
+				compositeCommand.add(UnexecutableCommand.INSTANCE);
+			} else if ( aCommand != null ) {
+				if ( aCommand instanceof ICommandProxy ) {
+					ICommandProxy iCommandproxy = (ICommandProxy)aCommand;
+					ICommand iCommand = iCommandproxy.getICommand();
+					compositeCommand.add(iCommand);
+				}									
+			}
 		}
-		
+	}
+	
+	/**
+	 * compoundCommand를 분해하여 다른 compoundCommand에 add하는 메서드
+	 * null 이나 Unexecutable에 관계없이 있는대로 add함
+	 * 
+	 * @param inputCompoundCommand
+	 * @param resultCompoundCommand
+	 */
+	public static void apexCompoundCommandToCompoundCommand(CompoundCommand inputCompoundCommand, CompoundCommand resultCompoundCommand) {
+		List cmdList = inputCompoundCommand.getCommands();
+		Iterator itCmd = cmdList.iterator();
+		while ( itCmd.hasNext() ) {
+			Command aCommand = (Command)itCmd.next();
+			resultCompoundCommand.add(aCommand);
+		}
 	}
 }

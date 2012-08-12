@@ -60,8 +60,6 @@ import org.eclipse.gmf.runtime.notation.Edge;
 import org.eclipse.gmf.runtime.notation.IdentityAnchor;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
-import org.eclipse.osgi.util.NLS;
-import org.eclipse.papyrus.infra.widgets.toolbox.notification.builders.NotificationBuilder;
 import org.eclipse.papyrus.uml.diagram.common.commands.PreserveAnchorsPositionCommand;
 import org.eclipse.papyrus.uml.diagram.sequence.command.ApexPreserveAnchorsPositionCommand;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
@@ -70,8 +68,9 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentCombi
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractionCompartmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionUseEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.StateInvariantEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.util.OperandBoundsComputeHelper;
@@ -146,6 +145,12 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				if(child instanceof CombinedFragmentEditPart) {
 					OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand(compoundCmd,request,(CombinedFragmentEditPart)child);
 				}
+				
+				/* apex added start */
+				if(child instanceof InteractionUseEditPart) {
+					InteractionCompartmentXYLayoutEditPolicy.apexGetMoveBelowItemsCommand(request, (InteractionUseEditPart)child, compoundCmd);
+				}
+				/* apex added end */
 				
 				int right = childBounds.right();
 				int bottom = childBounds.bottom();
@@ -469,7 +474,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			if ( moveDelta.y > 0 ) { // 아래로 이동 시
 					
 				// belowEditPart, beneathEditPart를 구성하여 beneathEditPart보다 아래로 이동하는 경우 belowEditPart 모두 이동
-				apexGetResizeOrMoveBelowItemsCommand(request, combinedFragmentEditPart, compoundCmd);
+				apexGetMoveBelowItemsCommand(request, combinedFragmentEditPart, compoundCmd);
 
 				// 중첩된 child CF의 이동 결과 Parent CF의 경계를 넘는 경우 Parent Resize 처리
 				apexResizeParentCombinedFragments(request, combinedFragmentEditPart, compoundCmd, depth);
@@ -674,7 +679,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			/* apex added start */
 			// 하향 확대 resize 시 아래에 있는 요소 이동 처리
 			// belowEditPart, beneathEditPart를 구성하여 beneathEditPart보다 아래로 확장하는 경우 belowEditPart 모두 이동
-			apexGetResizeOrMoveBelowItemsCommand(request, combinedFragmentEditPart, compoundCmd);
+			apexGetMoveBelowItemsCommand(request, combinedFragmentEditPart, compoundCmd);
 			/* apex added end */
 			
 			/* apex added start */
@@ -984,7 +989,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			}			
 		}
 		
-		// CF 경계 변경 실제 처리 부분 - 중첩된 CF의 move/resize에 의한 포함하는 CF의 경계 resize 처리 
+		// CF 경계 변경 실제 처리 부분 - 중첩된 CF의 move/resize에 의한 포함하는 CF의 경계 resize/move 처리 
 		cfFigure.translateToRelative(origCFBounds);
 		TransactionalEditingDomain editingDomain = combinedFragmentEditPart.getEditingDomain();
 		ICommand resizeCFCommand = isResizeByChild ? new SetBoundsCommand(editingDomain, 
@@ -1007,15 +1012,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				InteractionOperandEditPart ioep = (InteractionOperandEditPart)pep;
 				IFigure ioFigure = ioep.getFigure();
 				Rectangle ioRect = ioFigure.getBounds().getCopy();
-				System.out
-						.println("InteractionCompartmentXYLayoutEditPolicy.apexResizeCombinedFragmentBoundsCommand(), line : "
-								+ Thread.currentThread().getStackTrace()[1]
-										.getLineNumber());
-				System.out.println("raw     ioRect    : " + ioRect);
 				ioFigure.getParent().translateToAbsolute(ioRect);
-				System.out.println("par abs ioRect    : " + ioRect);
 				ioRect.resize(sizeDelta);
-				System.out.println("res     ioRect    : " + ioRect);
 				
 				CombinedFragmentCombinedFragmentCompartmentEditPart cfcfep= (CombinedFragmentCombinedFragmentCompartmentEditPart)ioep.getParent();
 				List childOps = cfcfep.getChildren();
@@ -1137,11 +1135,13 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 	 * @param request
 	 * @return 
 	 */
-	public static void apexGetResizeOrMoveBelowItemsCommand(ChangeBoundsRequest request, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart abstractGraphicalEditPart, CompoundCommand compoundCmd) {
+	public static void apexGetMoveBelowItemsCommand(ChangeBoundsRequest request, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart abstractGraphicalEditPart, CompoundCommand compoundCmd) {
 
 		if ( request.getMoveDelta().y > 0 || request.getSizeDelta().height > 0) { // 아래로 이동하거나 아래로 Resize 하는 경우
+
 			// 넘겨받은 AbstractGraphicalEditPart 보다 아래에 있는 belowList 구성		
 			List belowEditPartList = ApexSequenceUtil.apexGetMovableEditPartList(abstractGraphicalEditPart);
+			
 			//List belowEditPartList = ApexSequenceUtil.apexGetBelowEditPartList(abstractGraphicalEditPart);
 
 //			CompoundCommand compoundCmd = new CompoundCommand();
@@ -1197,8 +1197,40 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 						// handle move of object graphically owned by the lifeline
 						if(ep instanceof ShapeEditPart) {
 							ShapeEditPart sep = (ShapeEditPart)ep;
-							EObject elem = sep.getNotationView().getElement();
 
+							/* apex improved start */
+							EditPart parentEP = sep.getParent();
+
+							if(parentEP instanceof LifelineEditPart) {
+								ChangeBoundsRequest esRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+								esRequest.setEditParts(sep);
+								esRequest.setMoveDelta(moveDelta);
+
+								Command moveESCommand = LifelineXYLayoutEditPolicy.getResizeOrMoveChildrenCommand((LifelineEditPart)parentEP, esRequest, true, false, true);
+
+								if(moveESCommand != null && !moveESCommand.canExecute()) {
+									// forbid move if the es can't be moved correctly
+									compoundCmd.add(UnexecutableCommand.INSTANCE);
+								/* apex improved start */
+								} else if(moveESCommand != null) {
+									if ( moveESCommand instanceof CompoundCommand ) {
+										ApexSequenceUtil.apexCompoundCommandToCompoundCommand((CompoundCommand)moveESCommand, compoundCmd);
+									} else {
+										compoundCmd.add(moveESCommand);	
+									}										
+								}
+								/* apex improved end */
+								/* apex replaced
+								} else if(moveESCommand != null) {
+									compoundCmd.add(moveESCommand);
+								}
+								*/
+							}	
+							/* apex improved end */
+							/* apex replaced
+							// InteractionFragment 의 child가 아닌 Comment 등의 경우도 이동해야하므로 아래 로직 대체
+							EObject elem = sep.getNotationView().getElement();
+							
 							if(elem instanceof InteractionFragment) {
 
 								EditPart parentEP = sep.getParent();
@@ -1216,47 +1248,59 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 									} else if(moveESCommand != null) {
 										compoundCmd.add(moveESCommand);
 									}
-								}
-								/* apex added start */
-								// below에 다른 CombinedFragment 가 있을 경우 같이 이동
-								if(sep instanceof CombinedFragmentEditPart) {
-									/*
-									// The new bounds will be calculated from the current bounds
-									Rectangle newBounds = sep.getFigure().getBounds().getCopy();
-
-									// Convert to relative
-									newBounds.x += moveDelta.x;
-									if ( moveDelta.y != 0 ) {
-										newBounds.y += moveDelta.y;	
-									} else {
-										newBounds.y += sizeDelta.height;
-									}
-									
-
-									SetBoundsCommand setBoundsCmd = new SetBoundsCommand(sep.getEditingDomain(), "Move of a CombinedFragment due to a Upper CF movement", sep, newBounds);
-									compoundCmd.add(new ICommandProxy(setBoundsCmd));
-									*/
-									// below CF의 이동
-									ChangeBoundsRequest esRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
-									esRequest.setEditParts(sep);
-									esRequest.setMoveDelta(moveDelta);
-
-									Command moveESCommand = getCombinedFragmentResizeChildrenCommand(esRequest, sep);
-
-									if(moveESCommand != null && !moveESCommand.canExecute()) {
-										// forbid move if the es can't be moved correctly
-										compoundCmd.add(UnexecutableCommand.INSTANCE);
-									} else if(moveESCommand != null) {
-										compoundCmd.add(moveESCommand);
-									}
-									
-									// below CF의 Op의 이동
-									OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand(compoundCmd, 
-											                                                          request,
-											                                                          (CombinedFragmentEditPart)sep);
-								}
-								/* apex added end */
+								}								
 							}
+							*/
+							/* apex improved start */
+							// below element의 이동
+							else { // Lifeline의 child가 아닌 경우
+								ChangeBoundsRequest esRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+								esRequest.setEditParts(sep);
+								esRequest.setMoveDelta(moveDelta);
+	
+								Command moveESCommand = null;
+								if ( sep instanceof CombinedFragmentEditPart ) {
+									moveESCommand = getCombinedFragmentResizeChildrenCommand(esRequest, sep);	
+								} else {
+									moveESCommand = apexGetMoveElement(esRequest, sep);
+								}							
+	
+								if(moveESCommand != null && !moveESCommand.canExecute()) {
+									// forbid move if the es can't be moved correctly
+									compoundCmd.add(UnexecutableCommand.INSTANCE);
+								} else if(moveESCommand != null) {
+									if ( moveESCommand instanceof CompoundCommand ) {
+										ApexSequenceUtil.apexCompoundCommandToCompoundCommand((CompoundCommand)moveESCommand, compoundCmd);
+									} else {
+										compoundCmd.add(moveESCommand);	
+									}										
+								}
+							}
+							/* apex improved start */
+							/* apex replaced
+							// The new bounds will be calculated from the current bounds
+							Rectangle newBounds = sep.getFigure().getBounds().getCopy();
+
+							// Convert to relative
+							newBounds.x += moveDelta.x;
+							if ( moveDelta.y != 0 ) {
+								newBounds.y += moveDelta.y;	
+							} else {
+								newBounds.y += sizeDelta.height;
+							}
+							
+
+							SetBoundsCommand setBoundsCmd = new SetBoundsCommand(sep.getEditingDomain(), "Move of a CombinedFragment due to a Upper CF movement", sep, newBounds);
+							compoundCmd.add(new ICommandProxy(setBoundsCmd));
+							*/
+							
+							
+							// below CF의 이동에 따라 Op는 함께 이동되므로 아래 로직 불필요
+							/* apex replaced
+							OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand(compoundCmd, 
+									                                                          request,
+									                                                          (CombinedFragmentEditPart)sep);
+							 */
 						}
 
 						// handle move of messages directly attached to a lifeline
@@ -1331,6 +1375,24 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				}
 			}
 		}		
+	}
+	
+	/**
+	 * element의 이동 처리 
+	 * 
+	 * @param request
+	 * @param graphicalEditPart
+	 * @return
+	 */
+	public static Command apexGetMoveElement(ChangeBoundsRequest request, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart graphicalEditPart) {
+		Point moveDelta = request.getMoveDelta();
+		
+		IFigure figure = graphicalEditPart.getFigure();
+		Rectangle newBounds = figure.getBounds().getCopy();
+		newBounds.translate(moveDelta);
+
+		SetBoundsCommand sbCommand = new SetBoundsCommand(graphicalEditPart.getEditingDomain(), "Apex Re-location of a ShapeNodeEditPart due to move of a upper element", graphicalEditPart, newBounds);
+		return new ICommandProxy(sbCommand);
 	}
 	
 	/**

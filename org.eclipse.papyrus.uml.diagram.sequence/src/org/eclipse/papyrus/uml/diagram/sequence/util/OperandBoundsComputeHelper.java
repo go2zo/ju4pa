@@ -1,5 +1,6 @@
 package org.eclipse.papyrus.uml.diagram.sequence.util;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.commands.ExecutionException;
@@ -8,6 +9,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.geometry.Dimension;
+import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.common.command.AbstractCommand;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
@@ -19,6 +21,7 @@ import org.eclipse.gmf.runtime.common.core.command.CommandResult;
 import org.eclipse.gmf.runtime.common.core.command.CompositeCommand;
 import org.eclipse.gmf.runtime.common.core.command.ICommand;
 import org.eclipse.gmf.runtime.common.core.command.ICompositeCommand;
+import org.eclipse.gmf.runtime.common.core.command.UnexecutableCommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.commands.SetBoundsCommand;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
@@ -26,6 +29,7 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.l10n.DiagramUIMessages;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
+import org.eclipse.gmf.runtime.diagram.ui.requests.RequestConstants;
 import org.eclipse.gmf.runtime.emf.commands.core.command.AbstractTransactionalCommand;
 import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
@@ -739,6 +743,10 @@ public class OperandBoundsComputeHelper {
 	}
 	
 	/**
+	 * apex updated
+	 * 
+	 * param 에 request 추가
+	 * 
 	 * Add update InteractionOperand bounds command after IO is created 
 	 * @param compartment
 	 * @param request
@@ -774,6 +782,20 @@ public class OperandBoundsComputeHelper {
 							            DiagramUIMessages.SetLocationCommand_Label_Resize,
 							            new EObjectAdapter(shapeView), new Rectangle(containerBounds.getX(),containerBounds.getY(),width,height));
 								command.add(setParentBoundsCmd);
+							}
+							
+							// Op추가로 CF 경계 확대 resize 시 below CF의 이동
+							List belowEditParts = ApexSequenceUtil.apexGetBelowEditPartList(parent);
+							if ( belowEditParts.size() > 0 ) {
+							
+								ChangeBoundsRequest esRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+								esRequest.setEditParts(parent);
+								esRequest.setMoveDelta(new Point(0, OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT));
+								CompoundCommand ccmd = new CompoundCommand();							
+								InteractionCompartmentXYLayoutEditPolicy.apexGetMoveBelowItemsCommand(esRequest, parent, ccmd);
+
+								// compoundCommand를 분해하여 compositeCommand 에 add
+								ApexSequenceUtil.apexCompoundCommandToCompositeCommand(ccmd, command);	
 							}
 						}
 					}
@@ -917,9 +939,6 @@ public class OperandBoundsComputeHelper {
 					}	
 				}				
 			}					
-				
-
-			
 		} else if ((direction & PositionConstants.SOUTH) != 0) { // 하단에서
 			
 			if ( heightDelta > 0 ) { // 확대하는 경우
