@@ -48,7 +48,9 @@ import org.eclipse.papyrus.uml.diagram.sequence.command.CustomZOrderCommand;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragment2EditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.DestructionOccurrenceSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.StateInvariantEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.OccurrenceSpecificationMoveHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
@@ -406,6 +408,16 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 		return command;
 	}
 
+	/**
+	 * apex updated
+	 * 
+	 * @param lifelineEP
+	 * @param request
+	 * @param isMove
+	 * @param updateEnclosingInteraction
+	 * @param useFixedXPos
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public static Command getResizeOrMoveChildrenCommand(LifelineEditPart lifelineEP, ChangeBoundsRequest request, boolean isMove, boolean updateEnclosingInteraction, boolean useFixedXPos) {
 		List<EditPart> editParts = request.getEditParts();
@@ -501,11 +513,63 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 					if(moveDelta != null) {
 						bounds.translate(moveDelta);
 					}
-
+					
 					// Create and add the set bounds command to the compound command
 					SetBoundsCommand setBoundsCmd = new SetBoundsCommand(cf2EP.getEditingDomain(), "Resize of a CoRegion", cf2EP, getNewBoundsForCoRegion(lifelineEP, bounds));
 					compoundCmd.add(new ICommandProxy(setBoundsCmd));
 				}
+				
+				/* apex added start */
+				if(ep instanceof StateInvariantEditPart) {
+					StateInvariantEditPart siEP = (StateInvariantEditPart)ep;
+					IFigure siFigure = siEP.getFigure();
+					Rectangle newBounds = siFigure.getBounds().getCopy();
+
+					/*8
+					System.out
+							.println("LifelineXYLayoutEditPolicy.getResizeOrMoveChildrenCommand(), line : "
+									+ Thread.currentThread().getStackTrace()[1]
+											.getLineNumber());
+					System.out.println("raw newBounds : " + newBounds);
+					//*/
+					// Get the dotline figure
+					LifelineDotLineFigure figureLifelineDotLineFigure = lifelineEP.getPrimaryShape().getFigureLifelineDotLineFigure();
+
+					Point moveDelta = request.getMoveDelta();
+					if(moveDelta != null) {
+						newBounds.translate(moveDelta);
+//						System.out.println("before -10 : " + newBounds);
+						newBounds.y -= 10;
+//						System.out.println("after  -10 : " + newBounds);
+					}
+					/*8
+					System.out.println("fin newBounds : " + newBounds);
+					Rectangle copyBounds = newBounds.getCopy();
+					siFigure.translateToAbsolute(copyBounds);
+					System.out.println("abs cpyBounds : " + copyBounds);
+					//*/
+					// Create and add the set bounds command to the compound command
+					SetBoundsCommand setBoundsCmd = new SetBoundsCommand(siEP.getEditingDomain(), "Apex Move of a StateInvariant", siEP, newBounds);
+					compoundCmd.add(new ICommandProxy(setBoundsCmd));
+					
+					InteractionCompartmentXYLayoutEditPolicy.apexGetMoveBelowItemsCommand(request, siEP, compoundCmd);
+				}
+				
+				if(ep instanceof DestructionOccurrenceSpecificationEditPart) {
+					DestructionOccurrenceSpecificationEditPart doEP = (DestructionOccurrenceSpecificationEditPart)ep;
+					IFigure siFigure = doEP.getFigure();
+					Rectangle bounds = siFigure.getBounds().getCopy();
+
+					Point moveDelta = request.getMoveDelta();
+					if(moveDelta != null) {
+						bounds.translate(moveDelta);
+					}
+
+					// Create and add the set bounds command to the compound command
+					SetBoundsCommand setBoundsCmd = new SetBoundsCommand(doEP.getEditingDomain(), "Apex Move of a DestructionEvent", doEP, bounds);
+					compoundCmd.add(new ICommandProxy(setBoundsCmd));
+				}
+				/* apex added end */
 			}
 
 			if(!compoundCmd.isEmpty()) {

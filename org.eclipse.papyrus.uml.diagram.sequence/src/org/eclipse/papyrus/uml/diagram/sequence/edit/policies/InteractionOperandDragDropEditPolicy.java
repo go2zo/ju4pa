@@ -55,6 +55,7 @@ public class InteractionOperandDragDropEditPolicy extends ResizableEditPolicy {
 					return getHost().getParent().getParent().getCommand(request);
 				}else{
 					int heightDelta = request.getSizeDelta().height();
+
 					if ((request.getResizeDirection() & PositionConstants.NORTH) != 0) {
 						return OperandBoundsComputeHelper.createIOEPResizeCommand(currentIOEP, heightDelta,
 								compartEP,PositionConstants.NORTH);

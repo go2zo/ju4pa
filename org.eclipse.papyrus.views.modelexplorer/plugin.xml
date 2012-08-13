@@ -395,5 +395,9 @@
    </extension>
    <extension point="org.eclipse.emf.facet.infra.browser.custom.core.registration">
       <browserCustomization file="resources/PapyrusEcoreBrowser.uiCustom"/>
+      <browserCustomization
+            file="resources/ApexModelExplorerCustomization.uiCustom"
+            loadByDefault="true">
+      </browserCustomization>
    </extension>
 </plugin>

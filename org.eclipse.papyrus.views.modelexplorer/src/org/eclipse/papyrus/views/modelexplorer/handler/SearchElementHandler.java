@@ -18,15 +18,9 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.papyrus.infra.core.services.ServiceException;
-import org.eclipse.papyrus.infra.core.services.ServicesRegistry;
-import org.eclipse.papyrus.infra.core.utils.ServiceUtilsForActionHandlers;
 import org.eclipse.papyrus.views.modelexplorer.ModelExplorerView;
 import org.eclipse.papyrus.views.modelexplorer.core.ui.pagebookview.MultiViewPageBookView;
-import org.eclipse.papyrus.views.modelexplorer.dialog.ApexHierarchyInformationControl;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Point;
+import org.eclipse.papyrus.views.modelexplorer.dialog.NavigatorSearchDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPart;
@@ -50,7 +44,7 @@ public class SearchElementHandler extends AbstractHandler {
 		ApexModelFilterControl apexModelFilterControl = new ApexModelFilterControl(shell, true);
 		apexModelFilterControl.setBackgroundColor(new Color(shell.getDisplay(), 255, 0, 0));
 		//*/
-		//*
+		/*
 		ApexHierarchyInformationControl control = new ApexHierarchyInformationControl(shell, SWT.RESIZE | SWT.BORDER, SWT.Collapse);		
 		control.setSize(800, 600);
 		Point loc = shell.getLocation();
@@ -69,10 +63,10 @@ public class SearchElementHandler extends AbstractHandler {
 		control.open();
 		//*/
 		/* apex improved end */
-		/* apex replaced
+		//* apex replaced
 		NavigatorSearchDialog dialog = new NavigatorSearchDialog(shell, getSelectedTreeViewer(event));
 		dialog.open();
-		*/
+		//*/
 		return null;
 	}
 

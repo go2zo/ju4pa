@@ -41,6 +41,8 @@ public class CombinedFragmentCombinedFragmentCompartmentItemSemanticEditPolicy e
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Generated not for limit InteractionOperand number. {@inheritDoc}
 	 * 
 	 * @generated NOT
@@ -63,6 +65,10 @@ public class CombinedFragmentCombinedFragmentCompartmentItemSemanticEditPolicy e
 			CompoundCommand result = new CompoundCommand();
 			Command cmd = getGEFWrapper(new InteractionOperandCreateCommand(req));
 			result.add(cmd);
+			
+			/* apex replaced
+			// 위 58 line에서 복수 operands에 대한 validation을 수행하므로
+			// 아래와 같이 무조건 Warning을 넣는 로직은 일단 주석 처리
 			// append a command which notifies
 			Command notifyCmd = new Command() {
 
@@ -80,6 +86,7 @@ public class CombinedFragmentCombinedFragmentCompartmentItemSemanticEditPolicy e
 			if(notifyCmd.canExecute()) {
 				result.add(notifyCmd);
 			}
+			*/
 			return result;
 		}
 		return super.getCreateCommand(req);

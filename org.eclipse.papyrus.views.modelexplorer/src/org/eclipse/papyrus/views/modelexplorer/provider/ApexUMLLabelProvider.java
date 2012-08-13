@@ -20,6 +20,11 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
+/**
+ * Search 시 CTRL+T 처럼 동작하도록
+ * @author hanmomhanda
+ *
+ */
 public class ApexUMLLabelProvider extends MoDiscoLabelProvider {
 	
 	/** Decoration Service *. */

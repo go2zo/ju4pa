@@ -186,6 +186,8 @@ public class SequenceUtil {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Find the container interaction fragment for the given bounds.
 	 * The elements are drawn under the lifeline, but their model container is an interaction.
 	 * It can be of type Interaction or InteractionOperand.
@@ -202,7 +204,13 @@ public class SequenceUtil {
 		if(hostEditPart == null) {
 			return null;
 		}
-
+		/* apex added start */
+		// 지워진 EditPart의 경우 getViewer()가 null을 반환하여 NullPointException 발생시킴
+		if ( hostEditPart.getViewer() == null ) {
+			return null;
+		}
+		/* apex added end */
+		
 		InteractionFragment container = null;
 		Set<InteractionFragment> coveredInteractions = new HashSet<InteractionFragment>();
 		Set<CombinedFragment> coveredCF = new HashSet<CombinedFragment>();

@@ -5,7 +5,11 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.papyrus.infra.core.services.ServicesRegistry;
 import org.eclipse.papyrus.infra.emf.providers.MoDiscoContentProvider;
-
+/**
+ * Search 시 CTRL+T 처럼 동작하도록
+ * @author hanmomhanda
+ *
+ */
 public class ApexUMLContentProvider extends MoDiscoContentProvider implements IStructuredContentProvider, ITreeContentProvider {
 
 	private ServicesRegistry serviceRegistry;

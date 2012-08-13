@@ -10,7 +10,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.draw2d.anchors.ApexHorizontalAnc
 
 public class ApexPreserveAnchorsPositionCommand
 		extends PreserveAnchorsPositionCommand {
-	
+
 	public ApexPreserveAnchorsPositionCommand(ShapeNodeEditPart shapeEP,
 			Dimension sizeDelta, int preserveAxis, IFigure figure, int resizeDirection) {
 		super(shapeEP, sizeDelta, preserveAxis, figure, resizeDirection);

@@ -31,6 +31,7 @@ import org.eclipse.papyrus.infra.core.services.ServicesRegistry;
 import org.eclipse.papyrus.infra.emf.Activator;
 import org.eclipse.uml2.uml.internal.impl.ActionExecutionSpecificationImpl;
 import org.eclipse.uml2.uml.internal.impl.BehaviorExecutionSpecificationImpl;
+import org.eclipse.uml2.uml.internal.impl.CombinedFragmentImpl;
 import org.eclipse.uml2.uml.internal.impl.ExecutionOccurrenceSpecificationImpl;
 import org.eclipse.uml2.uml.internal.impl.LifelineImpl;
 import org.eclipse.uml2.uml.internal.impl.MessageImpl;
@@ -78,16 +79,21 @@ public class MoDiscoContentProvider extends CustomizableModelContentProvider {
 		ArrayList<Object> fullResult = new ArrayList<Object>();
 
 		Object[] arrayObject = super.getChildren(parentElement);
-		
 /*8
 System.out.println("MoDiscoContentProvider.getChildren(), line : "
 		+ Thread.currentThread().getStackTrace()[1].getLineNumber());
+System.out.println("parentElement : " + parentElement);
+for ( int i = 0 ; i < arrayObject.length ; i++ ) {
+	System.out.println("  arrayObject["+i+"] : " + arrayObject[i]);
+}
 //*/
+		
+
 		if (arrayObject != null) {
 			for (int i = 0; i < arrayObject.length; i++) {
 				boolean canBeAdded = true;
 				
-				/*8				
+/*8				
 System.out.println("\n** in super.getChildren loop, arrayObject["+i+"] being added : " + arrayObject[i]);
 //*/
 				if ( arrayObject[i] instanceof ModelElementItem) {
@@ -95,17 +101,17 @@ System.out.println("\n** in super.getChildren loop, arrayObject["+i+"] being add
 /*8
 System.out.println("      mei.getEObject() being added : " + mei.getEObject());
 //*/
-				}
-				if ( arrayObject[i] instanceof LinkItem) {
+
+				} else if ( arrayObject[i] instanceof LinkItem) {
 					LinkItem li = (LinkItem)arrayObject[i];
 
 /*8					
 System.out.println("      li.getText() : " + li.getText());
 System.out.println("      li.getReference() : " + li.getReference());	
 System.out.println("      li.getParent() : " + li.getParent());
+System.out.println("      li.getParent().getClass().toString() : " + li.getParent().getClass().toString());
 System.out.println("      li.getTreeParent() : " + li.getTreeParent());
 //*/
-					
 					
 					if (li.getReference().getName().startsWith("enclosing")) {
 						canBeAdded = false;
@@ -125,7 +131,7 @@ System.out.println("      li.getTreeParent() : " + li.getTreeParent());
 						canBeAdded = false;
 					} else if (li.getParent() instanceof TimeConstraintImpl && li.getReference().getName().equals("context") ) {
 						canBeAdded = false;
-					}	
+					}
 					
 /*8
 if ( canBeAdded ) {
@@ -140,6 +146,7 @@ if ( canBeAdded ) {
 				fullResult.add(arrayObject[i]);
 			}
 		}
+
 		/* apex improved end */
 		/* apex replaced
 		Object[] arrayObject = super.getChildren(parentElement);
@@ -167,7 +174,81 @@ if ( canBeAdded ) {
 
 		return result.toArray();
 	}
+	
+	/* 
+	// org.eclipse.emf.facet.infra.browser.uicore.CustomizableModelContentProvider
+	public Object[] getChildren(final Object parentElement) {
+		if (parentElement instanceof ITreeElement) {
+			final ITreeElement treeElement = (ITreeElement) parentElement;
+			return treeElement.getChildren().toArray();
+		}
+		return null;
+	}
 
+	// org.eclipse.emf.facet.infra.browser.uicore.internal.model.ModelElementItem
+	public List<Object> getChildren() {
+
+		final ArrayList<Object> children = new ArrayList<Object>();
+
+		// show a link for the container
+		if (this.appearanceConfiguration.isShowContainer()) {
+			addContainer(this.fModelElement, children);
+		}
+
+		// show a virtual attribute for the URI
+		if (this.appearanceConfiguration.isShowURI()) {
+			addURIAttribute(children);
+		}
+
+		addVirtualElements(children);
+
+		if (this.appearanceConfiguration.isShowAttributes()) {
+			final List<AttributeItem> attributes = createAttributes();
+			// sort attributes by name
+			// TODO: separate preference for attributes?
+			if (this.appearanceConfiguration.isSortLinks()) {
+				sortAttributes(attributes);
+			}
+			children.addAll(attributes);
+		}
+
+		final ArrayList<Object> elementsInCollapsedLinks = new ArrayList<Object>();
+		final ArrayList<LinkItem> links = createLinks(elementsInCollapsedLinks);
+			final CustomizationEngine customizationEngine = this.appearanceConfiguration
+					.getCustomizationEngine();
+			// filter out invisible elements
+			// cf Bug 329037 - [UICustom] "Collapse Link" option does not
+			// exploit the "Visible" option
+			ListIterator<Object> listIterator = elementsInCollapsedLinks.listIterator();
+			while (listIterator.hasNext()) {
+				Object next = listIterator.next();
+				if (next instanceof ModelElementItem) {
+					ModelElementItem modelElementItem = (ModelElementItem) next;
+					EObject eObject = modelElementItem.getEObject();
+					if (!customizationEngine.isTypeVisible(eObject.eClass(), eObject)) {
+						listIterator.remove();
+					}
+				}
+			}
+		if (this.appearanceConfiguration.isSortInstances()) {
+			BigListItem.sortElements(elementsInCollapsedLinks);
+		}
+		children.addAll(elementsInCollapsedLinks);
+
+		// sort links by name
+		if (this.appearanceConfiguration.isSortLinks()) {
+			sortLinks(links);
+		}
+		if (this.appearanceConfiguration.isSortLinksByType()) {
+			// counting on the fact that sorting preserves the order of equal
+			// elements
+			sortLinksByType(links);
+		}
+		children.addAll(links);
+
+		return children;
+	}
+	
 	/**
 	 * @param owner
 	 *        the owner of the diagrams
