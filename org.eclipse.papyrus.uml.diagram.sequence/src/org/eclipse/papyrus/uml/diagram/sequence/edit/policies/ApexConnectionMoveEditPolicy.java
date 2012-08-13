@@ -79,17 +79,17 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 
 		if(getHost() instanceof ConnectionNodeEditPart) {
 			ConnectionNodeEditPart connectionPart = (ConnectionNodeEditPart)getHost();
-//			Command result = apexGetMoveConnectionCommand(request, connectionPart, false);
-//			return result;
+			Command result = apexGetMoveConnectionCommand(request, connectionPart, false);
+			return result;
 			
-			EObject message = connectionPart.resolveSemanticElement();
-			if(message instanceof Message) {
-				MessageEnd send = ((Message)message).getSendEvent();
-				ApexMoveInteractionFragmentsCommand cmd = new ApexMoveInteractionFragmentsCommand(
-						connectionPart.getEditingDomain(), connectionPart.getViewer(), (InteractionFragment)send,
-						request.getLocation().y, request.getMoveDelta().y, false);
-				return new ICommandProxy(cmd);
-			}
+//			EObject message = connectionPart.resolveSemanticElement();
+//			if(message instanceof Message) {
+//				MessageEnd send = ((Message)message).getSendEvent();
+//				ApexMoveInteractionFragmentsCommand cmd = new ApexMoveInteractionFragmentsCommand(
+//						connectionPart.getEditingDomain(), connectionPart.getViewer(), (InteractionFragment)send,
+//						request.getLocation().y, request.getMoveDelta().y, false);
+//				return new ICommandProxy(cmd);
+//			}
 		}
 		
 		
