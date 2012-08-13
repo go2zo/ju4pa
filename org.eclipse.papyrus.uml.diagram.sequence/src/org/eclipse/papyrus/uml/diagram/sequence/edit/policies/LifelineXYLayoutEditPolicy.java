@@ -525,27 +525,29 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 					IFigure siFigure = siEP.getFigure();
 					Rectangle newBounds = siFigure.getBounds().getCopy();
 
+					/*8
 					System.out
 							.println("LifelineXYLayoutEditPolicy.getResizeOrMoveChildrenCommand(), line : "
 									+ Thread.currentThread().getStackTrace()[1]
 											.getLineNumber());
 					System.out.println("raw newBounds : " + newBounds);
-					
+					//*/
 					// Get the dotline figure
 					LifelineDotLineFigure figureLifelineDotLineFigure = lifelineEP.getPrimaryShape().getFigureLifelineDotLineFigure();
 
 					Point moveDelta = request.getMoveDelta();
 					if(moveDelta != null) {
 						newBounds.translate(moveDelta);
-						System.out.println("before -10 : " + newBounds);
-						newBounds.y -= 6;
-						System.out.println("after  -10 : " + newBounds);
+//						System.out.println("before -10 : " + newBounds);
+						newBounds.y -= 10;
+//						System.out.println("after  -10 : " + newBounds);
 					}
+					/*8
 					System.out.println("fin newBounds : " + newBounds);
 					Rectangle copyBounds = newBounds.getCopy();
 					siFigure.translateToAbsolute(copyBounds);
 					System.out.println("abs cpyBounds : " + copyBounds);
-					
+					//*/
 					// Create and add the set bounds command to the compound command
 					SetBoundsCommand setBoundsCmd = new SetBoundsCommand(siEP.getEditingDomain(), "Apex Move of a StateInvariant", siEP, newBounds);
 					compoundCmd.add(new ICommandProxy(setBoundsCmd));
