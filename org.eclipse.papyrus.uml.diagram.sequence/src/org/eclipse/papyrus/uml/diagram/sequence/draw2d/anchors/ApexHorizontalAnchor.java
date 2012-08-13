@@ -48,10 +48,10 @@ public class ApexHorizontalAnchor extends SlidableAnchor {
 	@Override
 	public Point getReferencePoint() {
 		Point reference = super.getReferencePoint();
-		Rectangle rBox = getBox();
-		if (relativeY > -1) {
-			reference.setY(relativeY + rBox.y());
-		}
+//		Rectangle rBox = getBox();
+//		if (relativeY > -1) {
+//			reference.setY(relativeY + rBox.y());
+//		}
 		return reference;
 	}
 	
