@@ -1377,7 +1377,12 @@ public class LifelineEditPart extends NamedElementEditPart {
 			BorderLayout layoutThis = new BorderLayout();
 			this.setLayoutManager(layoutThis);
 			this.setOpaque(false);
+			/* apex improved start */
+			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(100), getMapMode().DPtoLP(800)));
+			/* apex improved end */
+			/* apex replaced
 			this.setPreferredSize(new Dimension(getMapMode().DPtoLP(100), getMapMode().DPtoLP(200)));
+			*/
 			createContents();
 		}
 
@@ -1676,6 +1681,7 @@ public class LifelineEditPart extends NamedElementEditPart {
 			//				getPrimaryShape().repaint();
 			//			}
 		}
+		
 		super.handleNotificationEvent(notification);
 		// fixed bug (id=364711) when bounds changed update coveredBys with the
 		// figure's bounds.
@@ -1686,7 +1692,7 @@ public class LifelineEditPart extends NamedElementEditPart {
 					updater.update(LifelineEditPart.this);
 				}
 			});
-		}
+		}		
 	}
 
 

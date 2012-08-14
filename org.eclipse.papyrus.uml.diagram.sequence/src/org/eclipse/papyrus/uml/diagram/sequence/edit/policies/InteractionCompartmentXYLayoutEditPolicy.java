@@ -356,9 +356,11 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			/* apex added end */
 			
 			// retrieve all the edit parts in the registry
-			Set<Entry<Object, EditPart>> allEditPartEntries = combinedFragmentEditPart.getViewer().getEditPartRegistry().entrySet();
-			for(Entry<Object, EditPart> epEntry : allEditPartEntries) {
-				EditPart ep = epEntry.getValue();
+//			Set<Entry<Object, EditPart>> allEditPartEntries = combinedFragmentEditPart.getViewer().getEditPartRegistry().entrySet();			
+//			for(Entry<Object, EditPart> epEntry : allEditPartEntries) {
+			List<EditPart> coveredChildrenEditParts = ApexSequenceUtil.apexGetCombinedFragmentChildrenEditParts((CombinedFragmentEditPart)combinedFragmentEditPart);
+			for ( EditPart ep : coveredChildrenEditParts ) {
+				//EditPart ep = epEntry.getValue();
 
 				// handle move of object graphically owned by the lifeline
 				// ExecSpec은 아래 로직을 따라 이동
@@ -543,7 +545,11 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			*/
 			CombinedFragment cf = (CombinedFragment)((CombinedFragmentEditPart)combinedFragmentEditPart).resolveSemanticElement();
 
-			// 아래 기존 로직은 CF의 child인 InteractionOperand resize 처리
+			// 아래 기존 로직은 CF의 첫번째 InteractionOperand의 상단에서의 resize 처리, 즉 두번째 이후 IOEP는 아래 로직 타지 않음
+			// 최종적인 IOEP의 경계처리는 CF생성때처럼 OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand()에 의해 수행됨 - 146line 참조
+			// 그 외의 IOEP resize(첫번째 Op의 하단에서의 resize 나 두번째 이후 Op의 상/하단에서의 resize 처리는
+			// OperandBoundsComputeHelper.createIOEPResizeCommand()에 의해 처리
+			// InteractionOperandDragDropEditPolicy.getResizeCommand() 참조
 			if(combinedFragmentEditPart.getChildren().size() > 0 && combinedFragmentEditPart.getChildren().get(0) instanceof CombinedFragmentCombinedFragmentCompartmentEditPart) {
 
 				CombinedFragmentCombinedFragmentCompartmentEditPart compartment = (CombinedFragmentCombinedFragmentCompartmentEditPart)combinedFragmentEditPart.getChildren().get(0);
@@ -574,8 +580,9 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 							// 이 Operand가 첫번째 Operand이면
 							if(firstOperand.equals(io)) {
 								Rectangle boundsIO = ioEP.getFigure().getBounds().getCopy();
+								
+								/* apex improved start */								
 								// 이 Operand의 좌표를 절대좌표로 변환
-								/* apex improved start */
 								ioEP.getFigure().translateToAbsolute(boundsIO);
 								/* apex improved end */
 								/* apex replacedd
@@ -599,9 +606,9 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 
 					// moveDelta만큼 이동
 					// apply the move delta which will impact all operands
-					newBoundsIO.translate(moveDelta);
+					//newBoundsIO.translate(moveDelta);
 
-					// 실제 경계 변경 처리
+					// 경계값 변경
 					// calculate the new bounds of the interaction operand
 					// scale according to the ratio
 					newBoundsIO.height = (int)(newBoundsIO.height * heightRatio);
@@ -609,6 +616,23 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 
 					// 첫번째 Operand의 경우 Header영역도 Operand에 포함(io의 y값은 감소시키고, 그만큼 height는 확장)
 					if(firstOperand.equals(io)) {
+						// ioep 의 highestChild의 top 아래로 resize 금지
+						if (sizeDelta.height < 0) {
+							IGraphicalEditPart highestChildEditPart = ApexSequenceUtil.apexGetHighestEditPartFromList(ioEP.getChildren());
+							if ( highestChildEditPart != null ) {
+								int topHighestChildEP = ApexSequenceUtil.apexGetAbsolutePosition(highestChildEditPart, SWT.TOP);
+								int topCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(ioEP, SWT.TOP) - sizeDelta.height;
+
+								if ( topCurrentIOEP >= topHighestChildEP ) {
+									return UnexecutableCommand.INSTANCE;
+								}	
+							}														
+						}
+						// ioep의 child가 ioep의 하단 아래로 밀려내려가는 것 방지
+						if ( OperandBoundsComputeHelper.apexIsInvadingTargetChildren(ioEP, compartment, PositionConstants.NORTH, sizeDelta.height) ) {
+							return UnexecutableCommand.INSTANCE;
+						}
+						
 						// used to compensate the height of the "header" where the OperandKind is stored
 						newBoundsIO.y -= headerHeight;
 						newBoundsIO.height += headerHeight;
@@ -1005,14 +1029,17 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		// CF의 해당 IO의 경계 변경 실제 처리 부분
 		// Operand List 모두 변경 처리 필요(alt의 경우)
 
-		if (childCombinedFragmentEditPart != null) {
+		if (childCombinedFragmentEditPart != null) { // 중첩 CF에 의한 reisze 경우
 			EditPart pep = childCombinedFragmentEditPart.getParent();
 			if ( pep instanceof InteractionOperandEditPart ) {
 				
 				InteractionOperandEditPart ioep = (InteractionOperandEditPart)pep;
 				IFigure ioFigure = ioep.getFigure();
 				Rectangle ioRect = ioFigure.getBounds().getCopy();
+				/* apex replaced
+				// width와 height로만 SetBoundsCommand를 생성하므로 아래 로직 불필요
 				ioFigure.getParent().translateToAbsolute(ioRect);
+				*/
 				ioRect.resize(sizeDelta);
 				
 				CombinedFragmentCombinedFragmentCompartmentEditPart cfcfep= (CombinedFragmentCombinedFragmentCompartmentEditPart)ioep.getParent();
@@ -1020,8 +1047,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				
 
 /*8
+				// Rectangle을 이용하여 경계를 반환하면 맞추기 어려우므로 아래처럼 width, height를 이용한 SetBoundsCommand로 처리
 				ICommand resizeIOCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(ioep, ioRect);
-//				Command resizeIOCommand = OperandBoundsComputeHelper.createIOEPResizeCommand(ioep, siblingIoepHeight, cfcfep, direction);
 				ccmd.add(new ICommandProxy(resizeIOCommand));
 //*/
 //*8				
