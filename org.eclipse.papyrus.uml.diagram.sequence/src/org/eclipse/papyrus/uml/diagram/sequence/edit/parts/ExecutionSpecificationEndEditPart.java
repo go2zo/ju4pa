@@ -15,10 +15,8 @@ import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Locator;
 import org.eclipse.draw2d.RelativeLocator;
-import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PrecisionPoint;
-import org.eclipse.draw2d.geometry.PrecisionRectangle;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.EList;
@@ -67,7 +65,6 @@ import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.gmf.runtime.notation.impl.ShapeImpl;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.commands.CommentAnnotatedElementCreateCommand;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.commands.ConstraintConstrainedElementCreateCommand;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.MessageEndEditPart.ViewHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.CommandHelper;
 import org.eclipse.uml2.uml.Comment;
@@ -141,11 +138,20 @@ public class ExecutionSpecificationEndEditPart extends GraphicalEditPart
 	}
 	
 	private void addToResource(final View container, final View view) {
+		/* apex improved start */
+		CommandHelper.executeCommandWithoutHistory(getEditingDomain(), new DummyCommand() {
+			public void execute() {
+				ViewUtil.insertChildView(container, view,-1, false);
+			}
+		}, true);
+		/* apex improved end */
+		/* apex replaced
 		CommandHelper.executeCommandWithoutHistory(getEditingDomain(), new DummyCommand() {
 			public void execute() {
 				ViewUtil.insertChildView(container, view,-1, false);
 			}
 		});
+		 */
 	}
 	
 	protected void createDefaultEditPolicies() {

@@ -30,7 +30,9 @@ import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PointList;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EStructuralFeature.Setting;
 import org.eclipse.gef.EditPart;
+import org.eclipse.gef.EditPartViewer;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.editparts.AbstractGraphicalEditPart;
@@ -41,11 +43,10 @@ import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.INodeEditPart;
+import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.util.DiagramEditPartsUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragment2EditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ContinuationEditPart;
@@ -55,13 +56,13 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEdi
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionUseEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.swt.SWT;
+import org.eclipse.uml2.common.util.CacheAdapter;
 import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.ExecutionOccurrenceSpecification;
 import org.eclipse.uml2.uml.Interaction;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
-import org.eclipse.uml2.uml.internal.impl.InteractionImpl;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ApexSequenceUtil {
@@ -178,7 +179,7 @@ public class ApexSequenceUtil {
 					}	
 				}
 				*/	
-				if ( SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1) instanceof InteractionImpl) {
+				if ( SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1) instanceof Interaction) {
 					// CF의 경우 중첩되어 있는 경우에도 findInteractionFragmentContainerAt() 이 InteractionImpl을 반환하므로
 					// IOEP를 통해 한 번 더 check 해야함
 					if ( agep1 instanceof CombinedFragmentEditPart
@@ -881,94 +882,13 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		return positionallyCoveredLifelineEditParts;
 	}
-	
-	
-	public static ConnectionNodeEditPart apexGetPrevConnectionEditPart(ConnectionNodeEditPart connectionPart) {
-		EditPart sourcePart = connectionPart.getSource();
-		if (sourcePart instanceof ActionExecutionSpecificationEditPart ||
-				sourcePart instanceof BehaviorExecutionSpecificationEditPart) {
-			List<ConnectionNodeEditPart> srcConns = apexGetSortedConnections((IGraphicalEditPart)sourcePart, true, true);
-			if (srcConns.size() > 0 && srcConns.indexOf(connectionPart) > 0) {
-				int index = srcConns.indexOf(connectionPart);
-				return srcConns.get(index - 1);
-//				return apexGetLastConnectionEditPart(srcConns.get(index - 1));
-			}
-			List<ConnectionNodeEditPart> tgtConns = apexGetSortedConnections((IGraphicalEditPart)sourcePart, false, true);
-			if (tgtConns.size() > 0) {
-				return tgtConns.get(tgtConns.size() - 1);
-			}
-		}
-		return null;
-	}
-	
-	public static ConnectionNodeEditPart apexGetNextConnectionEditPart(ConnectionNodeEditPart connectionPart) {
-		EditPart targetPart = connectionPart.getTarget();
-		if (targetPart instanceof ActionExecutionSpecificationEditPart ||
-				targetPart instanceof BehaviorExecutionSpecificationEditPart) {
-			List<ConnectionNodeEditPart> srcConns = apexGetSortedConnections((IGraphicalEditPart)targetPart, true, true);
-			if (srcConns.size() > 0) {
-				return srcConns.get(0);
-			}
-		}
-		EditPart sourcePart = connectionPart.getSource();
-		if (sourcePart instanceof ActionExecutionSpecificationEditPart ||
-				sourcePart instanceof BehaviorExecutionSpecificationEditPart) {
-			List<ConnectionNodeEditPart> srcConns = apexGetSortedConnections((IGraphicalEditPart)sourcePart, true, true);
-			if (srcConns.size() > 0) {
-				int index = srcConns.indexOf(connectionPart);
-				if (index > -1 && index < srcConns.size() - 1) {
-					return srcConns.get(index + 1);
-				}
-			}
-		}
-		return null;
-	}
-	
-	public static ConnectionNodeEditPart apexGetLastConnectionEditPart(ConnectionNodeEditPart connectionPart) {
-		EditPart targetPart = connectionPart.getTarget();
-		if (targetPart instanceof LifelineEditPart) {
-			return connectionPart;
-		}
-		else if (targetPart instanceof ActionExecutionSpecificationEditPart ||
-				targetPart instanceof BehaviorExecutionSpecificationEditPart) {
-			List<ConnectionNodeEditPart> sourceConns = apexGetSortedConnections((IGraphicalEditPart)targetPart, true, true);
-			if (sourceConns.size() > 0) {
-				return apexGetLastConnectionEditPart(sourceConns.get(sourceConns.size() - 1));
-			}
-			else {
-				return connectionPart;
-			}
-		}
-		return null;
-	}
-	
-	public static List<ConnectionNodeEditPart> apexGetSortedConnections(IGraphicalEditPart editPart, boolean isSource, final boolean forward) {
-		List<ConnectionNodeEditPart> srcConns = new ArrayList<ConnectionNodeEditPart>();
-		List<?> conns = isSource ? editPart.getSourceConnections() : editPart.getTargetConnections();
-		for (Object conn : conns) {
-			if (conn instanceof ConnectionNodeEditPart) {
-				srcConns.add((ConnectionNodeEditPart)conn);
-			}
-		}
-		Collections.sort(srcConns, new Comparator<ConnectionNodeEditPart>() {
-			public int compare(ConnectionNodeEditPart o1, ConnectionNodeEditPart o2) {
-				Point p1 = SequenceUtil.getAbsoluteEdgeExtremity((ConnectionNodeEditPart)o1, true);
-				Point p2 = SequenceUtil.getAbsoluteEdgeExtremity((ConnectionNodeEditPart)o2, true);
-				
-				if (p1 != null && p2 != null) {
-					int compare = forward ? p1.y() - p2.y() : p2.y() - p1.y();
-					return compare >= 0 ? (compare != 0 ? 1 : 0) : -1;
-				}
-				return 0;
-			}
-		});
-		
-		return srcConns;
-	}
-	
+
+	/**
+	 * 동일한 부모 InteractionFragment를 갖는 Sibling EditPart들을 구함
+	 * @param gep current edit part
+	 * @return
+	 */
 	public static List<IGraphicalEditPart> apexGetSiblingEditParts(IGraphicalEditPart gep) {
-		List<InteractionFragment> fragmentList = new ArrayList<InteractionFragment>();
-		
 		InteractionFragment fragment = null;
 		if (gep instanceof ConnectionNodeEditPart) {
 			ConnectionNodeEditPart connection = (ConnectionNodeEditPart)gep;
@@ -979,7 +899,83 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			Rectangle bounds = SequenceUtil.getAbsoluteBounds(gep);
 			fragment = SequenceUtil.findInteractionFragmentContainerAt(bounds, gep);
 		}
+		
+		return apexGetSiblingEditPart(fragment, gep.getViewer());
+	}
 
+	/**
+	 * 동일한 부모 InteractionFragment를 갖는 Sibling EditPart들 중 아래의 EditPart을 구함
+	 * @param gep
+	 * @return
+	 */
+	public static List<IGraphicalEditPart> apexGetNextSiblingEditParts(IGraphicalEditPart gep) {
+		List<IGraphicalEditPart> removeList = new ArrayList<IGraphicalEditPart>();
+		List<IGraphicalEditPart> result = apexGetSiblingEditParts(gep);
+		int y = ApexSequenceUtil.apexGetAbsolutePosition(gep, SWT.BOTTOM);
+		for (IGraphicalEditPart part : result) {
+			int top = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.TOP);
+			if (y > top) {
+				removeList.add(part);
+			}
+		}
+		
+		result.removeAll(removeList);
+		
+		Collections.sort(result, new Comparator<IGraphicalEditPart>() {
+			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
+				Rectangle r1 = apexGetAbsoluteRectangle(o1);
+				Rectangle r2 = apexGetAbsoluteRectangle(o2);
+				
+				if (r1.y - r2.y == 0)
+					return r1.x - r2.x;
+				return r1.y - r2.y;
+			}
+		});
+		
+		return result;
+	}
+	
+	/**
+	 * 동일한 부모 InteractionFragment를 갖는 Sibling EditPart들 중 위의 EditPart을 구함
+	 * @param gep
+	 * @return
+	 */
+	public static List<IGraphicalEditPart> apexGetPrevSiblingEditParts(IGraphicalEditPart gep) {
+		List<IGraphicalEditPart> removeList = new ArrayList<IGraphicalEditPart>();
+		List<IGraphicalEditPart> result = apexGetSiblingEditParts(gep);
+		int y = ApexSequenceUtil.apexGetAbsolutePosition(gep, SWT.TOP);
+		for (IGraphicalEditPart part : result) {
+			int bottom = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.BOTTOM);
+			if (y < bottom) {
+				removeList.add(part);
+			}
+		}
+		
+		result.removeAll(removeList);
+		
+		Collections.sort(result, new Comparator<IGraphicalEditPart>() {
+			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
+				Rectangle r1 = apexGetAbsoluteRectangle(o1);
+				Rectangle r2 = apexGetAbsoluteRectangle(o2);
+				
+				if (r1.bottom() - r2.bottom() == 0)
+					return r1.right() - r2.right();
+				return r1.bottom() - r2.bottom();
+			}
+		});
+		
+		return result;
+	}
+	
+	/**
+	 * interactionFragment의 하위 fragment들의 EditPart을 구함
+	 * @param interactionFragment
+	 * @param viewer
+	 * @return
+	 */
+	public static List<IGraphicalEditPart> apexGetSiblingEditPart(InteractionFragment fragment, EditPartViewer viewer) {
+		List<InteractionFragment> fragmentList = new ArrayList<InteractionFragment>();
+		
 		if (fragment instanceof Interaction) {
 			fragmentList.addAll( ((Interaction) fragment).getFragments() );
 		}
@@ -1000,9 +996,9 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				parseElement = ((ExecutionOccurrenceSpecification)itf).getExecution();
 			}
 			
-			List<View> views = DiagramEditPartsUtil.findViews(parseElement, gep.getViewer());
+			List<View> views = DiagramEditPartsUtil.findViews(parseElement, viewer);
 			for (View view : views) {
-				EditPart part = DiagramEditPartsUtil.getEditPartFromView(view, gep);
+				EditPart part = (EditPart)viewer.getEditPartRegistry().get(view);
 				boolean isCombinedFragment = part instanceof CombinedFragmentEditPart || part instanceof CombinedFragment2EditPart;
 				boolean isContinuation = part instanceof ContinuationEditPart;
 				boolean isInteractionOperand = part instanceof InteractionOperandEditPart;
@@ -1010,8 +1006,8 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				boolean isInteraction = part instanceof InteractionEditPart;
 				boolean isMessage = part instanceof ConnectionNodeEditPart;
 				boolean isActivation = part instanceof AbstractExecutionSpecificationEditPart;
-				boolean isSameEditPart = gep.equals(part);
-				if(isCombinedFragment || isContinuation || isInteractionOperand || isInteractionUse || isInteraction || isMessage /*|| isActivation*/) {
+				boolean isSameEditPart = fragment.equals(view.getElement());
+				if(isCombinedFragment || isContinuation || isInteractionOperand || isInteractionUse || isInteraction || isMessage || isActivation) {
 					if (!result.contains(part) && !isSameEditPart) {
 						result.add((IGraphicalEditPart) part);
 					}
@@ -1022,51 +1018,23 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		return result;
 	}
 	
-	public static List<IGraphicalEditPart> apexGetNextSiblingEditParts(IGraphicalEditPart gep) {
-		List<IGraphicalEditPart> removeList = new ArrayList<IGraphicalEditPart>();
-		List<IGraphicalEditPart> result = apexGetSiblingEditParts(gep);
-		int y = ApexSequenceUtil.apexGetAbsolutePosition(gep, SWT.BOTTOM);
-		for (IGraphicalEditPart part : result) {
-			int top = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.TOP);
-			if (y > top) {
-				removeList.add(part);
+	/**
+	 * y값을 포함하는 EditPart 리스트를 구함
+	 * @param yLocation
+	 * @param interactionFragment
+	 * @param viewer
+	 * @return
+	 */
+	public static List<IGraphicalEditPart> apexGetEditPartsContainerAt(int yLocation, InteractionFragment interactionFragment, EditPartViewer viewer) {
+		List<IGraphicalEditPart> result = new ArrayList<IGraphicalEditPart>();
+		
+		List<IGraphicalEditPart> siblingEditParts = apexGetSiblingEditPart(interactionFragment, viewer);
+		for (IGraphicalEditPart editPart : siblingEditParts) {
+			if (yLocation > apexGetAbsolutePosition(editPart, SWT.TOP) &&
+					yLocation < apexGetAbsolutePosition(editPart, SWT.BOTTOM)) {
+				result.add(editPart);
 			}
 		}
-		
-		result.removeAll(removeList);
-		
-		Collections.sort(result, new Comparator<IGraphicalEditPart>() {
-			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
-				int i1 = apexGetAbsolutePosition(o1, SWT.TOP);
-				int i2 = apexGetAbsolutePosition(o2, SWT.TOP);
-				return i1 - i2;
-			}
-		});
-		
-		return result;
-	}
-	
-	public static List<IGraphicalEditPart> apexGetPrevSiblingEditParts(IGraphicalEditPart gep) {
-		List<IGraphicalEditPart> removeList = new ArrayList<IGraphicalEditPart>();
-		List<IGraphicalEditPart> result = apexGetSiblingEditParts(gep);
-		int y = ApexSequenceUtil.apexGetAbsolutePosition(gep, SWT.TOP);
-		for (IGraphicalEditPart part : result) {
-			int bottom = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.BOTTOM);
-			if (y < bottom) {
-				removeList.add(part);
-			}
-		}
-		
-		result.removeAll(removeList);
-		
-		Collections.sort(result, new Comparator<IGraphicalEditPart>() {
-			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
-				int i1 = apexGetAbsolutePosition(o1, SWT.BOTTOM);
-				int i2 = apexGetAbsolutePosition(o2, SWT.BOTTOM);
-				return i1 - i2;
-			}
-		});
-		
 		return result;
 	}
 	
@@ -1116,5 +1084,17 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			Command aCommand = (Command)itCmd.next();
 			resultCompoundCommand.add(aCommand);
 		}
+	}
+	
+	public static EditPart getEditPart(EObject eObject, EditPartViewer viewer) {
+		Collection<Setting> settings = CacheAdapter.getInstance().getNonNavigableInverseReferences(eObject);
+		for (Setting ref : settings) {
+			if(NotationPackage.eINSTANCE.getView_Element().equals(ref.getEStructuralFeature())) {
+				View view = (View)ref.getEObject();
+				EditPart part = (EditPart)viewer.getEditPartRegistry().get(view);
+				return part;
+			}
+		}
+		return null;
 	}
 }

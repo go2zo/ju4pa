@@ -157,11 +157,20 @@ public class MessageEndEditPart extends GraphicalEditPart implements
 	}
 
 	private void addToResource(final View container, final View view) {
+		/* apex improved start */
+		CommandHelper.executeCommandWithoutHistory(getEditingDomain(), new DummyCommand() {
+			public void execute() {
+				ViewUtil.insertChildView(container, view,-1, false);
+			}
+		}, true);
+		/* apex improved end */
+		/* apex replaced
 		CommandHelper.executeCommandWithoutHistory(getEditingDomain(), new DummyCommand() {
 			public void execute() {
 				ViewUtil.insertChildView(container, view,-1, false);
 			}
 		});
+		 */
 	}
 
 	protected void createDefaultEditPolicies() {

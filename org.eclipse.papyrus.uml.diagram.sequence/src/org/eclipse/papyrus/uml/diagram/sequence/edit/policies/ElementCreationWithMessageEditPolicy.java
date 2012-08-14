@@ -166,7 +166,32 @@ public class ElementCreationWithMessageEditPolicy extends LifelineChildGraphical
 	 */
 	@Override
 	protected void showCreationFeedback(CreateConnectionRequest request) {
+		/* apex improved start */
+		FeedbackHelper helper = getFeedbackHelper(request);
+		Point p = new Point(request.getLocation());
+		ConnectionAnchor anchor = getTargetConnectionAnchor(request);
+		Point sourceLocation = null;
+		if (request instanceof CreateUnspecifiedTypeConnectionRequest) {
+			CreateUnspecifiedTypeConnectionRequest unspecifiedRequest = (CreateUnspecifiedTypeConnectionRequest)request;
+			for (Object type : unspecifiedRequest.getElementTypes()) {
+				if (type instanceof IElementType) {
+					CreateRequest createRequest = unspecifiedRequest.getRequestForType((IElementType)type);
+					Object srcLocation = createRequest.getExtendedData().get(SequenceRequestConstant.SOURCE_LOCATION_DATA);
+					if (srcLocation instanceof Point) {
+						sourceLocation = (Point)srcLocation;
+						break;
+					}
+				}
+			}
+		}
+		if (anchor == null && sourceLocation != null) {
+			p.y = sourceLocation.y;
+		}
+		helper.update(anchor, p);
+		/* apex improved end */
+		/* apex replaced
 		super.showCreationFeedback(request);
+		 */
 
 		/* apex added start */
 		if (request instanceof CreateUnspecifiedTypeConnectionRequest) {
