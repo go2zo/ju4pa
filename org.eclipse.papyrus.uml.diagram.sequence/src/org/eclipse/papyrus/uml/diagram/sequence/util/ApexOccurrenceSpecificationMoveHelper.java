@@ -26,11 +26,18 @@ import org.eclipse.papyrus.uml.diagram.common.util.DiagramEditPartsUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.draw2d.anchors.ApexHorizontalAnchor;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.uml2.common.util.CacheAdapter;
+import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.Message;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
 import org.eclipse.uml2.uml.OccurrenceSpecification;
 
 public class ApexOccurrenceSpecificationMoveHelper {
+	
+	public static Command getMoveInteractionFragmentCommand(InteractionFragment movedInteractionFragment, int yLocation) {
+		CompoundCommand command = new CompoundCommand();
+		
+		return command;
+	}
 
 	/**
 	 * Get the complete command to move message occurrence specification.

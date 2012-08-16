@@ -62,10 +62,10 @@ public class ApexSetBoundsForExecutionSpecificationCommand extends
 		location.y = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getLocation_Y());
 		size.width = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getSize_Width());
 		size.height = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getSize_Height());
-		int bottom = Math.max(oldBounds.getBottom().y, location.y + size.height);
+		int bottom = Math.max(oldBounds.getBottom().y, location.y + size.height + EXECUTION_BOTTOM_MARGIN);
 		
 		bounds = new Rectangle(oldBounds);
-		bounds.height = bottom - oldBounds.y + EXECUTION_BOTTOM_MARGIN;
+		bounds.height = bottom - oldBounds.y;
 		
 		ViewUtil.setStructuralFeatureValue(view, NotationPackage.eINSTANCE.getLocation_X(), Integer.valueOf(bounds.x));
 		ViewUtil.setStructuralFeatureValue(view, NotationPackage.eINSTANCE.getLocation_Y(), Integer.valueOf(bounds.y));

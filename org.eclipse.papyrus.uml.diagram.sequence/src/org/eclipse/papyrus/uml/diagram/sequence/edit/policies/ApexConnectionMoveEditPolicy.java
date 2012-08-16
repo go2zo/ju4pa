@@ -1,11 +1,11 @@
 package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.draw2d.Connection;
-import org.eclipse.draw2d.FigureCanvas;
 import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.PolylineConnection;
@@ -22,19 +22,15 @@ import org.eclipse.gef.Request;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.commands.UnexecutableCommand;
-import org.eclipse.gef.requests.BendpointRequest;
+import org.eclipse.gef.editpolicies.SelectionHandlesEditPolicy;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
-import org.eclipse.gef.ui.parts.ScrollingGraphicalViewer;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.commands.SetBoundsCommand;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
-import org.eclipse.gmf.runtime.diagram.ui.editpolicies.ConnectionBendpointEditPolicy;
-import org.eclipse.gmf.runtime.diagram.ui.util.SelectInDiagramHelper;
 import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
-import org.eclipse.gmf.runtime.gef.ui.internal.editpolicies.LineMode;
-import org.eclipse.papyrus.uml.diagram.sequence.draw2d.routers.MessageRouter.RouterKind;
+import org.eclipse.papyrus.uml.diagram.sequence.command.ApexMoveInteractionFragmentsCommand;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
@@ -42,50 +38,61 @@ import org.eclipse.papyrus.uml.diagram.sequence.util.ApexOccurrenceSpecification
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.swt.SWT;
+import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.Message;
 import org.eclipse.uml2.uml.MessageEnd;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
 import org.eclipse.uml2.uml.OccurrenceSpecification;
 
-@SuppressWarnings("restriction")
-public class ApexMessageConnectionLineSegEditPolicy extends
-		ConnectionBendpointEditPolicy {
-	public ApexMessageConnectionLineSegEditPolicy() {
-		super(LineMode.ORTHOGONAL_FREE);
+public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
+	
+	public final static String CONNECTION_MOVE_ROLE = "ApexConnectionMoveEditPolicy"; //$NON-NLS-1$ 
+
+	@Override
+	protected List createSelectionHandles() {
+		List list = new ArrayList();
+		return list;
 	}
 
+	
+	/**
+	 * Returns the Connection associated with this EditPolicy.
+	 */
+	protected Connection getConnection() {
+		return (Connection) ((ConnectionEditPart) getHost()).getFigure();
+	}
+	
 	@Override
 	public Command getCommand(Request request) {
-		if(isHorizontal()) {
-			return super.getCommand(request);
+		if (request instanceof ChangeBoundsRequest) {
+			if (REQ_MOVE.equals(request.getType())) {
+				return getMoveConnectionCommand((ChangeBoundsRequest)request);
+			}
 		}
-		return null;
+		return super.getCommand(request);
 	}
 
-	/**
-	 * apex updated
-	 * 
-	 * Move the anchors along with the line and update bendpoints accordingly.
-	 */
-	@Override
-	protected Command getBendpointsChangedCommand(BendpointRequest request) {
-		if((getHost().getViewer() instanceof ScrollingGraphicalViewer) && (getHost().getViewer().getControl() instanceof FigureCanvas)) {
-			SelectInDiagramHelper.exposeLocation((FigureCanvas)getHost().getViewer().getControl(), request.getLocation().getCopy());
-		}
+	protected Command getMoveConnectionCommand(ChangeBoundsRequest request) {
+//		if((getHost().getViewer() instanceof ScrollingGraphicalViewer) && (getHost().getViewer().getControl() instanceof FigureCanvas)) {
+//			SelectInDiagramHelper.exposeLocation((FigureCanvas)getHost().getViewer().getControl(), request.getLocation().getCopy());
+//		}
 
 		if(getHost() instanceof ConnectionNodeEditPart) {
 			ConnectionNodeEditPart connectionPart = (ConnectionNodeEditPart)getHost();
-			int oldY = ApexSequenceUtil.apexGetAbsolutePosition(connectionPart, SWT.BOTTOM);
-			
-			ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(REQ_MOVE);
-			Point location = request.getLocation().getCopy();
-			Point moveDalta = new Point(0, location.y() - oldY);
-			cbRequest.setMoveDelta(moveDalta);
-			cbRequest.setLocation(location);
-
-			Command result = apexGetMoveConnectionCommand(cbRequest, connectionPart, false);
+			Command result = apexGetMoveConnectionCommand(request, connectionPart, false);
 			return result;
+			
+//			EObject message = connectionPart.resolveSemanticElement();
+//			if(message instanceof Message) {
+//				MessageEnd send = ((Message)message).getSendEvent();
+//				ApexMoveInteractionFragmentsCommand cmd = new ApexMoveInteractionFragmentsCommand(
+//						connectionPart.getEditingDomain(), connectionPart.getViewer(), (InteractionFragment)send,
+//						request.getLocation().y, request.getMoveDelta().y, false);
+//				return new ICommandProxy(cmd);
+//			}
 		}
+		
+		
 		return UnexecutableCommand.INSTANCE;
 	}
 
@@ -96,6 +103,13 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 	private static boolean flexiblePrev = false;
 	/* apex added end */
 
+	private static Command chain(Command cmd1, Command cmd2) {
+		if (cmd1 == null) {
+			return cmd2;
+		}
+		return cmd1.chain(cmd2);
+	}
+	
 	/**
 	 * 
 	 * @param request
@@ -184,6 +198,10 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 					}
 				}
 
+				Command srcCmd = null;
+				Command tgtCmd = null;
+				Command nextCmd = null;
+				
 				if (moveAlone) {
 					// Target인 Activation의 Minimumsize 이하로 줄어들 수 없음
 					if (tgtPart instanceof AbstractExecutionSpecificationEditPart) {
@@ -206,8 +224,8 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 							newBounds.height = y + PADDING - newBounds.y;
 						}
 						
-						compoudCmd.add( createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
-						compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
+						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
+						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
 								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
 					}
 					else if (srcPart.equals(srcLifelinePart)) { // source : LifelineEditPart
@@ -219,8 +237,8 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 							newBounds.height = y + MARGIN - oldBounds.y;
 						}
 						
-						compoudCmd.add( createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
-						compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
+						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
+						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
 								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
 					}
 					
@@ -232,7 +250,7 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						newBounds.y = y;
 						newBounds.height -= moveDeltaY; 
 						
-						compoudCmd.add( createChangeBoundsCommand(tgtExecSpecEP, oldBounds, newBounds, true) );
+						tgtCmd = chain(tgtCmd, createChangeBoundsCommand(tgtExecSpecEP, oldBounds, newBounds, true) );
 					}
 				}
 				else {
@@ -247,10 +265,9 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						Rectangle newBounds = oldBounds.getCopy();
 						newBounds.height += (y - realMinY); 
 						
-						compoudCmd.add( createChangeBoundsCommand(realPrevPart, oldBounds, newBounds, true) );
+						srcCmd = chain(srcCmd, createChangeBoundsCommand(realPrevPart, oldBounds, newBounds, true));
 					}
 					
-					Command sendMessageMoveCmd = null;
 					if (srcPart instanceof AbstractExecutionSpecificationEditPart) {
 						IGraphicalEditPart srcExecSpecEP = (IGraphicalEditPart)srcPart;
 						
@@ -277,11 +294,11 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						newBounds.height += moveDeltaY;
 
 						if (connectionPart.equals(lastConnPart)) {
-							compoudCmd.add( createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
+							srcCmd = chain(srcCmd, createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true));
 						}
 						
-						sendMessageMoveCmd = ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty);
+						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
+								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty));
 					}
 					else if (srcPart.equals(srcLifelinePart)) { // source : LifelineEditPart
 						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
@@ -292,18 +309,21 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 							newBounds.height = y + MARGIN - oldBounds.y;
 						}
 						
-						compoudCmd.add( createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
-						compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
+						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
+						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
 								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
 					}
 
+					// target: linked activations
 					List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, false, true, false);
-					for (IGraphicalEditPart linkedPart : linkedParts) {
+					for (int i = 0; i < linkedParts.size(); i++) {
+//					for (int i = linkedParts.size() - 1; i >= 0; i--) {
+						IGraphicalEditPart linkedPart = linkedParts.get(i);
 						Rectangle oldBounds = ApexSequenceUtil.apexGetAbsoluteRectangle(linkedPart);
 						Rectangle newBounds = oldBounds.getCopy();
 						newBounds.y += moveDeltaY;
 						
-						compoudCmd.add( createChangeBoundsCommand(linkedPart, oldBounds, newBounds, true) );
+						tgtCmd = chain(tgtCmd, createChangeBoundsCommand(linkedPart, oldBounds, newBounds, true) );
 					}
 					
 					if (moveDeltaY > 0) {
@@ -312,93 +332,28 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						if (nextParts.size() > 0) {
 							IGraphicalEditPart nextSiblingEditPart = nextParts.get(0);
 							if (nextSiblingEditPart instanceof ConnectionNodeEditPart) {
-								Command nextCmd = apexGetMoveConnectionCommand(request, (ConnectionNodeEditPart) nextSiblingEditPart, moveAlone);
-								compoudCmd.add(nextCmd);
+								nextCmd = apexGetMoveConnectionCommand(request, (ConnectionNodeEditPart) nextSiblingEditPart, moveAlone);
 							}
 							else {
-								Command nextCmd = nextSiblingEditPart.getCommand(request);
-								compoudCmd.add(nextCmd);
+								nextCmd = nextSiblingEditPart.getCommand(request);
 //								apexGetResizeOrMoveBelowItemsCommand(request, nextSiblingEditPart);
 							}
 						}
 					}
-					
-					compoudCmd.add(sendMessageMoveCmd);
-					
-//					if (srcPart instanceof AbstractExecutionSpecificationEditPart) {
-//						IGraphicalEditPart srcExecSpecEP = (IGraphicalEditPart)srcPart;
-//						Rectangle oldBounds = ApexSequenceUtil.apexGetAbsoluteRectangle(srcExecSpecEP);
-//						Rectangle newBounds = oldBounds.getCopy();
-//						newBounds.height += moveDeltaY;
-//						
-//						compoudCmd.add( createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
-//
-//						List sourceConnections = srcExecSpecEP.getSourceConnections();
-//						int oldLocationY = oldLocation.y;
-//						for (Object sourceConnection : sourceConnections) {
-//							if (sourceConnection instanceof ConnectionNodeEditPart) {
-//								EObject semanticElement = ((ConnectionNodeEditPart)sourceConnection).resolveSemanticElement();
-//								if (semanticElement instanceof Message) {
-//									MessageEnd messageEnd = ((Message)semanticElement).getSendEvent();
-//									int tmp = SequenceUtil.findLocationOfMessageOccurrence((GraphicalEditPart) srcExecSpecEP, (MessageOccurrenceSpecification) messageEnd).y;
-//									
-//									if (oldLocationY < tmp || connectionPart.equals(sourceConnection)) {
-//										compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-//												(OccurrenceSpecification)messageEnd, tmp + moveDeltaY, newBounds, srcLifelinePart, empty) );
-//
-//										List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(
-//												(IGraphicalEditPart) sourceConnection, false, true, false);
-//										
-//										for (IGraphicalEditPart linkedPart : linkedParts) {
-//											Rectangle oldBounds2 = ApexSequenceUtil.apexGetAbsoluteRectangle(linkedPart);
-//											Rectangle newBounds2 = oldBounds2.getCopy().translate(0, moveDeltaY);
-//											compoudCmd.add( createChangeBoundsCommand(linkedPart, oldBounds2, newBounds2, false) );
-//										}
-//									}
-//								}
-//							}
-//						}
-//
-//						if (moveDeltaY > 0) {
-//							List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(srcExecSpecEP, true, false, false);
-//							nextParts.removeAll(linkedParts);
-//							IGraphicalEditPart realNextPart = null;
-//							int top = Integer.MAX_VALUE;
-//							for (IGraphicalEditPart part : nextParts) {
-//								int tmp = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.TOP);
-//								if (top > tmp) {
-//									top = tmp;
-//									realNextPart = part;
-//								}
-//							}
-//
-//							Point newMoveDelta = new Point(0, moveDeltaY);
-//							ChangeBoundsRequest newRequest = new ChangeBoundsRequest(REQ_MOVE);
-//							newRequest.setMoveDelta(newMoveDelta);
-//
-//							if (realNextPart instanceof ConnectionNodeEditPart) {
-//								compoudCmd.add( apexGetMoveConnectionCommand(newRequest, (ConnectionNodeEditPart) realNextPart, false) );
-//							}
-//							else if (realNextPart != null) {
-//								compoudCmd.add( apexGetResizeOrMoveBelowItemsCommand(newRequest, realNextPart) );
-//							}
-//						}
-//					}
-//					else if (srcPart.equals(srcLifelinePart)) {
-//						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
-//						Rectangle oldBounds = figure.getBounds().getCopy();
-//						figure.translateToAbsolute(oldBounds);
-//						
-//						Rectangle newBounds = oldBounds.getCopy();
-//						if (newBounds.bottom() < y + MARGIN) {
-//							newBounds.height = y + MARGIN - newBounds.y;
-//							compoudCmd.add( createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
-//						}
-//					}
 				}
-
-				return compoudCmd.size() > 0 ? compoudCmd : null;
+				
+				if (moveDeltaY > 0) {
+					compoudCmd.add(nextCmd);
+					compoudCmd.add(tgtCmd);
+					compoudCmd.add(srcCmd);
+				}
+				else {
+					compoudCmd.add(srcCmd);
+					compoudCmd.add(tgtCmd);
+					compoudCmd.add(nextCmd);
+				}
 			}
+			return compoudCmd.size() > 0 ? compoudCmd : null;
 		}
 		
 		return null;
@@ -458,56 +413,27 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 	 */
 	@Override
 	public void showSourceFeedback(Request request) {
-		if(request instanceof BendpointRequest) {
-			/* apex improved start */
-			super.showSourceFeedback(request);
-			/* apex improved end */
-			/* apex replaced
-			if(isHorizontal()) {
-				super.showSourceFeedback(request);
-			}
-			*/
+		if (request instanceof ChangeBoundsRequest) {
+			showMoveConnectionFeedback((ChangeBoundsRequest) request);
 		}
+		super.showSourceFeedback(request);
 	}
 	
-	/**
-	 * apex updated
-	 */
-	@Override
-	protected void showMoveLineSegFeedback(BendpointRequest request) {
-		/* apex added start */
+	protected void showMoveConnectionFeedback(ChangeBoundsRequest request) {
 		ConnectionNodeEditPart host = (ConnectionNodeEditPart)getHost();
 		Connection connection = host.getConnectionFigure();
 		
-		Point location = request.getLocation().getCopy();
-		connection.translateToRelative(location);
-		
-//		Point srcAnchorPoint = connection.getSourceAnchor().getReferencePoint();
-//		Point tgtAnchorPoint = connection.getTargetAnchor().getReferencePoint();
-//		Point start = connection.getSourceAnchor().getLocation(tgtAnchorPoint);
-//		Point end = connection.getTargetAnchor().getLocation(srcAnchorPoint);
-////		Point start = connection.getSourceAnchor().getReferencePoint();
-////		Point end = connection.getTargetAnchor().getReferencePoint();
-////		Point start = SequenceUtil.getAbsoluteEdgeExtremity(host, true);
-////		Point end = SequenceUtil.getAbsoluteEdgeExtremity(host, false);
-//		connection.translateToRelative(start);
-//		connection.translateToRelative(end);
-//		start.setY(location.y());
-//		end.setY(location.y());
+		Point moveDelta = request.getMoveDelta().getCopy();
 		
 		PointList pl = connection.getPoints().getCopy();
-		int dy = location.y - pl.getFirstPoint().y;
 		for (int i = 0; i < pl.size(); i++) {
 			Point p = pl.getPoint(i);
-			p.y += dy;
+			p.translate(0, moveDelta.y);
 			pl.setPoint(p, i);
 		}
 		
 		PolylineConnection feedbackConnection = getDragSourceFeedbackFigure();
-//		feedbackConnection.setStart(start);
-//		feedbackConnection.setEnd(end);
 		feedbackConnection.setPoints(pl);
-		/* apex added end */
 	}
 
 	/**
@@ -526,7 +452,6 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 	private PolylineConnection feedback;
 	/* apex added end */
 	
-	@Override
 	protected PolylineConnection createDragSourceFeedbackConnection() {
 		/* apex improved start */
 		PolylineConnection connection = new PolylineConnection();
@@ -540,7 +465,6 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 		 */
 	}
 	
-	/* apex added start */
 	/**
 	 * Returns feedback figure
 	 * 
@@ -552,16 +476,6 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 			addFeedback(feedback);
 		}
 		return feedback;
-	}
-	/* apex added end */
-
-	private boolean isHorizontal() {
-		Connection connection = getConnection();
-		RouterKind kind = RouterKind.getKind(connection, connection.getPoints());
-		if(kind.equals(RouterKind.HORIZONTAL)) {
-			return true;
-		}
-		return false;
 	}
 
 }

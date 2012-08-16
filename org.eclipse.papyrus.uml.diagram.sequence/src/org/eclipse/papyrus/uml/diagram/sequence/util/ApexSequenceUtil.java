@@ -27,6 +27,7 @@ import java.util.Set;
 import org.eclipse.draw2d.Connection;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.PointList;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature.Setting;
@@ -674,9 +675,12 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		Rectangle bounds = null;
 		if (gep instanceof ConnectionNodeEditPart) {
 			Connection conn = ((ConnectionNodeEditPart)gep).getConnectionFigure();
-			Point p2 = conn.getTargetAnchor().getReferencePoint();
-			Point p1 = conn.getSourceAnchor().getLocation(p2);
-			bounds = new Rectangle(p1.x(), p1.y, p2.x() - p1.x(), p2.y() - p1.y());
+			PointList pl = conn.getPoints().getCopy();
+			conn.translateToAbsolute(pl);
+			bounds = pl.getBounds();
+//			Point p2 = conn.getTargetAnchor().getReferencePoint();
+//			Point p1 = conn.getSourceAnchor().getLocation(p2);
+//			bounds = new Rectangle(p1.x(), p1.y, p2.x() - p1.x(), p2.y() - p1.y());
 		} else {
 			IFigure figure = gep.getFigure();
 			bounds = figure.getBounds().getCopy();
