@@ -184,8 +184,10 @@ public class ApexSequenceUtil {
 						belowEditPartMap.put(agep1, yTopThisEP);
 					}	
 				}
-				*/	
-				if ( SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1) instanceof InteractionImpl) {
+				*/
+				InteractionFragment ift = SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1);
+				// 중첩되지 않고 Interaction 에 속한 fragment의 경우
+				if ( ift instanceof Interaction) {
 					// CF의 경우 중첩되어 있는 경우에도 findInteractionFragmentContainerAt() 이 InteractionImpl을 반환하므로
 					// IOEP를 통해 한 번 더 check 해야함
 					if ( agep1 instanceof CombinedFragmentEditPart
@@ -205,7 +207,7 @@ public class ApexSequenceUtil {
 			}	
 		}
 		
-		// agep1의 sibling
+	    // agep1의 sibling
 		List<IGraphicalEditPart> siblings = apexGetSiblingEditParts2(agep);
 		if ( siblings != null) {
 			for ( IGraphicalEditPart ep : siblings ) {
@@ -225,6 +227,7 @@ public class ApexSequenceUtil {
 				}	
 			}			
 		}		
+
 		
 		Collection<Entry<IGraphicalEditPart, Integer>> entrySet = belowEditPartMap.entrySet();
 		List<Entry<IGraphicalEditPart, Integer>> entryList = new ArrayList<Entry<IGraphicalEditPart, Integer>>(entrySet);
@@ -1244,7 +1247,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		
 		for ( Lifeline ll : coveredLifelines ) {
-			coveredLifelineEditParts.add((LifelineEditPart)getEditPart(ll, snep.getViewer()));
+			coveredLifelineEditParts.add((LifelineEditPart)apexGetEditPart(ll, snep.getViewer()));
 		}
 		/*
 		RootEditPart rootEP = snep.getRoot();
@@ -1332,7 +1335,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		return cfChildren;
 	}
 	
-	public static EditPart getEditPart(EObject eObject, EditPartViewer viewer) {
+	public static EditPart apexGetEditPart(EObject eObject, EditPartViewer viewer) {
 		Collection<Setting> settings = CacheAdapter.getInstance().getNonNavigableInverseReferences(eObject);
 		for (Setting ref : settings) {
 			if(NotationPackage.eINSTANCE.getView_Element().equals(ref.getEStructuralFeature())) {

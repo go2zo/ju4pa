@@ -1288,7 +1288,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 								Command moveESCommand = null;
 								if ( sep instanceof CombinedFragmentEditPart ) {
 									moveESCommand = getCombinedFragmentResizeChildrenCommand(esRequest, sep);	
-								} else {
+								} else { // Comment, Constraint 등 Lifeline의 child도 아니고, CF도 아닌 경우
 									moveESCommand = apexGetMoveElement(esRequest, sep);
 								}							
 	
