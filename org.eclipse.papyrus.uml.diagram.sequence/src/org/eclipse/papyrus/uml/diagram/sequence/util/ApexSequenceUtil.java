@@ -78,6 +78,8 @@ public class ApexSequenceUtil {
 	 * 주어진 EditPartEntry Set에서 해당 AbstractGraphicalEditPart 보다
 	 * y 좌표가 아래에 있는 EditPartList 반환 
 	 * 
+	 * 사용 안 함
+	 * 
 	 * @param agep   기준이 되는 AbstractGraphicalEditPart
 	 * @return aep보다 아래에 위치한 EditPart의 List
 	 */
@@ -89,32 +91,15 @@ public class ApexSequenceUtil {
 
 		int yBottomOfAgep = apexGetAbsolutePosition(agep, SWT.BOTTOM);
 		
-		/*8
-		System.out
-		.println("ApexSequenceUtil.apexGetBelowEditPartList(), line : "
-				+ Thread.currentThread().getStackTrace()[1]
-						.getLineNumber());
-		int i = 0;
-		//*/
 		for (Entry<Object, EditPart> aEPEntry : wholeEditPartEntries ) {
 			
 			EditPart editPart = aEPEntry.getValue();
 			
-			/*8
-			System.out.println("entry["+ i++ +"] : " + editPart.getClass().toString().substring(editPart.getClass().toString().lastIndexOf('.')+1));
-			//*/
 			if (editPart.equals(agep))
 				continue;
 			if ( editPart instanceof IGraphicalEditPart ) {				
 				IGraphicalEditPart agep1 = (IGraphicalEditPart)editPart;				
 				int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
-				/*8
-				System.out
-						.println("ApexSequenceUtil.apexGetBelowEditPartList(), line : "
-								+ Thread.currentThread().getStackTrace()[1]
-										.getLineNumber());
-				System.out.println("belowEditPart["+i++ +"] : " + agep1.getClass() + ", yTop : " + yTopThisEP);
-				//*/
 				if ( yTopThisEP >= yBottomOfAgep
 						&& !belowEditPartMap.containsKey(agep1)) {
 					belowEditPartMap.put(agep1, yTopThisEP);
@@ -140,10 +125,12 @@ public class ApexSequenceUtil {
 		return belowEditPartList;
 	}
 	
-	/**
-	 * 중첩되지 않고 Sibling 중에서
+	/** 
 	 * 해당 AbstractGraphicalEditPart 보다 y좌표가 아래에 있어
-	 * 하향 이동 시 함께 움직여줘야 할 EditPartList 반환 
+	 * 하향 이동 시 함께 움직여줘야 할 EditPartList 반환
+	 * 
+	 * agep가 Interaction의 child인 경우 Interaction의 children만 위치비교하여 List에 추가(중첩된 EP는 추가 안함)
+	 * agep가 InteractionOperand의 child인 경우 해당 Op에 포함된 Sibling만 위치비교하여 List에 추가 
 	 * 
 	 * @param agep   기준이 되는 AbstractGraphicalEditPart
 	 * @return aep보다 아래에 위치한 EditPart의 List
@@ -186,8 +173,9 @@ public class ApexSequenceUtil {
 					}	
 				}
 				*/
+				// 중첩되지 않고 Interaction 에 속한 경우만 위치비교하여 belowEditPartMap에 추가
 				InteractionFragment ift = SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1);
-				// 중첩되지 않고 Interaction 에 속한 fragment의 경우
+
 				if ( ift instanceof Interaction) {
 					// CF의 경우 중첩되어 있는 경우에도 findInteractionFragmentContainerAt() 이 InteractionImpl을 반환하므로
 					// IOEP를 통해 한 번 더 check 해야함
@@ -204,31 +192,30 @@ public class ApexSequenceUtil {
 							&& !belowEditPartMap.containsKey(agep1)) {
 						belowEditPartMap.put(agep1, yTopThisEP);
 					}	
-				}
+				} else if ( ift instanceof InteractionOperand ) { // 중첩된 경우 Sibling 만 위치비교하여 belowEditPartMap에 추가
+
+					List<IGraphicalEditPart> siblings = apexGetSiblingEditParts2(agep);
+					if ( siblings != null) {
+						for ( IGraphicalEditPart ep : siblings ) {
+							if (ep.equals(agep))
+								continue;
+							if ( ep instanceof IGraphicalEditPart ) {
+								
+								IGraphicalEditPart agep2 = (IGraphicalEditPart)ep;
+								
+								int yTopThisEP = apexGetAbsolutePosition(agep2, SWT.TOP);
+
+								if ( yTopThisEP >= yBottomOfAgep
+										&& !belowEditPartMap.containsKey(agep2)) {
+									belowEditPartMap.put(agep2, yTopThisEP);
+								}	
+								
+							}	
+						}			
+					}					
+				}				
 			}	
 		}
-		
-	    // agep1의 sibling
-		List<IGraphicalEditPart> siblings = apexGetSiblingEditParts2(agep);
-		if ( siblings != null) {
-			for ( IGraphicalEditPart ep : siblings ) {
-				if (ep.equals(agep))
-					continue;
-				if ( ep instanceof IGraphicalEditPart ) {
-					
-					IGraphicalEditPart agep1 = (IGraphicalEditPart)ep;
-					
-					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
-
-					if ( yTopThisEP >= yBottomOfAgep
-							&& !belowEditPartMap.containsKey(agep1)) {
-						belowEditPartMap.put(agep1, yTopThisEP);
-					}	
-					
-				}	
-			}			
-		}		
-
 		
 		Collection<Entry<IGraphicalEditPart, Integer>> entrySet = belowEditPartMap.entrySet();
 		List<Entry<IGraphicalEditPart, Integer>> entryList = new ArrayList<Entry<IGraphicalEditPart, Integer>>(entrySet);
@@ -243,15 +230,7 @@ public class ApexSequenceUtil {
 		for (Entry<IGraphicalEditPart, Integer> entry : entryList) {
 			belowEditPartList.add(entry.getKey());
 		}
-/*8
-		System.out
-				.println("ApexSequenceUtil.apexGetMovableEditPartList(), line : "
-						+ Thread.currentThread().getStackTrace()[1]
-								.getLineNumber());
-		for ( int i = 0 ; i < belowEditPartList.size() ; i++ ) {
-			System.out.println("["+i+"] " + belowEditPartList.get(i));
-		}
-//*/
+		
 		return belowEditPartList;
 	}
 
@@ -259,11 +238,11 @@ public class ApexSequenceUtil {
 	public static List<IGraphicalEditPart> apexGetSiblingEditParts2(IGraphicalEditPart gep) {
 		
 		List<IGraphicalEditPart> siblings = null;
-		EditPart ep = gep.getParent();
-		if ( ep instanceof InteractionInteractionCompartmentEditPart
-		     || ep instanceof InteractionOperandEditPart ) {
-			siblings = ep.getChildren();
-		}
+		EditPart parentEP = gep.getParent();
+		if ( parentEP instanceof InteractionOperandEditPart ) {
+			siblings = apexGetInteractionOperandChildrenEditParts((InteractionOperandEditPart)parentEP);
+		}		
+		
 		return siblings;
 	}
 	
@@ -309,7 +288,7 @@ public class ApexSequenceUtil {
 	 */
 	public static IGraphicalEditPart apexGetBeneathEditPart(IGraphicalEditPart agep) {
 
-		List belowEditPartList = apexGetBelowEditPartList(agep);
+		List belowEditPartList = apexGetMovableEditPartList(agep);
 		
 		int gap = Integer.MAX_VALUE;
 		IGraphicalEditPart beneathEditPart = null;

@@ -802,7 +802,7 @@ public class OperandBoundsComputeHelper {
 							}
 							
 							// Op추가로 CF 경계 확대 resize 시 below CF의 이동
-							List belowEditParts = ApexSequenceUtil.apexGetBelowEditPartList(parent);
+							List belowEditParts = ApexSequenceUtil.apexGetMovableEditPartList(parent);
 							if ( belowEditParts.size() > 0 ) {
 							
 								ChangeBoundsRequest esRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
