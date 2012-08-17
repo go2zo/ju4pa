@@ -142,13 +142,7 @@ public class ApexSequenceUtil {
 		Map<IGraphicalEditPart, Integer> belowEditPartMap = new HashMap<IGraphicalEditPart, Integer>();
 
 		int yBottomOfAgep = apexGetAbsolutePosition(agep, SWT.BOTTOM);
-		/*8
-		System.out
-		.println("ApexSequenceUtil.apexGetMovableEditPartList(), line : "
-				+ Thread.currentThread().getStackTrace()[1]
-						.getLineNumber());
-		int i = 0;
-		//*/
+		
 		for (Entry<Object, EditPart> aEPEntry : wholeEditPartEntries ) {
 			
 			EditPart editPart = aEPEntry.getValue();
@@ -157,63 +151,39 @@ public class ApexSequenceUtil {
 			if ( editPart instanceof IGraphicalEditPart ) {
 				
 				IGraphicalEditPart agep1 = (IGraphicalEditPart)editPart;
-				/*8
-				System.out.println("editPart["+i++ +"] : " + editPart.getClass().toString().substring(editPart.getClass().toString().lastIndexOf('.')+1) + ", parent : " + agep1.getParent().getClass());
-				System.out.println("container : " + apexGetSimpleClassName(SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1)));
-				//*/
-				// parent가 interactionCompartment인 것(즉, 중첩되지 않은 것)
-				/*
-				if ( agep1.getParent() instanceof InteractionInteractionCompartmentEditPart) {
+
+				// agep가 중첩된 경우 해당 OP내의 요소만 위치비교하여 추가
+				if ( agep.getParent() instanceof InteractionOperandEditPart ) {
+					InteractionOperandEditPart ioep = (InteractionOperandEditPart)agep.getParent();
+					List<EditPart> siblings = apexGetInteractionOperandChildrenEditParts(ioep);
 					
-					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
-	
-					if ( yTopThisEP >= yBottomOfAgep
-							&& !belowEditPartMap.containsKey(agep1)) {
-						belowEditPartMap.put(agep1, yTopThisEP);
-					}	
-				}
-				*/
-				// 중첩되지 않고 Interaction 에 속한 경우만 위치비교하여 belowEditPartMap에 추가
-				InteractionFragment ift = SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1);
-
-				if ( ift instanceof Interaction) {
-					// CF의 경우 중첩되어 있는 경우에도 findInteractionFragmentContainerAt() 이 InteractionImpl을 반환하므로
-					// IOEP를 통해 한 번 더 check 해야함
-					if ( agep1 instanceof CombinedFragmentEditPart
-						 && agep1.getParent() instanceof InteractionOperandEditPart ) { // 중첩되어있는 것은 put 하지 않음 
-						continue;
-					}						
-					if ( agep1 instanceof InteractionOperandEditPart ) { // InteractionOperand는 put 하지 않음 
+					for ( EditPart ep : siblings ) {
+						if (ep.equals(agep))
 							continue;
-					}
-					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
-	
-					if ( yTopThisEP >= yBottomOfAgep
-							&& !belowEditPartMap.containsKey(agep1)) {
-						belowEditPartMap.put(agep1, yTopThisEP);
-					}	
-				} else if ( ift instanceof InteractionOperand ) { // 중첩된 경우 Sibling 만 위치비교하여 belowEditPartMap에 추가
+						if ( ep instanceof IGraphicalEditPart ) {
+							
+							IGraphicalEditPart agep2 = (IGraphicalEditPart)ep;
+							
+							int yTopThisEP = apexGetAbsolutePosition(agep2, SWT.TOP);
 
-					List<IGraphicalEditPart> siblings = apexGetSiblingEditParts2(agep);
-					if ( siblings != null) {
-						for ( IGraphicalEditPart ep : siblings ) {
-							if (ep.equals(agep))
-								continue;
-							if ( ep instanceof IGraphicalEditPart ) {
-								
-								IGraphicalEditPart agep2 = (IGraphicalEditPart)ep;
-								
-								int yTopThisEP = apexGetAbsolutePosition(agep2, SWT.TOP);
-
-								if ( yTopThisEP >= yBottomOfAgep
-										&& !belowEditPartMap.containsKey(agep2)) {
-									belowEditPartMap.put(agep2, yTopThisEP);
-								}	
-								
+							if ( yTopThisEP >= yBottomOfAgep
+									&& !belowEditPartMap.containsKey(agep2)) {
+								belowEditPartMap.put(agep2, yTopThisEP);
 							}	
-						}			
-					}					
-				}				
+							
+						}	
+					}
+				// agep 가 중첩되지 않은 경우 interactionCompartment 내의 요소만 위치비교하여 추가
+				} else if ( agep.getParent() instanceof InteractionInteractionCompartmentEditPart ) {
+					if ( agep1.getParent() instanceof InteractionInteractionCompartmentEditPart ) {
+						int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
+
+						if ( yTopThisEP >= yBottomOfAgep
+								&& !belowEditPartMap.containsKey(agep1)) {
+							belowEditPartMap.put(agep1, yTopThisEP);
+						}	
+					}
+				}
 			}	
 		}
 		
@@ -1137,12 +1107,13 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * @return
 	 */
 	public static List<EditPart> apexGetIOEPContainedEditParts(InteractionOperandEditPart ioep) {
-		return apexGetIOEPContainedEditParts(ioep, true);
+		return apexGetIOEPContainedEditParts(ioep, false);
 	}
 	
 	/**
-	 * IOEP가 cover하는 Lifeline의 Activation 및 Connection 중 IOEP에 경계가 포함되는 EditPartList 반환
-	 * coveredOnly가 false인 경우 IOEP의 covered 대신 위치적으로 IOEP와 교차되는 Lifeline의 EditPartList 반환
+	 * coveredOnly가 false인 경우 IOEP와 경계가 교차하는 Lifeline의 Activation 및 Connection 중 IOEP에 경계가 포함되는 EditPartList 반환
+	 * 
+	 * coveredOnly가 true인 경우 IOEP가 cover하는 Lifeline의 Activation 및 Connection 중 IOEP에 경계가 포함되는 EditPartList 반환 
 	 * 
 	 * @param ioep
 	 * @param coveredOnly
@@ -1185,7 +1156,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		
 		return containedEditParts;
-	}
+	}	
 	
 	/**
 	 * CombinedFragmentEditPart 나 InteractionOperandEditPart의 coveredLifelineEditParts 반환

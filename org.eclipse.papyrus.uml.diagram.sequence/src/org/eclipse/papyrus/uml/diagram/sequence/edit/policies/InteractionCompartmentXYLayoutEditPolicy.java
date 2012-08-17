@@ -580,8 +580,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 
 					// 첫번째 Operand의 경우 Header영역도 Operand에 포함(io의 y값은 감소시키고, 그만큼 height는 확장)
 					if(firstOperand.equals(io)) {
-						// ioep 의 highestChild의 top 아래로 resize 금지
-						if (sizeDelta.height < 0) {
+						// ioep 의 highestChild의 top 아래로 축소 resize 금지
+						if (sizeDelta.height < 0 && (request.getResizeDirection() & PositionConstants.NORTH) != 0 ) {
 							IGraphicalEditPart highestChildEditPart = ApexSequenceUtil.apexGetHighestEditPartFromList(ioEP.getChildren());
 							if ( highestChildEditPart != null ) {
 								int topHighestChildEP = ApexSequenceUtil.apexGetAbsolutePosition(highestChildEditPart, SWT.TOP);
@@ -1187,7 +1187,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 	 */
 	public static void apexGetMoveBelowItemsCommand(ChangeBoundsRequest request, org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart abstractGraphicalEditPart, CompoundCommand compoundCmd) {
 
-		if ( request.getMoveDelta().y > 0 || request.getSizeDelta().height > 0) { // 아래로 이동하거나 아래로 Resize 하는 경우
+		if ( request.getMoveDelta().y > 0 || (request.getSizeDelta().height > 0 && (request.getResizeDirection() & PositionConstants.SOUTH) != 0 ) ) { // 아래로 이동하거나 아래로 확대 Resize 하는 경우
 
 			// 넘겨받은 AbstractGraphicalEditPart 보다 아래에 있는 belowList 구성		
 			List belowEditPartList = ApexSequenceUtil.apexGetMovableEditPartList(abstractGraphicalEditPart);
@@ -1300,6 +1300,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				System.out.println("parent EP                    : " + parentEditPart);
 				System.out.println("parent IO                    : " + (InteractionOperandEditPart)ep);
 //*/
+
+				
 				// Operand내 최하단 element의 bottom이 Operand bottom 보다 아래로 갈 경우, 즉 확장이 필요한 경우
 				List<IGraphicalEditPart> opChildren = ioep.getChildren();
 				
@@ -1307,6 +1309,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				IFigure lowestFigure = lowestEditPart.getFigure();				
 				Rectangle lowestRect = lowestFigure.getBounds().getCopy();
 				lowestFigure.translateToAbsolute(lowestRect);
+				
 				lowestRect.translate(moveDelta);
 				lowestRect.resize(sizeDelta);				
 
