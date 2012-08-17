@@ -1329,7 +1329,8 @@ System.out.println("newBounds is bigger than parentOperand");
 				}
 				
 				
-			} else if (ep instanceof InteractionInteractionCompartmentEditPart) { // 최상위 CF의 경우
+			}
+			/*else if (ep instanceof InteractionInteractionCompartmentEditPart) { // 최상위 CF의 경우
 				//Resize 계통 method가 CF가 아닌 org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart로 동작하도록 개조
 				InteractionInteractionCompartmentEditPart iicep = (InteractionInteractionCompartmentEditPart)ep;
 				Rectangle parentIicEPBounds = iicep.getFigure().getBounds().getCopy();
@@ -1344,18 +1345,16 @@ System.out.println("newBounds is bigger than parentOperand");
 				System.out.println("parentIICBounds              : " + parentIicEPBounds + ", right = " + parentIicEPBounds.right() + ", bottom = " + parentIicEPBounds.bottom());
 				System.out.println("parent EP                    : " + parentEditPart);
 				System.out.println("parent IIC                   : " + (InteractionInteractionCompartmentEditPart)ep);
-*/
+
 				if ( newBoundsCF.right() > parentIicEPBounds.right() ||
 					     newBoundsCF.bottom() > parentIicEPBounds.bottom() ) {
-/*8
-System.out.println("newBounds is bigger than parentIIC");
-*/
+
 //					apexGetCombinedFragmentResizeChildrenCommand(request, (PackageEditPart)parentEditPart, ccmd, depth);
 				} else {
 					return ccmd;
 				}
 			}
-				
+*/
 
 
 			/*
