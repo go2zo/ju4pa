@@ -809,7 +809,7 @@ public class OperandBoundsComputeHelper {
 								esRequest.setEditParts(parent);
 								esRequest.setMoveDelta(new Point(0, OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT));
 								CompoundCommand ccmd = new CompoundCommand();							
-								InteractionCompartmentXYLayoutEditPolicy.apexGetMoveBelowItemsCommand(esRequest, parent, ccmd);
+								InteractionCompartmentXYLayoutEditPolicy.apexGetMoveBelowItemsCommand(esRequest, parent, ccmd, 0);
 
 								// compoundCommand를 분해하여 compositeCommand 에 add
 								ApexSequenceUtil.apexCompoundCommandToCompositeCommand(ccmd, command);	

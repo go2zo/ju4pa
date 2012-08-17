@@ -250,7 +250,7 @@ public class ApexSequenceUtil {
 	}
 	
 	/**
-	 * y좌표 기준 주어진 AbstractGraphicalEditPart의 바로 아래에 위치한 AbstractGraphicalEditPart 반환
+	 * MovableEditParts 중에서 AbstractGraphicalEditPart의 바로 아래에 위치한 AbstractGraphicalEditPart 반환
 	 * 
 	 * @param agep    기준이 되는 AbstractGraphicalEditPart
 	 * @param belowEditPartList    검색할 EditPart의 List
