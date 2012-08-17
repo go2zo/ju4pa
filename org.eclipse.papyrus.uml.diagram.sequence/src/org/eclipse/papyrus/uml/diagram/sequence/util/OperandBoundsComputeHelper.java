@@ -784,8 +784,16 @@ public class OperandBoundsComputeHelper {
 							lastOperandBounds.getY()+lastOperandBounds.getHeight(), lastOperandBounds.getWidth(), OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT);
 					// auto update CombinedFragmentEditPart bounds after added new operand
 					if(compartment.getParent() instanceof CombinedFragmentEditPart){
+
 						CombinedFragmentEditPart parent = (CombinedFragmentEditPart) compartment
 								.getParent();
+						ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+						cbRequest.setSizeDelta(new Dimension(0, OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT));
+						cbRequest.setResizeDirection(PositionConstants.SOUTH);
+						ApexSequenceUtil.apexCompoundCommandToCompositeCommand((CompoundCommand)InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(cbRequest, parent),
+								                                               command);
+
+						/*
 						if (parent.getModel() instanceof Node) {
 							Node node = (Node) parent.getModel();
 							if (node.getLayoutConstraint() instanceof Bounds) {
@@ -805,16 +813,18 @@ public class OperandBoundsComputeHelper {
 							List belowEditParts = ApexSequenceUtil.apexGetMovableEditPartList(parent);
 							if ( belowEditParts.size() > 0 ) {
 							
+
 								ChangeBoundsRequest esRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
 								esRequest.setEditParts(parent);
 								esRequest.setMoveDelta(new Point(0, OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT));
 								CompoundCommand ccmd = new CompoundCommand();							
-								InteractionCompartmentXYLayoutEditPolicy.apexGetMoveBelowItemsCommand(esRequest, parent, ccmd, 0);
+								InteractionCompartmentXYLayoutEditPolicy.apexMoveBelowItems(esRequest, parent, ccmd);
 
 								// compoundCommand를 분해하여 compositeCommand 에 add
-								ApexSequenceUtil.apexCompoundCommandToCompositeCommand(ccmd, command);	
+								ApexSequenceUtil.apexCompoundCommandToCompositeCommand(ccmd, command);								
 							}
 						}
+						 */
 					}
 					command.add(new SetBoundsCommand(compartment.getEditingDomain(), DiagramUIMessages.SetLocationCommand_Label_Resize, viewDescriptor, rect));
 				}
