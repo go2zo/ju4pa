@@ -60,6 +60,9 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractio
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionUseEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.MessageEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.MessageEndEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.MessageSyncAppliedStereotypeEditPart;
 import org.eclipse.swt.SWT;
 import org.eclipse.uml2.common.util.CacheAdapter;
 import org.eclipse.uml2.uml.CombinedFragment;
@@ -69,7 +72,6 @@ import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
 import org.eclipse.uml2.uml.Lifeline;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
-import org.eclipse.uml2.uml.internal.impl.InteractionImpl;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ApexSequenceUtil {
@@ -200,7 +202,6 @@ public class ApexSequenceUtil {
 		for (Entry<IGraphicalEditPart, Integer> entry : entryList) {
 			belowEditPartList.add(entry.getKey());
 		}
-		
 		return belowEditPartList;
 	}
 
@@ -622,19 +623,21 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	
 	public static Rectangle apexGetAbsoluteRectangle(IGraphicalEditPart gep) {
 		Rectangle bounds = null;
-		if (gep instanceof ConnectionNodeEditPart) {
-			Connection conn = ((ConnectionNodeEditPart)gep).getConnectionFigure();
-			PointList pl = conn.getPoints().getCopy();
-			conn.translateToAbsolute(pl);
-			bounds = pl.getBounds();
-//			Point p2 = conn.getTargetAnchor().getReferencePoint();
-//			Point p1 = conn.getSourceAnchor().getLocation(p2);
-//			bounds = new Rectangle(p1.x(), p1.y, p2.x() - p1.x(), p2.y() - p1.y());
-		} else {
-			IFigure figure = gep.getFigure();
-			bounds = figure.getBounds().getCopy();
-			figure.translateToAbsolute(bounds);
-		}
+		if ( gep != null ) {
+			if (gep instanceof ConnectionNodeEditPart) {
+				Connection conn = ((ConnectionNodeEditPart)gep).getConnectionFigure();
+				PointList pl = conn.getPoints().getCopy();
+				conn.translateToAbsolute(pl);
+				bounds = pl.getBounds();
+//				Point p2 = conn.getTargetAnchor().getReferencePoint();
+//				Point p1 = conn.getSourceAnchor().getLocation(p2);
+//				bounds = new Rectangle(p1.x(), p1.y, p2.x() - p1.x(), p2.y() - p1.y());
+			} else {
+				IFigure figure = gep.getFigure();
+				bounds = figure.getBounds().getCopy();
+				figure.translateToAbsolute(bounds);
+			}
+		}		
 		
 		return bounds;
 	}	
@@ -1064,23 +1067,32 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	/**
 	 * compoundCommand를 분해해서 compositeCommand에 add해주는 메서드
 	 * 
-	 * @param compoundCommand
+	 * @param inputCommand
 	 * @param compositeCommand
 	 */
-	public static void apexCompoundCommandToCompositeCommand(CompoundCommand compoundCommand, CompositeCommand compositeCommand) {
-		List cmdList = compoundCommand.getCommands();
-		Iterator itCmd = cmdList.iterator();
-		while ( itCmd.hasNext() ) {
-			Command aCommand = (Command)itCmd.next();
-			if ( aCommand != null && !aCommand.canExecute()) {
-				compositeCommand.add(UnexecutableCommand.INSTANCE);
-			} else if ( aCommand != null ) {
-				if ( aCommand instanceof ICommandProxy ) {
-					ICommandProxy iCommandproxy = (ICommandProxy)aCommand;
-					ICommand iCommand = iCommandproxy.getICommand();
-					compositeCommand.add(iCommand);
-				}									
+	public static void apexCompoundCommandToCompositeCommand(Command inputCommand, CompositeCommand compositeCommand) {
+		if ( inputCommand instanceof CompoundCommand ) {
+			CompoundCommand compoundCommand = (CompoundCommand)inputCommand;
+			List cmdList = compoundCommand.getCommands();
+			Iterator itCmd = cmdList.iterator();
+			while ( itCmd.hasNext() ) {
+				Command aCommand = (Command)itCmd.next();
+				if ( aCommand != null && !aCommand.canExecute()) {
+					compositeCommand.add(UnexecutableCommand.INSTANCE);
+				} else if ( aCommand != null ) {
+					if ( aCommand instanceof ICommandProxy ) {
+						ICommandProxy iCommandProxy = (ICommandProxy)aCommand;
+						ICommand iCommand = iCommandProxy.getICommand();
+						compositeCommand.add(iCommand);
+					}									
+				}
 			}
+		} else if ( inputCommand instanceof org.eclipse.gef.commands.UnexecutableCommand) {
+			compositeCommand.add(UnexecutableCommand.INSTANCE);
+		} else if ( inputCommand instanceof ICommandProxy ) {
+			ICommandProxy iCommandProxy = (ICommandProxy)inputCommand;
+			ICommand iCommand = iCommandProxy.getICommand();
+			compositeCommand.add(iCommand);
 		}
 	}
 	
@@ -1088,16 +1100,22 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * compoundCommand를 분해하여 다른 compoundCommand에 add하는 메서드
 	 * null 이나 Unexecutable에 관계없이 있는대로 add함
 	 * 
-	 * @param inputCompoundCommand
+	 * @param inputCommand
 	 * @param resultCompoundCommand
 	 */
-	public static void apexCompoundCommandToCompoundCommand(CompoundCommand inputCompoundCommand, CompoundCommand resultCompoundCommand) {
-		List cmdList = inputCompoundCommand.getCommands();
-		Iterator itCmd = cmdList.iterator();
-		while ( itCmd.hasNext() ) {
-			Command aCommand = (Command)itCmd.next();
-			resultCompoundCommand.add(aCommand);
+	public static void apexCompoundCommandToCompoundCommand(Command inputCommand, CompoundCommand resultCompoundCommand) {
+		if ( inputCommand instanceof CompoundCommand ) {
+			CompoundCommand inputCompoundCommand = (CompoundCommand)inputCommand;
+			List cmdList = inputCompoundCommand.getCommands();
+			Iterator itCmd = cmdList.iterator();
+			while ( itCmd.hasNext() ) {
+				Command aCommand = (Command)itCmd.next();
+				resultCompoundCommand.add(aCommand);
+			}	
+		} else {
+			resultCompoundCommand.add(inputCommand);
 		}
+		
 	}
 		
 	/**
@@ -1127,6 +1145,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		
 		Rectangle ioepRect = apexGetAbsoluteRectangle(ioep);
 		
+		// LifelineEditPart의 children editpart 중 IOEP에 포함되어야 하는 것 처리
 		for ( LifelineEditPart lep : coveredLifelineEditParts ) {
 			List<EditPart> lepChildren = lep.getChildren();
 			
@@ -1147,9 +1166,10 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				if ( ep instanceof ConnectionEditPart ) {
 					ConnectionEditPart cep = (ConnectionEditPart)ep;
 					Rectangle cepRect = apexGetAbsoluteRectangle(cep);
-					
 					if ( ioepRect.contains(cepRect) ) {
 						containedEditParts.add(cep);
+						// 부속되는 MessageSyncAppliedStereotypeEditPart를 추출하여 
+						// containedEditParts에 add
 					}	
 				}
 			}
@@ -1256,12 +1276,10 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 */
 	public static List apexGetInteractionOperandChildrenEditParts(InteractionOperandEditPart ioep) {
 		
-		List operandChildren = new ArrayList();
-		
-		operandChildren.addAll(ioep.getChildren());
-		operandChildren.addAll(apexGetIOEPContainedEditParts(ioep));
-		
-		return operandChildren;
+		List ioChildren = apexGetIOEPContainedEditParts(ioep);
+		ioChildren.addAll(ioep.getChildren());
+				
+		return ioChildren;
 	}
 	
 	/**
@@ -1274,7 +1292,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 */
 	public static List apexGetCombinedFragmentChildrenEditParts(CombinedFragmentEditPart cfep) {
 		
-		List cfChildren = new ArrayList();
+		List cfChildren = null;
 		
 		List<CombinedFragmentCombinedFragmentCompartmentEditPart> childCompartments = cfep.getChildren();
 		
@@ -1282,8 +1300,8 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			List<InteractionOperandEditPart> ioeps = compartEP.getChildren();
 			
 			for ( InteractionOperandEditPart ioep : ioeps ) {
-				cfChildren.addAll(apexGetIOEPContainedEditParts(ioep));
-			}
+				cfChildren = apexGetIOEPContainedEditParts(ioep);
+			}			
 		}		
 		
 		return cfChildren;
@@ -1299,5 +1317,19 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			}
 		}
 		return null;
+	}
+	
+	public static InteractionOperandEditPart apexGetEnclosingInteractionOperandEditpart(IGraphicalEditPart graphicalEditPart) {
+		InteractionOperandEditPart ioep = null;
+		
+		Rectangle absRect = ApexSequenceUtil.apexGetAbsoluteRectangle(graphicalEditPart);
+		
+		InteractionFragment iftContainer = SequenceUtil.findInteractionFragmentContainerAt(absRect.getLocation(), graphicalEditPart);
+		
+		EditPart editPart = ApexSequenceUtil.apexGetEditPart(iftContainer, graphicalEditPart.getViewer());
+		if ( editPart instanceof InteractionOperandEditPart ) {
+			ioep = (InteractionOperandEditPart)editPart;
+		}
+		return ioep;
 	}
 }

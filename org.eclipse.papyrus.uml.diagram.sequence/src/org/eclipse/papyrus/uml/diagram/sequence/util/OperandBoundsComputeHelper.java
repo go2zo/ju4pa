@@ -521,12 +521,13 @@ public class OperandBoundsComputeHelper {
 			// 아래로 확대하는 경우 바로 아래 element 침범 시 X 처리
 			if ((direction & PositionConstants.SOUTH) != 0 && heightDelta > 0) {
 				IGraphicalEditPart beneathEditPart = ApexSequenceUtil.apexGetBeneathEditPart(currentIOEP);
-				int topBeneathEP = ApexSequenceUtil.apexGetAbsolutePosition(beneathEditPart, SWT.TOP);
-				int bottomCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM) + heightDelta;
-				if ( bottomCurrentIOEP >= topBeneathEP ) {
-					return null;
-				}
-				
+				if ( beneathEditPart != null ) {
+					int topBeneathEP = ApexSequenceUtil.apexGetAbsolutePosition(beneathEditPart, SWT.TOP);
+					int bottomCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM) + heightDelta;
+					if ( bottomCurrentIOEP >= topBeneathEP ) {
+						return null;
+					}	
+				}				
 			}
 			// 위로 축소하는 경우 맨 아래 element 침범 시 X 처리
 			if ((direction & PositionConstants.SOUTH) != 0 && heightDelta < 0) {
@@ -790,7 +791,7 @@ public class OperandBoundsComputeHelper {
 						ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
 						cbRequest.setSizeDelta(new Dimension(0, OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT));
 						cbRequest.setResizeDirection(PositionConstants.SOUTH);
-						ApexSequenceUtil.apexCompoundCommandToCompositeCommand((CompoundCommand)InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(cbRequest, parent),
+						ApexSequenceUtil.apexCompoundCommandToCompositeCommand(InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(cbRequest, parent),
 								                                               command);
 
 						/*
