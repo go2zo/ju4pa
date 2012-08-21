@@ -507,7 +507,8 @@ public class SequenceUtil {
 				// finish event of the message
 				extremity = ((AbstractPointListShape)msgFigure).getEnd().getCopy();
 			}
-			msgFigure.getParent().translateToAbsolute(extremity);
+			//msgFigure.getParent().translateToAbsolute(extremity);
+			msgFigure.translateToAbsolute(extremity);
 			return extremity;
 		}
 		return null;
@@ -1055,7 +1056,7 @@ public class SequenceUtil {
 							coveredInteractionFragments.add(es.getFinish());
 						}
 					} else {
-						Rectangle intersection = selectionRect.getIntersection(figureBounds);
+						Rectangle intersection = selectionRect.getIntersection(figureBounds);						
 						if(!intersection.equals(new Rectangle()) && !intersection.equals(selectionRect)) {
 							return null;
 						}

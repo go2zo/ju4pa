@@ -32,16 +32,13 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentCombinedFragmentCompartmentEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexOccurrenceSpecificationMoveHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
-import org.eclipse.papyrus.uml.diagram.sequence.util.OperandBoundsComputeHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.swt.SWT;
-import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.Message;
 import org.eclipse.uml2.uml.MessageEnd;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
@@ -72,7 +69,6 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 				return getMoveConnectionCommand((ChangeBoundsRequest)request);
 			}
 		}
-
 		return super.getCommand(request);
 	}
 
@@ -123,20 +119,9 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 	 */
 	public static Command apexGetMoveConnectionCommand(ChangeBoundsRequest request, ConnectionNodeEditPart connectionPart, boolean moveAlone) {
 		EObject message = connectionPart.resolveSemanticElement();
-
 		if(message instanceof Message) {
 			MessageEnd send = ((Message)message).getSendEvent();
 			MessageEnd rcv = ((Message)message).getReceiveEvent();
-			
-			System.out
-					.println("ApexConnectionMoveEditPolicy.apexGetMoveConnectionCommand(), line : "
-							+ Thread.currentThread().getStackTrace()[1]
-									.getLineNumber());
-			System.out.println("send.getAppliedStereotypes() : " + send.getAppliedStereotypes());
-			System.out.println("rcv.getAppliedStereotypes()  : " + rcv.getAppliedStereotypes());
-			System.out.println("message.getAppliedStereotypes()  : " + ((Message)message).getAppliedStereotypes());
-			
-			
 			EditPart srcPart = connectionPart.getSource();
 			LifelineEditPart srcLifelinePart = SequenceUtil.getParentLifelinePart(srcPart);
 			EditPart tgtPart = connectionPart.getTarget();
@@ -241,7 +226,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						
 						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
 						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcExecSpecEP, srcLifelinePart, empty) );
 					}
 					else if (srcPart.equals(srcLifelinePart)) { // source : LifelineEditPart
 						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
@@ -254,7 +239,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						
 						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
 						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, srcLifelinePart, empty) );
 					}
 					
 					// target : AbstractExecutionSpecificationEditPart
@@ -313,7 +298,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						}
 						
 						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty));
+								(OccurrenceSpecification)send, y, newBounds, srcExecSpecEP, srcLifelinePart, empty));
 					}
 					else if (srcPart.equals(srcLifelinePart)) { // source : LifelineEditPart
 						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
@@ -326,12 +311,11 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						
 						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
 						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, srcLifelinePart, empty) );
 					}
 
 					// target: linked activations
 					List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, false, true, false);
-					
 					for (int i = 0; i < linkedParts.size(); i++) {
 //					for (int i = linkedParts.size() - 1; i >= 0; i--) {
 						IGraphicalEditPart linkedPart = linkedParts.get(i);
@@ -339,7 +323,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						Rectangle newBounds = oldBounds.getCopy();
 						newBounds.y += moveDeltaY;
 						
-						tgtCmd = chain(tgtCmd, createChangeBoundsCommand(linkedPart, oldBounds, newBounds, true) );						
+						tgtCmd = chain(tgtCmd, createChangeBoundsCommand(linkedPart, oldBounds, newBounds, true) );
 					}
 					
 					if (moveDeltaY > 0) {
@@ -350,13 +334,12 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 							if (nextSiblingEditPart instanceof ConnectionNodeEditPart) {
 								nextCmd = apexGetMoveConnectionCommand(request, (ConnectionNodeEditPart) nextSiblingEditPart, moveAlone);
 							}
-							else { // below CF의 이동은 여기서 처리 됨
-								// moveDelta.x는 무시
-								request.setMoveDelta(new Point(0, moveDelta.y));
+							else {
 								nextCmd = nextSiblingEditPart.getCommand(request);
+//								apexGetResizeOrMoveBelowItemsCommand(request, nextSiblingEditPart);
 							}
 						}
-						// 최하단 activation bottom 이 포함하는 IOEP나 CF보다 아래로 갈 경우 포함하는 CF Resize
+						// 최하단 activation bottom 이 포함하는 IOEP보다 아래로 갈 경우 포함하는 CF Resize
 						linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, false, true, false);
 
 						IGraphicalEditPart lowestActivationEditPart = ApexSequenceUtil.apexGetLowestEditPartFromList(linkedParts);						
@@ -366,11 +349,9 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						EditPart pEditPart = ioep.getParent();
 
 						if ( pEditPart instanceof CombinedFragmentCombinedFragmentCompartmentEditPart ) {
-							CombinedFragmentCombinedFragmentCompartmentEditPart cfcfcep = (CombinedFragmentCombinedFragmentCompartmentEditPart)pEditPart;
 							request.setMoveDelta(new Point(0, moveDelta.y));
 							InteractionCompartmentXYLayoutEditPolicy.apexMoveBelowItems(request, (GraphicalEditPart)lowestActivationEditPart, compoundCmd);
 						}
-						
 					}
 				}
 				
@@ -389,6 +370,19 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Message보다 하위의 item들을 delta만큼 이동
+	 * @param request
+	 * @param abstractGraphicalEditPart
+	 * @return
+	 */
+	private static Command apexGetResizeOrMoveBelowItemsCommand(ChangeBoundsRequest request, IGraphicalEditPart gep) {
+		CompoundCommand command = new CompoundCommand();
+		gep.getCommand(request);
+		command.add(InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(request, (GraphicalEditPart)gep));
+		return command;
 	}
 	
 	private static Command createChangeBoundsCommand(IGraphicalEditPart gep, Rectangle oldBounds, Rectangle newBounds, boolean isPreserveAnchorsPosition) {

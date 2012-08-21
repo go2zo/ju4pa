@@ -55,7 +55,7 @@ public class ApexOccurrenceSpecificationMoveHelper {
 	 * @return command to move all edit parts linked to the occurrence specifications or null
 	 */
 
-	public static Command getMoveMessageOccurrenceSpecificationsCommand(OccurrenceSpecification movedOccurrenceSpecification, int yLocation, Rectangle newBounds, LifelineEditPart lifelinePart, List<EditPart> notToMoveEditParts) {
+	public static Command getMoveMessageOccurrenceSpecificationsCommand(OccurrenceSpecification movedOccurrenceSpecification, int yLocation, Rectangle newBounds, EditPart childToReconnectTo, LifelineEditPart lifelinePart, List<EditPart> notToMoveEditParts) {
 		// the global command which shall be completed and returned
 		CompoundCommand command = new CompoundCommand();
 		
@@ -64,8 +64,6 @@ public class ApexOccurrenceSpecificationMoveHelper {
 		}
 		
 		if(movedOccurrenceSpecification instanceof MessageOccurrenceSpecification) {
-			Point oldReferencePoint = getReferencePoint(lifelinePart, movedOccurrenceSpecification, newBounds.y);
-			EditPart childToReconnectTo = SequenceUtil.findPartToReconnectTo(lifelinePart, oldReferencePoint);
 			Point referencePoint = getReferencePoint(lifelinePart, movedOccurrenceSpecification, yLocation);
 
 			if (childToReconnectTo instanceof IGraphicalEditPart) {

@@ -3,18 +3,17 @@ package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.PositionConstants;
-import org.eclipse.draw2d.geometry.Dimension;
-import org.eclipse.draw2d.geometry.PrecisionRectangle;
 import org.eclipse.gef.Handle;
 import org.eclipse.gef.commands.Command;
+import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.commands.UnexecutableCommand;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.ResizableShapeEditPolicy;
-import org.eclipse.gmf.runtime.draw2d.ui.mapmode.IMapMode;
-import org.eclipse.gmf.runtime.draw2d.ui.mapmode.MapModeUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 
 public class ApexExecutionSpecificationSelectionEditPolicy extends
 		ResizableShapeEditPolicy {
@@ -63,7 +62,15 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 
 	@Override
 	protected Command getResizeCommand(ChangeBoundsRequest request) {
-		return super.getResizeCommand(request);
+		CompoundCommand compoundCmd = new CompoundCommand("");
+		if (getHost() instanceof AbstractExecutionSpecificationEditPart) {
+			AbstractExecutionSpecificationEditPart activationEP = (AbstractExecutionSpecificationEditPart)getHost();
+			InteractionOperandEditPart ioep = ApexSequenceUtil.apexGetEnclosingInteractionOperandEditpart(activationEP);
+			CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)ioep.getParent().getParent();
+			compoundCmd.add(InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(request, cfep, activationEP));
+		}
+		compoundCmd.add(super.getResizeCommand(request));
+		return compoundCmd;
 	}
 
 }
