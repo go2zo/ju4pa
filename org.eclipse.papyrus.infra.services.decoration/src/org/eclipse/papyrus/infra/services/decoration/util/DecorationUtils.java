@@ -52,6 +52,8 @@ public class DecorationUtils {
 	};
 
 	/**
+	 * apex updated
+	 * 
 	 * Instantiates a new decoration utils.
 	 * 
 	 * @param element
@@ -63,9 +65,16 @@ public class DecorationUtils {
 		}
 
 		EObject eObject = (EObject)Platform.getAdapterManager().getAdapter(element, EObject.class);
+		/* apex improved start*/
+		if (eObject == null && !(element instanceof LinkItem)) {
+			throw new IllegalArgumentException("The decorated element cannot be resolved to an EObject");
+		}
+		/* apex improved end */
+		/* apex replaced
 		if(eObject == null) {
 			throw new IllegalArgumentException("The decorated element cannot be resolved to an EObject");
 		}
+		*/
 
 		this.element = element;
 		setEObject(eObject);

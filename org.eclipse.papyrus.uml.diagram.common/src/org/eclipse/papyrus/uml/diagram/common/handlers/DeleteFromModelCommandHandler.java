@@ -18,10 +18,12 @@ import java.util.List;
 
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IHandler;
+import org.eclipse.gef.EditPart;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.UnexecutableCommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.CommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.DiagramEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.requests.EditCommandRequestWrapper;
@@ -56,6 +58,16 @@ public class DeleteFromModelCommandHandler extends GraphicalCommandHandler imple
 				if(curCommand != null) {
 					command.compose(new CommandProxy(curCommand));
 				}
+				
+				/* apex added start */
+				if (editPart instanceof ConnectionEditPart) {
+					EditPart target = ((ConnectionEditPart) editPart).getTarget();
+					Command secCommand = target.getCommand(new EditCommandRequestWrapper(new DestroyElementRequest(false)));
+					if (secCommand != null) {
+//						command.compose(new CommandProxy(secCommand));
+					}
+				}
+				/* apex added end */
 			}
 		}
 

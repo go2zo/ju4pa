@@ -15,6 +15,7 @@ package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
+import org.eclipse.gef.EditPart;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.requests.GroupRequest;
@@ -61,6 +62,12 @@ public class MessageConnectionEditPolicy extends ConnectionEditPolicy {
 		if(getHost() instanceof ConnectionNodeEditPart) {
 			TransactionalEditingDomain editingDomain = ((ConnectionNodeEditPart)getHost()).getEditingDomain();
 			SequenceDeleteHelper.completeDeleteMessageViewCommand(deleteViewsCommand, editingDomain, getHost());
+			
+			/* apex added start */
+//			EditPart target = ((ConnectionNodeEditPart)getHost()).getTarget();
+//			Command deleteTargetViewCommand = target.getCommand(deleteRequest);
+//			deleteViewsCommand.add(deleteTargetViewCommand);
+			/* apex added end */
 		}
 		
 		SequenceUtil.addRestoreConstraintOfLifelineCommand(deleteViewsCommand, getHost());

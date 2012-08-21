@@ -226,7 +226,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						
 						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
 						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcExecSpecEP, srcLifelinePart, empty) );
 					}
 					else if (srcPart.equals(srcLifelinePart)) { // source : LifelineEditPart
 						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
@@ -239,7 +239,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						
 						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
 						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, srcLifelinePart, empty) );
 					}
 					
 					// target : AbstractExecutionSpecificationEditPart
@@ -298,7 +298,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						}
 						
 						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty));
+								(OccurrenceSpecification)send, y, newBounds, srcExecSpecEP, srcLifelinePart, empty));
 					}
 					else if (srcPart.equals(srcLifelinePart)) { // source : LifelineEditPart
 						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
@@ -311,7 +311,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						
 						srcCmd = chain(srcCmd, createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
 						srcCmd = chain(srcCmd, ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, srcLifelinePart, empty) );
 					}
 
 					// target: linked activations

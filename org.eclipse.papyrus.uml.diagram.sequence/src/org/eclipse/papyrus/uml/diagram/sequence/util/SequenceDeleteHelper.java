@@ -23,6 +23,7 @@ import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
+import org.eclipse.gef.ConnectionEditPart;
 import org.eclipse.gef.EditPart;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
@@ -286,6 +287,13 @@ public class SequenceDeleteHelper {
 						receiveEvent,true);
 				addDeleteMessageRelatedTimeObservationLinkCommand(req.getEditingDomain(), editPart, command,
 						sendEvent,true);
+				
+				/* apex added start */
+				if (editPart instanceof ConnectionEditPart) {
+					EditPart target = ((ConnectionEditPart) editPart).getTarget();
+					
+				}
+				/* apex added end */
 
 				return new ICommandProxy(command);
 			}

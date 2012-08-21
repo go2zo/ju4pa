@@ -208,7 +208,7 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						
 						compoudCmd.add( createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
 						compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcPart, srcLifelinePart, empty) );
 					}
 					else if (srcPart.equals(srcLifelinePart)) { // source : LifelineEditPart
 						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
@@ -221,7 +221,7 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						
 						compoudCmd.add( createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
 						compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcPart, srcLifelinePart, empty) );
 					}
 					
 					// target : AbstractExecutionSpecificationEditPart
@@ -281,7 +281,7 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						}
 						
 						sendMessageMoveCmd = ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty);
+								(OccurrenceSpecification)send, y, newBounds, srcPart, srcLifelinePart, empty);
 					}
 					else if (srcPart.equals(srcLifelinePart)) { // source : LifelineEditPart
 						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
@@ -294,7 +294,7 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						
 						compoudCmd.add( createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
 						compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-								(OccurrenceSpecification)send, y, newBounds, srcLifelinePart, empty) );
+								(OccurrenceSpecification)send, y, newBounds, srcPart, srcLifelinePart, empty) );
 					}
 
 					List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, false, true, false);

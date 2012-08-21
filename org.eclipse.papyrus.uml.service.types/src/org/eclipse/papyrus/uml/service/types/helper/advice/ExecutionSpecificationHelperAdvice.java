@@ -21,11 +21,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EStructuralFeature.Setting;
 import org.eclipse.gmf.runtime.common.core.command.ICommand;
 import org.eclipse.gmf.runtime.emf.type.core.edithelper.AbstractEditHelperAdvice;
 import org.eclipse.gmf.runtime.emf.type.core.requests.DestroyDependentsRequest;
-import org.eclipse.papyrus.uml.diagram.common.helper.InteractionFragmentHelper;
 import org.eclipse.papyrus.infra.core.utils.PapyrusEcoreUtils;
+import org.eclipse.papyrus.uml.diagram.common.helper.InteractionFragmentHelper;
 import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.Lifeline;
@@ -62,15 +64,29 @@ public class ExecutionSpecificationHelperAdvice extends AbstractEditHelperAdvice
 		// Add start - finish referenced OccurrenceSpecification to the dependents list
 		// if they are not used by another element.
 		OccurrenceSpecification osStart = es.getStart();
+		/* apex improved start */
+		if((osStart != null) && (isOnlyUsage(osStart, es))) {
+			dependentsToDestroy.add(osStart);
+		}
+		/* apex improved end */
+		/* apex replaced
 		if((osStart != null) && (PapyrusEcoreUtils.isOnlyUsage(osStart, es))) {
 			dependentsToDestroy.add(osStart);
 		}
+		*/
 
 		OccurrenceSpecification osFinish = es.getFinish();
+		/* apex improved start */
+		if((osFinish != null) && (isOnlyUsage(osFinish, es))) {
+			dependentsToDestroy.add(osFinish);
+		}
+		/* apex improved end */
+		/* apex replaced
 		if((osFinish != null) && (PapyrusEcoreUtils.isOnlyUsage(osFinish, es))) {
 			dependentsToDestroy.add(osFinish);
 		}
-
+		*/
+		
 		Set<Lifeline> coveredLifelines = new HashSet<Lifeline>(es.getCovereds());
 
 		// find initiating MOS of a synch message
@@ -90,6 +106,7 @@ public class ExecutionSpecificationHelperAdvice extends AbstractEditHelperAdvice
 		}
 
 		// find MOS between the start and finish
+		/* apex replaced
 		InteractionFragment fragment = osStart;
 		while(fragment != null && !fragment.equals(osFinish)) {
 			// remove MOS if it have the same covered lifelines as the ES
@@ -99,7 +116,8 @@ public class ExecutionSpecificationHelperAdvice extends AbstractEditHelperAdvice
 
 			fragment = InteractionFragmentHelper.findNextFragment(fragment, es.getOwner());
 		}
-
+		 */
+		
 		// return command to destroy dependents
 		if(!dependentsToDestroy.isEmpty()) {
 			return request.getDestroyDependentsCommand(dependentsToDestroy);
@@ -107,4 +125,46 @@ public class ExecutionSpecificationHelperAdvice extends AbstractEditHelperAdvice
 
 		return null;
 	}
+	
+	/* apex added start */
+	/**
+	 * Covered를 제외하여 onlyUsage를 계산
+	 * @see PapyrusEcoreUtils#isOnlyUsage(EObject, EObject)
+	 * 
+	 * @param usedObject
+	 * @param knownReferencer
+	 * @return
+	 */
+	private boolean isOnlyUsage(EObject usedObject, EObject knownReferencer) {
+		boolean isUsed = false;
+		EPackage mmPackage = usedObject.eClass().getEPackage();
+
+		// Retrieve the list of elements referencing the usedObject.
+		Set<EObject> crossReferences = new HashSet<EObject>();
+		for(Setting setting : PapyrusEcoreUtils.getUsages(usedObject)) {
+			EObject eObj = setting.getEObject();
+			if(eObj.eClass().getEPackage().equals(mmPackage)) {
+				crossReferences.add(eObj);
+			}
+		}
+
+		// Remove the container of used object.
+		crossReferences.remove(usedObject.eContainer());
+		// Remove the knownReferencer from the list of references.
+		crossReferences.remove(knownReferencer);
+		/* apex added start */
+		// Remove covered list
+		if (usedObject instanceof InteractionFragment)
+			crossReferences.removeAll(((InteractionFragment) usedObject).getCovereds());
+		/* apex added end */
+
+		// If no referencer remains in the list, the known element is the only
+		// usage.
+		if(crossReferences.isEmpty()) {
+			isUsed = true;
+		}
+
+		return isUsed;
+	}
+	/* apex added end */
 }
