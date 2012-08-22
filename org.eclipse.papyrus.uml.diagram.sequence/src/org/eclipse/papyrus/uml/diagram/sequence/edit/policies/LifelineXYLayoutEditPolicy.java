@@ -552,7 +552,7 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 					SetBoundsCommand setBoundsCmd = new SetBoundsCommand(siEP.getEditingDomain(), "Apex Move of a StateInvariant", siEP, newBounds);
 					compoundCmd.add(new ICommandProxy(setBoundsCmd));
 					
-					InteractionCompartmentXYLayoutEditPolicy.apexGetMoveBelowItemsCommand(request, siEP, compoundCmd);
+					InteractionCompartmentXYLayoutEditPolicy.apexMoveBelowItems(request, siEP, compoundCmd);
 				}
 				
 				if(ep instanceof DestructionOccurrenceSpecificationEditPart) {

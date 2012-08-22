@@ -40,14 +40,17 @@ import org.eclipse.gmf.runtime.common.core.command.CompositeCommand;
 import org.eclipse.gmf.runtime.common.core.command.ICommand;
 import org.eclipse.gmf.runtime.common.core.command.UnexecutableCommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.INodeEditPart;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.util.DiagramEditPartsUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragment2EditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentCombinedFragmentCompartmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ContinuationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionEditPart;
@@ -62,7 +65,7 @@ import org.eclipse.uml2.uml.ExecutionOccurrenceSpecification;
 import org.eclipse.uml2.uml.Interaction;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
-import org.eclipse.uml2.uml.Message;
+import org.eclipse.uml2.uml.Lifeline;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -71,6 +74,8 @@ public class ApexSequenceUtil {
 	/**
 	 * 주어진 EditPartEntry Set에서 해당 AbstractGraphicalEditPart 보다
 	 * y 좌표가 아래에 있는 EditPartList 반환 
+	 * 
+	 * 사용 안 함
 	 * 
 	 * @param agep   기준이 되는 AbstractGraphicalEditPart
 	 * @return aep보다 아래에 위치한 EditPart의 List
@@ -83,32 +88,15 @@ public class ApexSequenceUtil {
 
 		int yBottomOfAgep = apexGetAbsolutePosition(agep, SWT.BOTTOM);
 		
-		/*8
-		System.out
-		.println("ApexSequenceUtil.apexGetBelowEditPartList(), line : "
-				+ Thread.currentThread().getStackTrace()[1]
-						.getLineNumber());
-		int i = 0;
-		//*/
 		for (Entry<Object, EditPart> aEPEntry : wholeEditPartEntries ) {
 			
 			EditPart editPart = aEPEntry.getValue();
 			
-			/*8
-			System.out.println("entry["+ i++ +"] : " + editPart.getClass().toString().substring(editPart.getClass().toString().lastIndexOf('.')+1));
-			//*/
 			if (editPart.equals(agep))
 				continue;
 			if ( editPart instanceof IGraphicalEditPart ) {				
 				IGraphicalEditPart agep1 = (IGraphicalEditPart)editPart;				
 				int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
-				/*8
-				System.out
-						.println("ApexSequenceUtil.apexGetBelowEditPartList(), line : "
-								+ Thread.currentThread().getStackTrace()[1]
-										.getLineNumber());
-				System.out.println("belowEditPart["+i++ +"] : " + agep1.getClass() + ", yTop : " + yTopThisEP);
-				//*/
 				if ( yTopThisEP >= yBottomOfAgep
 						&& !belowEditPartMap.containsKey(agep1)) {
 					belowEditPartMap.put(agep1, yTopThisEP);
@@ -134,10 +122,12 @@ public class ApexSequenceUtil {
 		return belowEditPartList;
 	}
 	
-	/**
-	 * 중첩되지 않고 Sibling 중에서
+	/** 
 	 * 해당 AbstractGraphicalEditPart 보다 y좌표가 아래에 있어
-	 * 하향 이동 시 함께 움직여줘야 할 EditPartList 반환 
+	 * 하향 이동 시 함께 움직여줘야 할 EditPartList 반환
+	 * 
+	 * agep가 Interaction의 child인 경우 Interaction의 children만 위치비교하여 List에 추가(중첩된 EP는 추가 안함)
+	 * agep가 InteractionOperand의 child인 경우 해당 Op에 포함된 Sibling만 위치비교하여 List에 추가 
 	 * 
 	 * @param agep   기준이 되는 AbstractGraphicalEditPart
 	 * @return aep보다 아래에 위치한 EditPart의 List
@@ -149,13 +139,7 @@ public class ApexSequenceUtil {
 		Map<IGraphicalEditPart, Integer> belowEditPartMap = new HashMap<IGraphicalEditPart, Integer>();
 
 		int yBottomOfAgep = apexGetAbsolutePosition(agep, SWT.BOTTOM);
-		/*8
-		System.out
-		.println("ApexSequenceUtil.apexGetMovableEditPartList(), line : "
-				+ Thread.currentThread().getStackTrace()[1]
-						.getLineNumber());
-		int i = 0;
-		//*/
+		
 		for (Entry<Object, EditPart> aEPEntry : wholeEditPartEntries ) {
 			
 			EditPart editPart = aEPEntry.getValue();
@@ -164,59 +148,41 @@ public class ApexSequenceUtil {
 			if ( editPart instanceof IGraphicalEditPart ) {
 				
 				IGraphicalEditPart agep1 = (IGraphicalEditPart)editPart;
-				/*8
-				System.out.println("editPart["+i++ +"] : " + editPart.getClass().toString().substring(editPart.getClass().toString().lastIndexOf('.')+1) + ", parent : " + agep1.getParent().getClass());
-				System.out.println("container : " + apexGetSimpleClassName(SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1)));
-				//*/
-				// parent가 interactionCompartment인 것(즉, 중첩되지 않은 것)
-				/*
-				if ( agep1.getParent() instanceof InteractionInteractionCompartmentEditPart) {
+
+				// agep가 중첩된 경우 해당 OP내의 요소만 위치비교하여 추가
+				if ( agep.getParent() instanceof InteractionOperandEditPart ) {
+					InteractionOperandEditPart ioep = (InteractionOperandEditPart)agep.getParent();
+					List<EditPart> siblings = apexGetInteractionOperandChildrenEditParts(ioep);
 					
-					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
-	
-					if ( yTopThisEP >= yBottomOfAgep
-							&& !belowEditPartMap.containsKey(agep1)) {
-						belowEditPartMap.put(agep1, yTopThisEP);
-					}	
-				}
-				*/	
-				if ( SequenceUtil.findInteractionFragmentContainerAt(agep1.getFigure().getBounds().getCopy(), agep1) instanceof Interaction) {
-					// CF의 경우 중첩되어 있는 경우에도 findInteractionFragmentContainerAt() 이 InteractionImpl을 반환하므로
-					// IOEP를 통해 한 번 더 check 해야함
-					if ( agep1 instanceof CombinedFragmentEditPart
-						 && agep1.getParent() instanceof InteractionOperandEditPart ) { // 중첩되어있는 것은 put 하지 않음 
-						continue;
-					}						
-					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
-	
-					if ( yTopThisEP >= yBottomOfAgep
-							&& !belowEditPartMap.containsKey(agep1)) {
-						belowEditPartMap.put(agep1, yTopThisEP);
-					}	
+					for ( EditPart ep : siblings ) {
+						if (ep.equals(agep))
+							continue;
+						if ( ep instanceof IGraphicalEditPart ) {
+							
+							IGraphicalEditPart agep2 = (IGraphicalEditPart)ep;
+							
+							int yTopThisEP = apexGetAbsolutePosition(agep2, SWT.TOP);
+
+							if ( yTopThisEP >= yBottomOfAgep
+									&& !belowEditPartMap.containsKey(agep2)) {
+								belowEditPartMap.put(agep2, yTopThisEP);
+							}	
+							
+						}
+					}
+				// agep 가 중첩되지 않은 경우 interactionCompartment 내의 요소만 위치비교하여 추가
+				} else if ( agep.getParent() instanceof InteractionInteractionCompartmentEditPart ) {
+					if ( agep1.getParent() instanceof InteractionInteractionCompartmentEditPart ) {
+						int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
+
+						if ( yTopThisEP >= yBottomOfAgep
+								&& !belowEditPartMap.containsKey(agep1)) {
+							belowEditPartMap.put(agep1, yTopThisEP);
+						}	
+					}
 				}
 			}	
 		}
-		
-		// agep1의 sibling
-		List<IGraphicalEditPart> siblings = apexGetSiblingEditParts2(agep);
-		if ( siblings != null) {
-			for ( IGraphicalEditPart ep : siblings ) {
-				if (ep.equals(agep))
-					continue;
-				if ( ep instanceof IGraphicalEditPart ) {
-					
-					IGraphicalEditPart agep1 = (IGraphicalEditPart)ep;
-					
-					int yTopThisEP = apexGetAbsolutePosition(agep1, SWT.TOP);
-
-					if ( yTopThisEP >= yBottomOfAgep
-							&& !belowEditPartMap.containsKey(agep1)) {
-						belowEditPartMap.put(agep1, yTopThisEP);
-					}	
-					
-				}	
-			}			
-		}		
 		
 		Collection<Entry<IGraphicalEditPart, Integer>> entrySet = belowEditPartMap.entrySet();
 		List<Entry<IGraphicalEditPart, Integer>> entryList = new ArrayList<Entry<IGraphicalEditPart, Integer>>(entrySet);
@@ -231,29 +197,10 @@ public class ApexSequenceUtil {
 		for (Entry<IGraphicalEditPart, Integer> entry : entryList) {
 			belowEditPartList.add(entry.getKey());
 		}
-/*8
-		System.out
-				.println("ApexSequenceUtil.apexGetMovableEditPartList(), line : "
-						+ Thread.currentThread().getStackTrace()[1]
-								.getLineNumber());
-		for ( int i = 0 ; i < belowEditPartList.size() ; i++ ) {
-			System.out.println("["+i+"] " + belowEditPartList.get(i));
-		}
-//*/
 		return belowEditPartList;
 	}
 
 	
-	public static List<IGraphicalEditPart> apexGetSiblingEditParts2(IGraphicalEditPart gep) {
-		
-		List<IGraphicalEditPart> siblings = null;
-		EditPart ep = gep.getParent();
-		if ( ep instanceof InteractionInteractionCompartmentEditPart
-		     || ep instanceof InteractionOperandEditPart ) {
-			siblings = ep.getChildren();
-		}
-		return siblings;
-	}
 	
 	/**
 	 * 주어진 EditPartList를 검색하여
@@ -289,7 +236,7 @@ public class ApexSequenceUtil {
 	}
 	
 	/**
-	 * y좌표 기준 주어진 AbstractGraphicalEditPart의 바로 아래에 위치한 AbstractGraphicalEditPart 반환
+	 * MovableEditParts 중에서 AbstractGraphicalEditPart의 바로 아래에 위치한 AbstractGraphicalEditPart 반환
 	 * 
 	 * @param agep    기준이 되는 AbstractGraphicalEditPart
 	 * @param belowEditPartList    검색할 EditPart의 List
@@ -297,7 +244,8 @@ public class ApexSequenceUtil {
 	 */
 	public static IGraphicalEditPart apexGetBeneathEditPart(IGraphicalEditPart agep) {
 
-		List belowEditPartList = apexGetBelowEditPartList(agep);
+		List belowEditPartList = apexGetMovableEditPartList(agep);
+		//List belowEditPartList = apexGetNextSiblingEditParts(agep);
 		
 		int gap = Integer.MAX_VALUE;
 		IGraphicalEditPart beneathEditPart = null;
@@ -543,11 +491,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		
 		for (IGraphicalEditPart ep : editPartList) {	
 			
-			IFigure epFigure = ep.getFigure();
-			Rectangle epRect = epFigure.getBounds().getCopy();
-			epFigure.translateToAbsolute(epRect);
-			
-			int epBottom = epRect.bottom();
+			int epBottom = apexGetAbsolutePosition(ep, SWT.BOTTOM);
 			
 			if ( epBottom > bottom) {
 				lowestEditPart = ep;
@@ -556,6 +500,29 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		
 		return lowestEditPart;
+	}
+	
+	/**
+	 * 주어진 EditPart List에서 top 기준 가장 위에 있는 EditPart 반환
+	 * @param editPartList
+	 * @return
+	 */
+	public static IGraphicalEditPart apexGetHighestEditPartFromList(List<IGraphicalEditPart> editPartList) {
+		
+		int top = Integer.MAX_VALUE;
+		IGraphicalEditPart highestEditPart = null;
+		
+		for (IGraphicalEditPart ep : editPartList) {	
+			
+			int epTop = apexGetAbsolutePosition(ep, SWT.TOP);
+			
+			if ( epTop < top) {
+				highestEditPart = ep;
+				top = epTop;
+			}
+		}
+		
+		return highestEditPart;
 	}
 	
 	/**
@@ -642,19 +609,21 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	
 	public static Rectangle apexGetAbsoluteRectangle(IGraphicalEditPart gep) {
 		Rectangle bounds = null;
-		if (gep instanceof ConnectionNodeEditPart) {
-			Connection conn = ((ConnectionNodeEditPart)gep).getConnectionFigure();
-			PointList pl = conn.getPoints().getCopy();
-			conn.translateToAbsolute(pl);
-			bounds = pl.getBounds();
-//			Point p2 = conn.getTargetAnchor().getReferencePoint();
-//			Point p1 = conn.getSourceAnchor().getLocation(p2);
-//			bounds = new Rectangle(p1.x(), p1.y, p2.x() - p1.x(), p2.y() - p1.y());
-		} else {
-			IFigure figure = gep.getFigure();
-			bounds = figure.getBounds().getCopy();
-			figure.translateToAbsolute(bounds);
-		}
+		if ( gep != null ) {
+			if (gep instanceof ConnectionNodeEditPart) {
+				Connection conn = ((ConnectionNodeEditPart)gep).getConnectionFigure();
+				PointList pl = conn.getPoints().getCopy();
+				conn.translateToAbsolute(pl);
+				bounds = pl.getBounds();
+//				Point p2 = conn.getTargetAnchor().getReferencePoint();
+//				Point p1 = conn.getSourceAnchor().getLocation(p2);
+//				bounds = new Rectangle(p1.x(), p1.y, p2.x() - p1.x(), p2.y() - p1.y());
+			} else {
+				IFigure figure = gep.getFigure();
+				bounds = figure.getBounds().getCopy();
+				figure.translateToAbsolute(bounds);
+			}
+		}		
 		
 		return bounds;
 	}	
@@ -861,7 +830,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * @param hostEditPart
 	 * @return
 	 */
-	public static List apexGetPositionallyCoveredLifelineEditParts(Rectangle selectionRect, AbstractGraphicalEditPart hostEditPart) {
+	public static List<LifelineEditPart> apexGetPositionallyCoveredLifelineEditParts(Rectangle selectionRect, AbstractGraphicalEditPart hostEditPart) {
 		
 		//hostEditPart.getFigure().translateToAbsolute(selectionRect);
 		
@@ -876,7 +845,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				Rectangle lifelineRect = ApexSequenceUtil.apexGetAbsoluteRectangle((LifelineEditPart)ep);
 
 				if(selectionRect.intersects(lifelineRect)) {
-					positionallyCoveredLifelineEditParts.add(ep);
+					positionallyCoveredLifelineEditParts.add((LifelineEditPart)ep);
 				}
 			}
 
@@ -1051,23 +1020,32 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	/**
 	 * compoundCommand를 분해해서 compositeCommand에 add해주는 메서드
 	 * 
-	 * @param compoundCommand
+	 * @param inputCommand
 	 * @param compositeCommand
 	 */
-	public static void apexCompoundCommandToCompositeCommand(CompoundCommand compoundCommand, CompositeCommand compositeCommand) {
-		List cmdList = compoundCommand.getCommands();
-		Iterator itCmd = cmdList.iterator();
-		while ( itCmd.hasNext() ) {
-			Command aCommand = (Command)itCmd.next();
-			if ( aCommand != null && !aCommand.canExecute()) {
-				compositeCommand.add(UnexecutableCommand.INSTANCE);
-			} else if ( aCommand != null ) {
-				if ( aCommand instanceof ICommandProxy ) {
-					ICommandProxy iCommandproxy = (ICommandProxy)aCommand;
-					ICommand iCommand = iCommandproxy.getICommand();
-					compositeCommand.add(iCommand);
-				}									
+	public static void apexCompoundCommandToCompositeCommand(Command inputCommand, CompositeCommand compositeCommand) {
+		if ( inputCommand instanceof CompoundCommand ) {
+			CompoundCommand compoundCommand = (CompoundCommand)inputCommand;
+			List cmdList = compoundCommand.getCommands();
+			Iterator itCmd = cmdList.iterator();
+			while ( itCmd.hasNext() ) {
+				Command aCommand = (Command)itCmd.next();
+				if ( aCommand != null && !aCommand.canExecute()) {
+					compositeCommand.add(UnexecutableCommand.INSTANCE);
+				} else if ( aCommand != null ) {
+					if ( aCommand instanceof ICommandProxy ) {
+						ICommandProxy iCommandProxy = (ICommandProxy)aCommand;
+						ICommand iCommand = iCommandProxy.getICommand();
+						compositeCommand.add(iCommand);
+					}									
+				}
 			}
+		} else if ( inputCommand instanceof org.eclipse.gef.commands.UnexecutableCommand) {
+			compositeCommand.add(UnexecutableCommand.INSTANCE);
+		} else if ( inputCommand instanceof ICommandProxy ) {
+			ICommandProxy iCommandProxy = (ICommandProxy)inputCommand;
+			ICommand iCommand = iCommandProxy.getICommand();
+			compositeCommand.add(iCommand);
 		}
 	}
 	
@@ -1075,16 +1053,237 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * compoundCommand를 분해하여 다른 compoundCommand에 add하는 메서드
 	 * null 이나 Unexecutable에 관계없이 있는대로 add함
 	 * 
-	 * @param inputCompoundCommand
+	 * @param inputCommand
 	 * @param resultCompoundCommand
 	 */
-	public static void apexCompoundCommandToCompoundCommand(CompoundCommand inputCompoundCommand, CompoundCommand resultCompoundCommand) {
-		List cmdList = inputCompoundCommand.getCommands();
-		Iterator itCmd = cmdList.iterator();
-		while ( itCmd.hasNext() ) {
-			Command aCommand = (Command)itCmd.next();
-			resultCompoundCommand.add(aCommand);
+	public static void apexCompoundCommandToCompoundCommand(Command inputCommand, CompoundCommand resultCompoundCommand) {
+		if ( inputCommand instanceof CompoundCommand ) {
+			CompoundCommand inputCompoundCommand = (CompoundCommand)inputCommand;
+			List cmdList = inputCompoundCommand.getCommands();
+			Iterator itCmd = cmdList.iterator();
+			while ( itCmd.hasNext() ) {
+				Command aCommand = (Command)itCmd.next();
+				resultCompoundCommand.add(aCommand);
+			}	
+		} else {
+			resultCompoundCommand.add(inputCommand);
 		}
+		
+	}
+		
+	/**
+	 * IOEP가 cover하는 Lifeline의 Activation 및 Connection 중 IOEP에 경계가 포함되는 EditPartList 반환
+	 * 
+	 * @param ioep
+	 * @return
+	 */
+	public static List<EditPart> apexGetIOEPContainedEditParts(InteractionOperandEditPart ioep) {
+		return apexGetIOEPContainedEditParts(ioep, false);
+	}
+	
+	/**
+	 * coveredOnly가 false인 경우 IOEP와 경계가 교차하는 Lifeline의 Activation 및 Connection 중 IOEP에 경계가 포함되는 EditPartList 반환
+	 * 
+	 * coveredOnly가 true인 경우 IOEP가 cover하는 Lifeline의 Activation 및 Connection 중 IOEP에 경계가 포함되는 EditPartList 반환 
+	 * 
+	 * @param ioep
+	 * @param coveredOnly
+	 * @return
+	 */
+	public static List<EditPart> apexGetIOEPContainedEditParts(InteractionOperandEditPart ioep, boolean coveredOnly) {
+		
+		List<EditPart> containedEditParts = new ArrayList<EditPart>();
+		
+		List<LifelineEditPart> coveredLifelineEditParts = apexGetCoveredLifelineEditParts(ioep, coveredOnly);
+		
+		Rectangle ioepRect = apexGetAbsoluteRectangle(ioep);
+		
+		// LifelineEditPart의 children editpart 중 IOEP에 포함되어야 하는 것 처리
+		for ( LifelineEditPart lep : coveredLifelineEditParts ) {
+			List<EditPart> lepChildren = lep.getChildren();
+			
+			for ( EditPart ep : lepChildren ) {
+				if ( ep instanceof AbstractExecutionSpecificationEditPart ) {
+					AbstractExecutionSpecificationEditPart aesep = (AbstractExecutionSpecificationEditPart)ep;
+					Rectangle activationRect = apexGetAbsoluteRectangle(aesep);
+					
+					if ( ioepRect.contains(activationRect) ) {
+						containedEditParts.add(aesep);
+					}	
+				}				
+			}
+			
+			List<EditPart> sourceConnections = lep.getSourceConnections();
+			
+			for ( EditPart ep : sourceConnections ) {
+				if ( ep instanceof ConnectionEditPart ) {
+					ConnectionEditPart cep = (ConnectionEditPart)ep;
+					Rectangle cepRect = apexGetAbsoluteRectangle(cep);
+					if ( ioepRect.contains(cepRect) ) {
+						containedEditParts.add(cep);
+						// 부속되는 MessageSyncAppliedStereotypeEditPart를 추출하여 
+						// containedEditParts에 add
+					}	
+				}
+			}
+		}
+		
+		return containedEditParts;
+	}	
+	
+	/**
+	 * CombinedFragmentEditPart 나 InteractionOperandEditPart의 coveredLifelineEditParts 반환
+	 * 
+	 * @param snep
+	 * @return
+	 */
+	public static List<LifelineEditPart> apexGetCoveredLifelineEditParts(ShapeNodeEditPart snep, boolean coveredOnly) {
+	
+		List<LifelineEditPart> coveredLifelineEditParts = new ArrayList<LifelineEditPart>();
+		
+		List<Lifeline> coveredLifelines = null;
+				
+		if ( snep instanceof CombinedFragmentEditPart ) {
+			CombinedFragment cf = (CombinedFragment)snep.resolveSemanticElement();
+			if ( coveredOnly ) {
+				coveredLifelines = cf.getCovereds();	
+			} else {
+				coveredLifelines = new ArrayList<Lifeline>();				
+				List<LifelineEditPart> positionallyCoveredLifelineEditparts = apexGetPositionallyCoveredLifelineEditParts(apexGetAbsoluteRectangle(snep), snep);
+			
+				for ( LifelineEditPart lep : positionallyCoveredLifelineEditparts ) {
+					coveredLifelines.add((Lifeline)lep.resolveSemanticElement());
+				}
+			}
+			
+		} else if ( snep instanceof InteractionOperandEditPart ) {
+			InteractionOperand io = (InteractionOperand)snep.resolveSemanticElement();
+			if ( coveredOnly ) {
+				coveredLifelines = io.getCovereds();	
+			} else {
+				coveredLifelines = new ArrayList<Lifeline>();				
+				List<LifelineEditPart> positionallyCoveredLifelineEditparts = apexGetPositionallyCoveredLifelineEditParts(apexGetAbsoluteRectangle(snep), snep);
+			
+				for ( LifelineEditPart lep : positionallyCoveredLifelineEditparts ) {
+					coveredLifelines.add((Lifeline)lep.resolveSemanticElement());
+				}
+			}
+				
+		} else {
+			return null;
+		}
+		
+		for ( Lifeline ll : coveredLifelines ) {
+			coveredLifelineEditParts.add((LifelineEditPart)apexGetEditPart(ll, snep.getViewer()));
+		}
+		/*
+		RootEditPart rootEP = snep.getRoot();
+		EditPart contents = rootEP.getContents();
+		System.out
+				.println("ApexSequenceUtil.apexGetCoveredLifelineEditParts(), line : "
+						+ Thread.currentThread().getStackTrace()[1]
+								.getLineNumber());
+		System.out.println("rootEP.getChildren() : " + rootEP.getChildren());
+		
+		if ( contents instanceof PackageEditPart ) {
+			PackageEditPart pep = (PackageEditPart)contents;
+			List interactionEditParts = pep.getChildren();
+			
+			if ( interactionEditParts.size() > 0 ) {
+			
+				if ( interactionEditParts.get(0) instanceof InteractionEditPart ) {				
+					InteractionEditPart iep = (InteractionEditPart)interactionEditParts.get(0);
+					List<EditPart> iepChildren = iep.getChildren();
+					
+					for ( EditPart ep : iepChildren ) {					
+						if ( ep instanceof InteractionInteractionCompartmentEditPart ) {
+							InteractionInteractionCompartmentEditPart iicep = (InteractionInteractionCompartmentEditPart)ep;
+							List<EditPart> iicepChildren = iicep.getChildren();
+						
+							for ( EditPart ep1 : iicepChildren ) {
+								if ( ep1 instanceof LifelineEditPart ) {
+									LifelineEditPart llep = (LifelineEditPart)ep1;									
+									Lifeline lifeline = (Lifeline)llep.resolveSemanticElement();
+									
+									
+									if ( coveredLifelines.contains(lifeline) ) {
+										coveredLifelineEditParts.add(llep);										
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		*/
+		return coveredLifelineEditParts;
+	}
+	
+	/**
+	 * InteractionOperand의 children 과
+	 * InteractionOperand이 cover하는 Lifeline의 Activation 중 InteractionOperand에 위치적으로 포함된 Activation 함께 리턴 
+	 * 
+	 * @param ioep
+	 * @return
+	 */
+	public static List apexGetInteractionOperandChildrenEditParts(InteractionOperandEditPart ioep) {
+		
+		List ioChildren = apexGetIOEPContainedEditParts(ioep);
+		ioChildren.addAll(ioep.getChildren());
+				
+		return ioChildren;
+	}
+	
+	/**
+	 * CFEP의 모든 최종 childrenEditParts 반환
+	 * CombinedFragmentCombinedFragmentCompartmentEditPart 과 InteractionOperand을 제외한
+	 * 중첩된 CF나 IOEP 내의 모든 Activation 반환
+	 * 
+	 * @param cfep
+	 * @return
+	 */
+	public static List apexGetCombinedFragmentChildrenEditParts(CombinedFragmentEditPart cfep) {
+		
+		List cfChildren = null;
+		
+		List<CombinedFragmentCombinedFragmentCompartmentEditPart> childCompartments = cfep.getChildren();
+		
+		for ( CombinedFragmentCombinedFragmentCompartmentEditPart compartEP : childCompartments ) {
+			List<InteractionOperandEditPart> ioeps = compartEP.getChildren();
+			
+			for ( InteractionOperandEditPart ioep : ioeps ) {
+				cfChildren = apexGetIOEPContainedEditParts(ioep);
+			}			
+		}		
+		
+		return cfChildren;
+	}
+	
+	public static EditPart apexGetEditPart(EObject eObject, EditPartViewer viewer) {
+		Collection<Setting> settings = CacheAdapter.getInstance().getNonNavigableInverseReferences(eObject);
+		for (Setting ref : settings) {
+			if(NotationPackage.eINSTANCE.getView_Element().equals(ref.getEStructuralFeature())) {
+				View view = (View)ref.getEObject();
+				EditPart part = (EditPart)viewer.getEditPartRegistry().get(view);
+				return part;
+			}
+		}
+		return null;
+	}
+	
+	public static InteractionOperandEditPart apexGetEnclosingInteractionOperandEditpart(IGraphicalEditPart graphicalEditPart) {
+		InteractionOperandEditPart ioep = null;
+		
+		Rectangle absRect = ApexSequenceUtil.apexGetAbsoluteRectangle(graphicalEditPart);
+		
+		InteractionFragment iftContainer = SequenceUtil.findInteractionFragmentContainerAt(absRect.getLocation(), graphicalEditPart);
+		
+		EditPart editPart = ApexSequenceUtil.apexGetEditPart(iftContainer, graphicalEditPart.getViewer());
+		if ( editPart instanceof InteractionOperandEditPart ) {
+			ioep = (InteractionOperandEditPart)editPart;
+		}
+		return ioep;
 	}
 	
 	public static EditPart getEditPart(EObject eObject, EditPartViewer viewer) {

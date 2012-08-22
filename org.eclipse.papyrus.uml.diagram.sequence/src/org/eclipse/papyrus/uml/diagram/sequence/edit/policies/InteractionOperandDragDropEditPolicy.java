@@ -51,6 +51,11 @@ public class InteractionOperandDragDropEditPolicy extends ResizableEditPolicy {
 				CombinedFragmentCombinedFragmentCompartmentEditPart compartEP = (CombinedFragmentCombinedFragmentCompartmentEditPart) this
 						.getHost().getParent();
 				// if first interaction operand and resize direction is NORTH
+				/* apex added start */
+				// 첫번째 Op의 상단에서의 resize를 아래와 같이 따로 처리해주지 않으면
+				// 상단에서 아래로 Op 축소 시 CF의 경계가 축소되고
+				// 상단에서 위로 Op 확장 시 CF의 경계가 확장되는 원치 않는 결과가 나옴
+				/* apex added end */
 				if(this.getHost() == OperandBoundsComputeHelper.findFirstIOEP(compartEP)&&(request.getResizeDirection() & PositionConstants.NORTH) != 0){ 
 					return getHost().getParent().getParent().getCommand(request);
 				}else{

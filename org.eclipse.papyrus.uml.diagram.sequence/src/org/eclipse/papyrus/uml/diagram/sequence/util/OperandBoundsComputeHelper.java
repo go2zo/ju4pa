@@ -1,6 +1,5 @@
 package org.eclipse.papyrus.uml.diagram.sequence.util;
 
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.commands.ExecutionException;
@@ -21,7 +20,6 @@ import org.eclipse.gmf.runtime.common.core.command.CommandResult;
 import org.eclipse.gmf.runtime.common.core.command.CompositeCommand;
 import org.eclipse.gmf.runtime.common.core.command.ICommand;
 import org.eclipse.gmf.runtime.common.core.command.ICompositeCommand;
-import org.eclipse.gmf.runtime.common.core.command.UnexecutableCommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.commands.SetBoundsCommand;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
@@ -46,6 +44,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.part.UMLVisualIDRegistry;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.swt.SWT;
 import org.eclipse.uml2.uml.CombinedFragment;
+import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
 
 public class OperandBoundsComputeHelper {
@@ -522,12 +521,31 @@ public class OperandBoundsComputeHelper {
 			// 아래로 확대하는 경우 바로 아래 element 침범 시 X 처리
 			if ((direction & PositionConstants.SOUTH) != 0 && heightDelta > 0) {
 				IGraphicalEditPart beneathEditPart = ApexSequenceUtil.apexGetBeneathEditPart(currentIOEP);
-				int topBeneathEP = ApexSequenceUtil.apexGetAbsolutePosition(beneathEditPart, SWT.TOP);
-				int bottomCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM) + heightDelta;
-				if ( bottomCurrentIOEP >= topBeneathEP ) {
-					return null;
+				if ( beneathEditPart != null ) {
+					int topBeneathEP = ApexSequenceUtil.apexGetAbsolutePosition(beneathEditPart, SWT.TOP);
+					int bottomCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM) + heightDelta;
+					if ( bottomCurrentIOEP >= topBeneathEP ) {
+						return null;
+					}	
+				}				
+			}
+			// 위로 축소하는 경우 맨 아래 element 침범 시 X 처리
+			if ((direction & PositionConstants.SOUTH) != 0 && heightDelta < 0) {
+//				List currentIOEPchildren = ApexSequenceUtil.apexGetIOEPChildrenAndFragments(currentIOEP);
+				List currentIOEPchildren = currentIOEP.getChildren();
+				if ( currentIOEPchildren.size() > 0 ) {
+					IGraphicalEditPart lowestEditPart = ApexSequenceUtil.apexGetLowestEditPartFromList(currentIOEPchildren);
+					int bottomLowestEditPart = ApexSequenceUtil.apexGetAbsolutePosition(lowestEditPart, SWT.BOTTOM);
+					int bottomCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM) + heightDelta;
+					if ( bottomCurrentIOEP <= bottomLowestEditPart ) {
+						return null;
+					}	
 				}
-				
+				List currentIOEPFragments = ((InteractionOperand)currentIOEP.resolveSemanticElement()).getFragments();
+				if ( currentIOEPFragments.size() > 0 ) {
+					InteractionFragment lowestIaf = null;
+					// 여기에 Lowest Activation 침범 시 null return 하도록 처리 필요
+				}
 			}
 			/* apex added end */
 			Rectangle currentIOEPRect = OperandBoundsComputeHelper
@@ -767,8 +785,16 @@ public class OperandBoundsComputeHelper {
 							lastOperandBounds.getY()+lastOperandBounds.getHeight(), lastOperandBounds.getWidth(), OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT);
 					// auto update CombinedFragmentEditPart bounds after added new operand
 					if(compartment.getParent() instanceof CombinedFragmentEditPart){
+
 						CombinedFragmentEditPart parent = (CombinedFragmentEditPart) compartment
 								.getParent();
+						ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+						cbRequest.setSizeDelta(new Dimension(0, OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT));
+						cbRequest.setResizeDirection(PositionConstants.SOUTH);
+						ApexSequenceUtil.apexCompoundCommandToCompositeCommand(InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(cbRequest, parent),
+								                                               command);
+
+						/*
 						if (parent.getModel() instanceof Node) {
 							Node node = (Node) parent.getModel();
 							if (node.getLayoutConstraint() instanceof Bounds) {
@@ -785,19 +811,21 @@ public class OperandBoundsComputeHelper {
 							}
 							
 							// Op추가로 CF 경계 확대 resize 시 below CF의 이동
-							List belowEditParts = ApexSequenceUtil.apexGetBelowEditPartList(parent);
+							List belowEditParts = ApexSequenceUtil.apexGetMovableEditPartList(parent);
 							if ( belowEditParts.size() > 0 ) {
 							
+
 								ChangeBoundsRequest esRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
 								esRequest.setEditParts(parent);
 								esRequest.setMoveDelta(new Point(0, OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT));
 								CompoundCommand ccmd = new CompoundCommand();							
-								InteractionCompartmentXYLayoutEditPolicy.apexGetMoveBelowItemsCommand(esRequest, parent, ccmd);
+								InteractionCompartmentXYLayoutEditPolicy.apexMoveBelowItems(esRequest, parent, ccmd);
 
 								// compoundCommand를 분해하여 compositeCommand 에 add
-								ApexSequenceUtil.apexCompoundCommandToCompositeCommand(ccmd, command);	
+								ApexSequenceUtil.apexCompoundCommandToCompositeCommand(ccmd, command);								
 							}
 						}
+						 */
 					}
 					command.add(new SetBoundsCommand(compartment.getEditingDomain(), DiagramUIMessages.SetLocationCommand_Label_Resize, viewDescriptor, rect));
 				}
@@ -910,25 +938,67 @@ public class OperandBoundsComputeHelper {
 					currentIOEP);
 		}
 		
-		List targetIOEPChildrenEditParts = targetIOEP.getChildren();
-		IGraphicalEditPart lowestTargetChildEP = ApexSequenceUtil.apexGetLowestEditPartFromList(targetIOEPChildrenEditParts);
-		
-		List currentIOEPChildrenEditParts = currentIOEP.getChildren();
-		IGraphicalEditPart lowestCurrentChildEP = ApexSequenceUtil.apexGetLowestEditPartFromList(currentIOEPChildrenEditParts);
-		
-		if ((direction & PositionConstants.NORTH) != 0) { // 상단에서
+		if ( targetIOEP != null ) {
+			//List targetIOEPChildrenEditParts = targetIOEP.getChildren();
+			List targetIOEPChildrenEditParts = ApexSequenceUtil.apexGetInteractionOperandChildrenEditParts(targetIOEP);
+			IGraphicalEditPart lowestTargetChildEP = ApexSequenceUtil.apexGetLowestEditPartFromList(targetIOEPChildrenEditParts);
 			
-			if ( heightDelta > 0 ) { // 확대하는 경우
-				// currentIOEP의 상단이 targetIOEP의 lowest child보다 위로 가면 X
-				int topNewCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.TOP) - Math.abs(heightDelta);
-				if ( lowestTargetChildEP != null ) {			
-					int bottomTargetIOEPLowestChild = ApexSequenceUtil.apexGetAbsolutePosition(lowestTargetChildEP, SWT.BOTTOM);
-					
-					if ( topNewCurrentIOEP < bottomTargetIOEPLowestChild + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) {
-						isInvadingTargetChildren = true;
+//			List currentIOEPChildrenEditParts = currentIOEP.getChildren();
+			List currentIOEPChildrenEditParts = ApexSequenceUtil.apexGetInteractionOperandChildrenEditParts(currentIOEP);
+			IGraphicalEditPart lowestCurrentChildEP = ApexSequenceUtil.apexGetLowestEditPartFromList(currentIOEPChildrenEditParts);
+			
+			if ((direction & PositionConstants.NORTH) != 0) { // 상단에서
+				
+				if ( heightDelta > 0 ) { // 확대하는 경우
+					// currentIOEP의 상단이 targetIOEP의 lowest child보다 위로 가면 X
+					int topNewCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.TOP) - Math.abs(heightDelta);
+					if ( lowestTargetChildEP != null ) {			
+						int bottomTargetIOEPLowestChild = ApexSequenceUtil.apexGetAbsolutePosition(lowestTargetChildEP, SWT.BOTTOM);
+						
+						if ( topNewCurrentIOEP < bottomTargetIOEPLowestChild + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) {
+							isInvadingTargetChildren = true;
+						}
 					}
+				} else { // 축소하는 경우
+					// currentIOEP의 new lowest child가  currentIOEP의 하단보다 아래로 내려가면 X
+					if ( lowestCurrentChildEP != null ) {
+						int bottomNewLowestCurrentChildEP = ApexSequenceUtil.apexGetAbsolutePosition(lowestCurrentChildEP, SWT.BOTTOM) + Math.abs(heightDelta);				
+						int bottomCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM);
+						
+						if ( (bottomNewLowestCurrentChildEP + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) >= bottomCurrentIOEP ) {
+							isInvadingTargetChildren = true;
+						}	
+					}				
+				}					
+			} else if ((direction & PositionConstants.SOUTH) != 0) { // 하단에서
+				
+				if ( heightDelta > 0 ) { // 확대하는 경우
+					// targetIOEP의 new lowest child가  targetIOEP의 하단보다 아래로 내려가면 X 
+					if ( lowestTargetChildEP != null ) {
+						int bottomNewLowestTargetChildEP = ApexSequenceUtil.apexGetAbsolutePosition(lowestTargetChildEP, SWT.BOTTOM) + Math.abs(heightDelta);
+						int bottomTargetIOEP = ApexSequenceUtil.apexGetAbsolutePosition(targetIOEP, SWT.BOTTOM);
+						
+						if ( (bottomNewLowestTargetChildEP + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) >= bottomTargetIOEP ) {
+							isInvadingTargetChildren = true;
+						}
+					}
+				} else { // 축소하는 경우
+					// currentIOEP의 하단이 currentIOEP의 lowest child보다 위로 가면 X
+					if ( lowestCurrentChildEP != null ) {
+						int bottomNewCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM) - Math.abs(heightDelta);
+						int bottomCurrentIOEPLowestChild = ApexSequenceUtil.apexGetAbsolutePosition(lowestCurrentChildEP, SWT.BOTTOM);
+						
+						if ( bottomNewCurrentIOEP < bottomCurrentIOEPLowestChild + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) {
+							isInvadingTargetChildren = true;
+						}	
+					}				
 				}
-			} else { // 축소하는 경우
+			}
+		} else { // 하나뿐인 Op의 경우
+//			List currentIOEPChildrenEditParts = currentIOEP.getChildren();
+			List currentIOEPChildrenEditParts = ApexSequenceUtil.apexGetInteractionOperandChildrenEditParts(currentIOEP);
+			IGraphicalEditPart lowestCurrentChildEP = ApexSequenceUtil.apexGetLowestEditPartFromList(currentIOEPChildrenEditParts);
+			if ( (direction & PositionConstants.NORTH) != 0 && heightDelta < 0 ) { // 상단에서 축소하는 경우
 				// currentIOEP의 new lowest child가  currentIOEP의 하단보다 아래로 내려가면 X
 				if ( lowestCurrentChildEP != null ) {
 					int bottomNewLowestCurrentChildEP = ApexSequenceUtil.apexGetAbsolutePosition(lowestCurrentChildEP, SWT.BOTTOM) + Math.abs(heightDelta);				
@@ -937,30 +1007,9 @@ public class OperandBoundsComputeHelper {
 					if ( (bottomNewLowestCurrentChildEP + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) >= bottomCurrentIOEP ) {
 						isInvadingTargetChildren = true;
 					}	
-				}				
-			}					
-		} else if ((direction & PositionConstants.SOUTH) != 0) { // 하단에서
-			
-			if ( heightDelta > 0 ) { // 확대하는 경우
-				// targetIOEP의 new lowest child가  targetIOEP의 하단보다 아래로 내려가면 X 
-				if ( lowestTargetChildEP != null ) {
-					int bottomNewLowestTargetChildEP = ApexSequenceUtil.apexGetAbsolutePosition(lowestTargetChildEP, SWT.BOTTOM) + Math.abs(heightDelta);
-					int bottomTargetIOEP = ApexSequenceUtil.apexGetAbsolutePosition(targetIOEP, SWT.BOTTOM);
-					
-					if ( (bottomNewLowestTargetChildEP + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) >= bottomTargetIOEP ) {
-						isInvadingTargetChildren = true;
-					}
 				}
-			} else { // 축소하는 경우
-				// currentIOEP의 하단이 currentIOEP의 lowest child보다 위로 가면 X
-				if ( lowestCurrentChildEP != null ) {
-					int bottomNewCurrentIOEP = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM) - Math.abs(heightDelta);
-					int bottomCurrentIOEPLowestChild = ApexSequenceUtil.apexGetAbsolutePosition(lowestCurrentChildEP, SWT.BOTTOM);
-					
-					if ( bottomNewCurrentIOEP < bottomCurrentIOEPLowestChild + OperandBoundsComputeHelper.COMBINED_FRAGMENT_FIGURE_BORDER) {
-						isInvadingTargetChildren = true;
-					}	
-				}				
+			ApexSequenceUtil.apexGetCoveredLifelineEditParts(currentIOEP, true);
+				
 			}
 		}
 
