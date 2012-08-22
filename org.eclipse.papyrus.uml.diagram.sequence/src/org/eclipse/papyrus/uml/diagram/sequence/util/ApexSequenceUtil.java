@@ -852,6 +852,36 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		return positionallyCoveredLifelineEditParts;
 	}
+	
+	/**
+	 * lifelineRect와 위치적으로 교차되는 CFEditPart List 반환
+	 * 
+	 * @param lifelineRect lifelineEditPart의 경계
+	 * @param hostEditPart 포함여부 기준이 되는 lifelineEditPart
+	 * @return
+	 */
+	public static List<CombinedFragmentEditPart> apexGetPositionallyLifelineCoveringCFEditParts(Rectangle lifelineRect, AbstractGraphicalEditPart hostEditPart) {
+		
+		//hostEditPart.getFigure().translateToAbsolute(selectionRect);
+		
+		List<CombinedFragmentEditPart> positionallyLifelineCoveringCFEditParts = new ArrayList<CombinedFragmentEditPart>();
+
+		// retrieve all the edit parts in the registry
+		Set<Entry<Object, EditPart>> allEditPartEntries = hostEditPart.getViewer().getEditPartRegistry().entrySet();
+		for(Entry<Object, EditPart> epEntry : allEditPartEntries) {
+			EditPart ep = epEntry.getValue();
+
+			if(ep instanceof CombinedFragmentEditPart) {
+				Rectangle cfRect = ApexSequenceUtil.apexGetAbsoluteRectangle((CombinedFragmentEditPart)ep);
+
+				if(lifelineRect.intersects(cfRect)) {
+					positionallyLifelineCoveringCFEditParts.add((CombinedFragmentEditPart)ep);
+				}
+			}
+
+		}
+		return positionallyLifelineCoveringCFEditParts;
+	}
 
 	/**
 	 * 동일한 부모 InteractionFragment를 갖는 Sibling EditPart들을 구함

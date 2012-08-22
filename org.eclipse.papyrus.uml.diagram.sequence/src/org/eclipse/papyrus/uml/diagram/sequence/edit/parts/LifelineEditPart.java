@@ -1686,12 +1686,25 @@ public class LifelineEditPart extends NamedElementEditPart {
 		// fixed bug (id=364711) when bounds changed update coveredBys with the
 		// figure's bounds.
 		if (notification.getNotifier() instanceof Bounds) {
-			Display.getDefault().asyncExec(new Runnable() {
-				public void run() {
-					LifelineCoveredByUpdater updater = new LifelineCoveredByUpdater(); 
-					updater.update(LifelineEditPart.this);
-				}
-			});
+			System.out
+					.println("LifelineEditPart.handleNotificationEvent(), line : "
+							+ Thread.currentThread().getStackTrace()[1]
+									.getLineNumber());
+			System.out.println("bounds of handleNoti : " + notification.getNotifier());
+			System.out.println("this orig bounds     : " + this.getFigure().getBounds().getCopy());
+			System.out.println("LL.this orig bounds  : " + LifelineEditPart.this.getFigure().getBounds().getCopy());
+			final Bounds origBounds = (Bounds)notification.getNotifier();
+			
+			LifelineCoveredByUpdater updater = new LifelineCoveredByUpdater(); 
+			updater.update(LifelineEditPart.this, origBounds);
+			
+//			Display.getDefault().asyncExec(new Runnable() {
+//				
+//				public void run() {
+//					LifelineCoveredByUpdater updater = new LifelineCoveredByUpdater(); 
+//					updater.update(LifelineEditPart.this, origBounds);
+//				}
+//			});
 		}		
 	}
 
