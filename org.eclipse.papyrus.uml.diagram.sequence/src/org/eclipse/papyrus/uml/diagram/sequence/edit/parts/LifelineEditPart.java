@@ -1646,6 +1646,8 @@ public class LifelineEditPart extends NamedElementEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Handle lifeline covered by and destruction event
 	 * 
 	 */
@@ -1686,18 +1688,21 @@ public class LifelineEditPart extends NamedElementEditPart {
 		// fixed bug (id=364711) when bounds changed update coveredBys with the
 		// figure's bounds.
 		if (notification.getNotifier() instanceof Bounds) {
+			Bounds afterBounds = (Bounds)notification.getNotifier();
+			
 			System.out
 					.println("LifelineEditPart.handleNotificationEvent(), line : "
 							+ Thread.currentThread().getStackTrace()[1]
 									.getLineNumber());
-			System.out.println("bounds of handleNoti : " + notification.getNotifier());
-			System.out.println("this orig bounds     : " + this.getFigure().getBounds().getCopy());
-			System.out.println("LL.this orig bounds  : " + LifelineEditPart.this.getFigure().getBounds().getCopy());
-			final Bounds origBounds = (Bounds)notification.getNotifier();
+			System.out.println("before rel Rect     : " + this.getFigure().getBounds().getCopy());
+			System.out.println("after  rel Rect     : " + new Rectangle(afterBounds.getX(), afterBounds.getY(), afterBounds.getWidth(), afterBounds.getHeight()));
+
+			Rectangle afterRect = new Rectangle(afterBounds.getX(), afterBounds.getY(), afterBounds.getWidth(), afterBounds.getHeight());
 			
 			LifelineCoveredByUpdater updater = new LifelineCoveredByUpdater(); 
-			updater.update(LifelineEditPart.this, origBounds);
+			updater.update(LifelineEditPart.this, afterRect);
 			
+			// 아래를 실행할 경우 본 메서드와 updater.update()가 순차실행되지 않아 주석처리
 //			Display.getDefault().asyncExec(new Runnable() {
 //				
 //				public void run() {

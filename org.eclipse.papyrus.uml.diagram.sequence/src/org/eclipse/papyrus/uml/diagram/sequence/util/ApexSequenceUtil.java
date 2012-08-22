@@ -856,7 +856,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	/**
 	 * lifelineRect와 위치적으로 교차되는 CFEditPart List 반환
 	 * 
-	 * @param lifelineRect lifelineEditPart의 경계
+	 * @param lifelineRect lifelineEditPart의 절대좌표경계
 	 * @param hostEditPart 포함여부 기준이 되는 lifelineEditPart
 	 * @return
 	 */
@@ -874,7 +874,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			if(ep instanceof CombinedFragmentEditPart) {
 				Rectangle cfRect = ApexSequenceUtil.apexGetAbsoluteRectangle((CombinedFragmentEditPart)ep);
 
-				if(lifelineRect.intersects(cfRect)) {
+				if(lifelineRect.right() >= cfRect.x && lifelineRect.x <= cfRect.right()) {
 					positionallyLifelineCoveringCFEditParts.add((CombinedFragmentEditPart)ep);
 				}
 			}
