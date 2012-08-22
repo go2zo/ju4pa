@@ -131,25 +131,17 @@ public class LifelineCoveredByUpdater {
 		
 		/* apex improved start */			
 		List<CombinedFragmentEditPart> cfEditPartsToCheck = null;
-		if (newRect.width == 0 && newRect.height == 0) { // 새 Lifeline 생성하는 경우 Interaction 내 모든 CF을 check
-			
-//				Set<Entry<Object, EditPart>> allEditPartEntries = lifelineEditpart.getViewer().getEditPartRegistry().entrySet();
-//				
-//				cfEditPartsToCheck = new ArrayList();
-//				
-//				for(Entry<Object, EditPart> epEntry : allEditPartEntries) {
-//					EditPart ep = epEntry.getValue();
-//					if( ep instanceof CombinedFragmentEditPart ) {
-//						CombinedFragmentEditPart combinedFragmentEditPart = (CombinedFragmentEditPart)ep;
-//						cfEditPartsToCheck.add(combinedFragmentEditPart);
-//						coveredLifelinesToAdd.add((Lifeline)lifelineEditPart.resolveSemanticElement());
-//					}
-//				}
-			System.out
-					.println("LifelineCoveredByUpdater.updateLifeline(), line : "
-							+ Thread.currentThread().getStackTrace()[1]
-									.getLineNumber());
-			System.out.println("new Lifeline");
+		if (newRect.width == 0 && newRect.height == 0) { // 새 Lifeline 생성하는 경우 Interaction 내 모든 CF을 check			
+			cfEditPartsToCheck = new ArrayList<CombinedFragmentEditPart>();
+			for (Map.Entry<InteractionFragmentEditPart, Rectangle> entry : interactionFragments.entrySet()) {
+				InteractionFragmentEditPart editPart = entry.getKey();
+				Rectangle interactionFragmentBounds = entry.getValue();
+				InteractionFragment interactionFragment = (InteractionFragment)editPart.resolveSemanticElement();
+				if ( interactionFragment instanceof CombinedFragment ) {
+					cfEditPartsToCheck.add((CombinedFragmentEditPart)editPart);
+					coveredByCombinedFragmentsToAdd.add((CombinedFragment)interactionFragment);
+				}
+			}
 		} else { // 새로 생성이 아닌 CF 경계 변경인 경우
 			
 			if (beforeRect.width > newRect.width ) { // width 축소 시 lifeline의 원래 위치를 포함하던 CF을 check
@@ -193,8 +185,6 @@ public class LifelineCoveredByUpdater {
 					coveredByLifelinesToRemove.add(interactionFragment);
 				}
 			}
-			
-			
 		}
 
 		if (!coveredByLifelinesToAdd.isEmpty()) {
@@ -227,55 +217,44 @@ public class LifelineCoveredByUpdater {
 	 * 
 	 * 
 	 * @param combinedFragmentEditPart
-	 * @param beforeLifelineBounds lifeline의 변경 전 상대좌표경계
-	 * @param newLifelineBounds lifeline의 변경 후 상대좌표경계
+	 * @param beforeLifelineRect lifeline의 변경 전 상대좌표경계
+	 * @param newLifelineRect lifeline의 변경 후 상대좌표경계
 	 * @param coveredByCombinedFragmentsToAdd
 	 * @param coveredByCombinedFragmentsToRemove
 	 * @param coveredByLifelines
 	 */
 	private void updateCoveredByCombinedFragment(CombinedFragmentEditPart combinedFragmentEditPart, 
-                                                 Rectangle beforeLifelineBounds,
-			                                     Rectangle newLifelineBounds, 
+                                                 Rectangle beforeLifelineRect,
+			                                     Rectangle newLifelineRect, 
 			                                     List<CombinedFragment> coveredByCombinedFragmentsToAdd, 
 			                                     List<CombinedFragment> coveredByCombinedFragmentsToRemove, 
 			                                     EList<InteractionFragment> coveredByLifelines) {
 		CombinedFragment combinedFragment = (CombinedFragment)combinedFragmentEditPart.resolveSemanticElement();
 		
 		/* apex improved start */
-		context.getFigure().translateToAbsolute(beforeLifelineBounds);
-		context.getFigure().translateToAbsolute(newLifelineBounds);
+		context.getFigure().translateToAbsolute(beforeLifelineRect);
+		context.getFigure().translateToAbsolute(newLifelineRect);
 		
 		Rectangle cfRect = combinedFragmentEditPart.getFigure().getBounds().getCopy();
 		combinedFragmentEditPart.getFigure().translateToAbsolute(cfRect);
 		
 		// 새 lifeline 경계와 CF 경계가 교차되고
-		if(cfRect.intersects(newLifelineBounds)) {
+		if (cfRect.intersects(newLifelineRect)) { 
 			
 			// 원래의 coveredBy에 없던 combinedFragment이면
 			if(!coveredByLifelines.contains(combinedFragment)) {
 				// 원래 coveredBy에 있던 CF이면서 coveredByLifelines에 없는 것은
 				// Property창에서 수동으로 coveredBy에서 제외한 것이므로
 				// 원래 coveredBy에 없던 cf만 add
-				if (!cfRect.intersects(beforeLifelineBounds)) {
+				if (!cfRect.intersects(beforeLifelineRect)) {
 					coveredByCombinedFragmentsToAdd.add(combinedFragment);
 				}						
 			}
-		// 새 lifeline 경계와 CF 경계가 교차되지 않고
+		// 새로 생성된 lifeline이 아니면서도 새 lifeline 경계와 CF 경계가 교차되지 않고
 		// 원래 coveredBy에 있던 combinedFragment이면 remove
-		} else {
+		} else if ( newLifelineRect.width != 0 && newLifelineRect.height != 0) {
 			coveredByCombinedFragmentsToRemove.add(combinedFragment);			
 		}
 		/* apex improved end */
-		/*
-		PartDecomposition partDecomposition = combinedFragment..getDecomposedAs();
-		if(partDecomposition != null) {
-			List subLifelines = combinedFragmentEditPart.getChildren();
-			for(Object child : subLifelines) {
-				if(child instanceof LifelineEditPart) {
-					updateCoveredByCombinedFragment((LifelineEditPart)child, newRect, coveredLifelinesToAdd, coveredLifelinesToRemove, coveredLifelines);
-				}
-			}
-		}
-		*/
 	}
 }
