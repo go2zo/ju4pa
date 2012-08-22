@@ -4,16 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.draw2d.PositionConstants;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.gef.EditPart;
 import org.eclipse.gef.Handle;
 import org.eclipse.gef.commands.Command;
-import org.eclipse.gef.commands.CompoundCommand;
-import org.eclipse.gef.commands.UnexecutableCommand;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.ResizableShapeEditPolicy;
+import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
+import org.eclipse.uml2.uml.ExecutionSpecification;
+import org.eclipse.uml2.uml.InteractionFragment;
 
 public class ApexExecutionSpecificationSelectionEditPolicy extends
 		ResizableShapeEditPolicy {
@@ -55,22 +57,41 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 
 	@Override
 	protected Command getMoveCommand(ChangeBoundsRequest request) {
-		if (request.getMoveDelta() != null && request.getMoveDelta().y != 0)
-			return UnexecutableCommand.INSTANCE;
+//		if (request.getMoveDelta() != null && request.getMoveDelta().y != 0)
+//			return UnexecutableCommand.INSTANCE;
 		return super.getMoveCommand(request);
 	}
 
 	@Override
 	protected Command getResizeCommand(ChangeBoundsRequest request) {
-		CompoundCommand compoundCmd = new CompoundCommand("");
-		if (getHost() instanceof AbstractExecutionSpecificationEditPart) {
-			AbstractExecutionSpecificationEditPart activationEP = (AbstractExecutionSpecificationEditPart)getHost();
-			InteractionOperandEditPart ioep = ApexSequenceUtil.apexGetEnclosingInteractionOperandEditpart(activationEP);
-			CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)ioep.getParent().getParent();
-			compoundCmd.add(InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(request, cfep, activationEP));
+//		CompoundCommand compoundCmd = new CompoundCommand("");
+//		if (getHost() instanceof AbstractExecutionSpecificationEditPart) {
+//			AbstractExecutionSpecificationEditPart activationEP = (AbstractExecutionSpecificationEditPart)getHost();
+//			InteractionOperandEditPart ioep = ApexSequenceUtil.apexGetEnclosingInteractionOperandEditpart(activationEP);
+//			CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)ioep.getParent().getParent();
+//			compoundCmd.add(InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(request, cfep, activationEP));
+//		}
+//		compoundCmd.add(super.getResizeCommand(request));
+//		return compoundCmd;
+		
+		Command command = null;
+		
+		View view = (View)getHost().getModel();
+		EObject element = view.getElement();
+		if (element instanceof ExecutionSpecification) {
+			InteractionFragment parent = ((ExecutionSpecification)element).getEnclosingOperand();
+			if (parent != null) {
+				EditPart interactionOperandEP = ApexSequenceUtil.getEditPart(parent, getHost().getViewer());
+				EditPart combinedFragmentCompartmentEP = interactionOperandEP.getParent();
+				EditPart combinedFragmentEP = combinedFragmentCompartmentEP.getParent();
+
+				command = combinedFragmentEP.getCommand(request);
+//				command = InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(
+//						request, (ShapeNodeEditPart)combinedFragmentEP, (ShapeNodeEditPart)getHost());
+			}
 		}
-		compoundCmd.add(super.getResizeCommand(request));
-		return compoundCmd;
+		return command == null ? super.getResizeCommand(request) :
+				command.chain(super.getResizeCommand(request));
 	}
 
 }

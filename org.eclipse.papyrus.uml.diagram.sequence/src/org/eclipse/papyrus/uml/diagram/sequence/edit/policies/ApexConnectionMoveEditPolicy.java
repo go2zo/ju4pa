@@ -325,7 +325,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 					}
 					
 					if (moveDeltaY > 0) {
-						linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, true, false, false);
+						linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, true, true, false);
 						nextParts.removeAll(linkedParts);
 						if (nextParts.size() > 0) {
 							IGraphicalEditPart nextSiblingEditPart = nextParts.get(0);

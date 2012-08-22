@@ -1198,8 +1198,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		if ( request.getMoveDelta().y > 0 || (request.getSizeDelta().height > 0 && ((request.getResizeDirection() & PositionConstants.SOUTH) != 0) ) ) { // 아래로 이동하거나 아래로 확대 Resize 하는 경우
 
 			// 넘겨받은 AbstractGraphicalEditPart 보다 아래에 있는 belowList 구성		
-			List belowEditPartList = ApexSequenceUtil.apexGetMovableEditPartList(abstractGraphicalEditPart);
-			//List belowEditPartList = ApexSequenceUtil.apexGetNextSiblingEditParts(abstractGraphicalEditPart);
+//			List belowEditPartList = ApexSequenceUtil.apexGetMovableEditPartList(abstractGraphicalEditPart);
+			List<IGraphicalEditPart> belowEditPartList = ApexSequenceUtil.apexGetNextSiblingEditParts(abstractGraphicalEditPart);
 
 			if ( belowEditPartList.size() > 0 ) {
 				// move/resize할 위치
@@ -1215,7 +1215,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				int bottom = origCFBounds.getBottom().y+deltaY;				
 
 				// 넘겨받은 AbstractGraphicalEditPart 바로 아래의 EditPart 구성
-				IGraphicalEditPart beneathEditPart  = ApexSequenceUtil.apexGetBeneathEditPart(abstractGraphicalEditPart);
+//				IGraphicalEditPart beneathEditPart  = ApexSequenceUtil.apexGetBeneathEditPart(abstractGraphicalEditPart);
+				IGraphicalEditPart beneathEditPart = belowEditPartList.get(0);
 
 				int topOfBeneathEditPart = ApexSequenceUtil.apexGetAbsolutePosition(beneathEditPart, SWT.TOP);
 
