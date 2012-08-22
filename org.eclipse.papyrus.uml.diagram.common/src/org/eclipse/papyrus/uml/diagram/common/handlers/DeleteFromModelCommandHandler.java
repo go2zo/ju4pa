@@ -60,13 +60,13 @@ public class DeleteFromModelCommandHandler extends GraphicalCommandHandler imple
 				}
 				
 				/* apex added start */
-				if (editPart instanceof ConnectionEditPart) {
-					EditPart target = ((ConnectionEditPart) editPart).getTarget();
-					Command secCommand = target.getCommand(new EditCommandRequestWrapper(new DestroyElementRequest(false)));
-					if (secCommand != null) {
+//				if (editPart instanceof ConnectionEditPart) {
+//					EditPart target = ((ConnectionEditPart) editPart).getTarget();
+//					Command secCommand = target.getCommand(new EditCommandRequestWrapper(new DestroyElementRequest(false)));
+//					if (secCommand != null) {
 //						command.compose(new CommandProxy(secCommand));
-					}
-				}
+//					}
+//				}
 				/* apex added end */
 			}
 		}

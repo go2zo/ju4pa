@@ -62,6 +62,7 @@ import org.eclipse.uml2.uml.ExecutionOccurrenceSpecification;
 import org.eclipse.uml2.uml.Interaction;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
+import org.eclipse.uml2.uml.Message;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -900,7 +901,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			fragment = SequenceUtil.findInteractionFragmentContainerAt(bounds, gep);
 		}
 		
-		return apexGetSiblingEditPart(fragment, gep.getViewer());
+		return apexGetSiblingEditParts(fragment, gep.getViewer());
 	}
 
 	/**
@@ -973,7 +974,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * @param viewer
 	 * @return
 	 */
-	public static List<IGraphicalEditPart> apexGetSiblingEditPart(InteractionFragment fragment, EditPartViewer viewer) {
+	public static List<IGraphicalEditPart> apexGetSiblingEditParts(InteractionFragment fragment, EditPartViewer viewer) {
 		List<InteractionFragment> fragmentList = new ArrayList<InteractionFragment>();
 		
 		if (fragment instanceof Interaction) {
@@ -1028,7 +1029,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	public static List<IGraphicalEditPart> apexGetEditPartsContainerAt(int yLocation, InteractionFragment interactionFragment, EditPartViewer viewer) {
 		List<IGraphicalEditPart> result = new ArrayList<IGraphicalEditPart>();
 		
-		List<IGraphicalEditPart> siblingEditParts = apexGetSiblingEditPart(interactionFragment, viewer);
+		List<IGraphicalEditPart> siblingEditParts = apexGetSiblingEditParts(interactionFragment, viewer);
 		for (IGraphicalEditPart editPart : siblingEditParts) {
 			if (yLocation > apexGetAbsolutePosition(editPart, SWT.TOP) &&
 					yLocation < apexGetAbsolutePosition(editPart, SWT.BOTTOM)) {

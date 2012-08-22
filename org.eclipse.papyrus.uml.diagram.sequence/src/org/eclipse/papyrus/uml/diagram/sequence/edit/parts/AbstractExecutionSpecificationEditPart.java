@@ -23,6 +23,24 @@ public abstract class AbstractExecutionSpecificationEditPart extends
 		super(view);
 	}
 
+	/* apex added start */
+	public View findChildByModel(EObject model) {
+		List list = getModelChildren();
+		if(list != null && list.size() > 0) {
+			for(Object o : list) {
+				if(!(o instanceof View) )
+					continue;
+				
+				View view = (View) o;
+				if(view.getElement() == model){
+					return view;
+				}
+			}
+		}
+		return null;
+	}
+	/* apex added end */
+
 	@Override
 	public List getChildren() {
 		if (executionSpecificationEndParts == null) {
@@ -62,6 +80,7 @@ public abstract class AbstractExecutionSpecificationEditPart extends
 		EObject element = this.resolveSemanticElement();
 		if (!(element instanceof ExecutionSpecification))
 			return;
+		
 		ExecutionSpecification execution = (ExecutionSpecification) element;
 		final ExecutionSpecificationEndEditPart startPart = new ExecutionSpecificationEndEditPart(
 				execution.getStart(), this, new RelativeLocator(getFigure(),

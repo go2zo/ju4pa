@@ -80,7 +80,14 @@ public class ExecutionSpecificationEndEditPart extends GraphicalEditPart
 	private Locator locator;
 	private OccurrenceSpecification executionSpecificationEnd;
 	
-	public ExecutionSpecificationEndEditPart(OccurrenceSpecification occurrenceSpecification, ShapeNodeEditPart parent, RelativeLocator locator ) {
+	/**
+	 * apex updated
+	 * 
+	 * @param occurrenceSpecification
+	 * @param parent
+	 * @param locator
+	 */
+	public ExecutionSpecificationEndEditPart(OccurrenceSpecification occurrenceSpecification, AbstractExecutionSpecificationEditPart parent, RelativeLocator locator ) {
 		super(createDummyView(parent, occurrenceSpecification) );
 		this.executionSpecificationEnd = occurrenceSpecification;
 		this.setParent(parent);
@@ -88,8 +95,21 @@ public class ExecutionSpecificationEndEditPart extends GraphicalEditPart
 		this.locator = locator;
 	}
 	
-	private static EObject createDummyView(ShapeNodeEditPart parent,
+	/**
+	 * apex updated
+	 * 
+	 * @param parent
+	 * @param model
+	 * @return
+	 */
+	private static EObject createDummyView(AbstractExecutionSpecificationEditPart parent,
 			EObject model) {
+		/* apex added start */
+		View view = parent.findChildByModel(model);
+		if(view != null)
+			return view;
+		/* apex added end */
+		
 		final Shape node = new ShapeImpl() {
 			public boolean eNotificationRequired() {
 				return true;  

@@ -13,24 +13,13 @@
  *****************************************************************************/
 package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
-import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
 import org.eclipse.gef.EditPart;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.requests.GroupRequest;
-import org.eclipse.gmf.runtime.common.core.command.ICommand;
-import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
-import org.eclipse.gmf.runtime.diagram.ui.commands.SetBoundsCommand;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.internal.editpolicies.ConnectionEditPolicy;
-import org.eclipse.gmf.runtime.diagram.ui.l10n.DiagramUIMessages;
-import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
-import org.eclipse.gmf.runtime.notation.Bounds;
-import org.eclipse.gmf.runtime.notation.Shape;
-import org.eclipse.gmf.runtime.notation.impl.ShapeImpl;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.Message4EditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceDeleteHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 
@@ -64,9 +53,9 @@ public class MessageConnectionEditPolicy extends ConnectionEditPolicy {
 			SequenceDeleteHelper.completeDeleteMessageViewCommand(deleteViewsCommand, editingDomain, getHost());
 			
 			/* apex added start */
-//			EditPart target = ((ConnectionNodeEditPart)getHost()).getTarget();
-//			Command deleteTargetViewCommand = target.getCommand(deleteRequest);
-//			deleteViewsCommand.add(deleteTargetViewCommand);
+			EditPart target = ((ConnectionNodeEditPart)getHost()).getTarget();
+			Command deleteTargetViewCommand = target.getCommand(deleteRequest);
+			deleteViewsCommand.add(deleteTargetViewCommand);
 			/* apex added end */
 		}
 		

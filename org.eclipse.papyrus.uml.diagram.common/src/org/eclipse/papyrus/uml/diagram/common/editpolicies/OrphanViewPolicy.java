@@ -414,7 +414,12 @@ public class OrphanViewPolicy extends AbstractEditPolicy implements Notification
 					// contributing to the delete action
 					// if add, checks it does not need to be watched
 					if(Notification.REMOVE == notification.getEventType()) {
+						/* apex improved start */
+						if(notification.getOldValue() instanceof View) {
+						/* apex improved end */
+						/* apex replaced
 						if(notification.getNewValue() instanceof View) {
+						 */
 							View oldView = (View)notification.getOldValue();
 							removeListenerForView(oldView);
 						}
@@ -484,6 +489,16 @@ public class OrphanViewPolicy extends AbstractEditPolicy implements Notification
 				parentsToDelete.put(parent, views);
 			}
 		}
+		
+		/* apex added start */
+		// do the job
+		for(EObject object : parentsToDelete.keySet()) {
+			List<View> views = parentsToDelete.get(object);
+			for(View view : views) {
+				removeAdditionalParentToListen(object, view);
+			}
+		}
+		/* apex added end */
 	}
 
 	/**
