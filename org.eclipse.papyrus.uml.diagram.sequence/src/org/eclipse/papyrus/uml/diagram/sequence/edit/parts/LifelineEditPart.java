@@ -1690,13 +1690,6 @@ public class LifelineEditPart extends NamedElementEditPart {
 		if (notification.getNotifier() instanceof Bounds) {
 			Bounds afterBounds = (Bounds)notification.getNotifier();
 			
-			System.out
-					.println("LifelineEditPart.handleNotificationEvent(), line : "
-							+ Thread.currentThread().getStackTrace()[1]
-									.getLineNumber());
-			System.out.println("before rel Rect     : " + this.getFigure().getBounds().getCopy());
-			System.out.println("after  rel Rect     : " + new Rectangle(afterBounds.getX(), afterBounds.getY(), afterBounds.getWidth(), afterBounds.getHeight()));
-
 			Rectangle afterRect = new Rectangle(afterBounds.getX(), afterBounds.getY(), afterBounds.getWidth(), afterBounds.getHeight());
 			
 			LifelineCoveredByUpdater updater = new LifelineCoveredByUpdater(); 

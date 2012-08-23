@@ -230,12 +230,6 @@ public class LifelineCoveredByUpdater {
 			                                     List<CombinedFragment> coveredByCombinedFragmentsToRemove, 
 			                                     EList<InteractionFragment> coveredByLifelines) {
 		CombinedFragment combinedFragment = (CombinedFragment)combinedFragmentEditPart.resolveSemanticElement();
-		System.out
-				.println("LifelineCoveredByUpdater.updateCoveredByCombinedFragment(), line : "
-						+ Thread.currentThread().getStackTrace()[1]
-								.getLineNumber());
-		System.out.println("beforeLifelineRect : " + beforeLifelineRect);
-		System.out.println("newLifelineRect    : " + newLifelineRect);
 		/* apex improved start */		
 		Rectangle cfRect = combinedFragmentEditPart.getFigure().getBounds().getCopy();
 		combinedFragmentEditPart.getFigure().translateToAbsolute(cfRect);

@@ -31,6 +31,8 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexOccurrenceSpecificationMoveHelper;
@@ -125,7 +127,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 			EditPart tgtPart = connectionPart.getTarget();
 			LifelineEditPart tgtLifelinePart = SequenceUtil.getParentLifelinePart(tgtPart);
 
-			CompoundCommand compoudCmd = new CompoundCommand(Messages.MoveMessageCommand_Label);
+			CompoundCommand compoundCmd = new CompoundCommand(Messages.MoveMessageCommand_Label);
 			
 			if(send instanceof OccurrenceSpecification && rcv instanceof OccurrenceSpecification && srcLifelinePart != null && tgtLifelinePart != null) {
 				Point moveDelta = request.getMoveDelta().getCopy();
@@ -325,7 +327,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 					}
 					
 					if (moveDeltaY > 0) {
-						linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, true, false, false);
+						linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, true, true, false);
 						nextParts.removeAll(linkedParts);
 						if (nextParts.size() > 0) {
 							IGraphicalEditPart nextSiblingEditPart = nextParts.get(0);
@@ -337,21 +339,25 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 //								apexGetResizeOrMoveBelowItemsCommand(request, nextSiblingEditPart);
 							}
 						}
+						// IOEP 내에 있는 message의 경우 포함하는 IOEP, CF Resize
+						// StackOverflow 에러 수정 필요 ㅠㅜ
+						apexGetResizeOrMoveBelowItemsCommand(request, connectionPart);							
+						
 					}
 				}
 				
 				if (moveDeltaY > 0) {
-					compoudCmd.add(nextCmd);
-					compoudCmd.add(tgtCmd);
-					compoudCmd.add(srcCmd);
+					compoundCmd.add(nextCmd);
+					compoundCmd.add(tgtCmd);
+					compoundCmd.add(srcCmd);
 				}
 				else {
-					compoudCmd.add(srcCmd);
-					compoudCmd.add(tgtCmd);
-					compoudCmd.add(nextCmd);
+					compoundCmd.add(srcCmd);
+					compoundCmd.add(tgtCmd);
+					compoundCmd.add(nextCmd);
 				}
 			}
-			return compoudCmd.size() > 0 ? compoudCmd : null;
+			return compoundCmd.size() > 0 ? compoundCmd : null;
 		}
 		
 		return null;

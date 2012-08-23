@@ -7,7 +7,7 @@ import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
-import org.eclipse.gef.EditPartViewer;
+import org.eclipse.gef.EditPart;
 import org.eclipse.gmf.runtime.common.core.command.CommandResult;
 import org.eclipse.gmf.runtime.diagram.core.util.ViewUtil;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
@@ -24,8 +24,8 @@ public class ApexSetBoundsAndMoveInteractionFragmentsCommand extends
 	private final static int EXECUTION_BOTTOM_MARGIN = 10;
 	
 	public ApexSetBoundsAndMoveInteractionFragmentsCommand(TransactionalEditingDomain domain, CreateElementAndNodeCommand command,
-			ViewDescriptor descriptor, EditPartViewer viewer, InteractionFragment fragment, Point location) {
-		super(domain, descriptor, viewer, fragment, location, null);
+			ViewDescriptor descriptor, EditPart editPart, InteractionFragment fragment, Point location) {
+		super(domain, descriptor, editPart, fragment, location, null);
 		
 		this.createElementAndNodeCommand = command;
 	}

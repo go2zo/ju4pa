@@ -13,7 +13,7 @@ import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
-import org.eclipse.gef.EditPartViewer;
+import org.eclipse.gef.EditPart;
 import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
@@ -39,8 +39,8 @@ public class ApexMoveInteractionFragmentsCommand extends
 		AbstractTransactionalCommand {
 
 	protected final static String COMMAND_LABEL = "Move InteractionFragments";
-	
-	protected EditPartViewer viewer;
+		
+	protected EditPart editPart;
 	protected ViewDescriptor descriptor;
 	protected InteractionFragment fragment;
 	protected Point location;
@@ -52,9 +52,9 @@ public class ApexMoveInteractionFragmentsCommand extends
 
 	
 	public ApexMoveInteractionFragmentsCommand(
-			TransactionalEditingDomain domain, ViewDescriptor descriptor, EditPartViewer viewer, InteractionFragment fragment, Point location, Point moveDelta) {
+			TransactionalEditingDomain domain, ViewDescriptor descriptor, EditPart editPart, InteractionFragment fragment, Point location, Point moveDelta) {
 		super(domain, COMMAND_LABEL, null);
-		this.viewer = viewer;
+		this.editPart = editPart;
 		this.descriptor = descriptor;
 		this.fragment = fragment;
 		this.location = location;
@@ -175,7 +175,7 @@ public class ApexMoveInteractionFragmentsCommand extends
 	}
 	
 	private IGraphicalEditPart getEditPart(InteractionFragment fragment) {
-		return (IGraphicalEditPart)ApexSequenceUtil.getEditPart(fragment, viewer);
+		return (IGraphicalEditPart)ApexSequenceUtil.getEditPart(fragment, editPart);
 	}
 	
 }

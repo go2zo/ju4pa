@@ -1198,8 +1198,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		if ( request.getMoveDelta().y > 0 || (request.getSizeDelta().height > 0 && ((request.getResizeDirection() & PositionConstants.SOUTH) != 0) ) ) { // 아래로 이동하거나 아래로 확대 Resize 하는 경우
 
 			// 넘겨받은 AbstractGraphicalEditPart 보다 아래에 있는 belowList 구성		
-			List belowEditPartList = ApexSequenceUtil.apexGetMovableEditPartList(abstractGraphicalEditPart);
-			//List belowEditPartList = ApexSequenceUtil.apexGetNextSiblingEditParts(abstractGraphicalEditPart);
+//			List belowEditPartList = ApexSequenceUtil.apexGetMovableEditPartList(abstractGraphicalEditPart);
+			List<IGraphicalEditPart> belowEditPartList = ApexSequenceUtil.apexGetNextSiblingEditParts(abstractGraphicalEditPart);
 
 			if ( belowEditPartList.size() > 0 ) {
 				// move/resize할 위치
@@ -1215,11 +1215,12 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				int bottom = origCFBounds.getBottom().y+deltaY;				
 
 				// 넘겨받은 AbstractGraphicalEditPart 바로 아래의 EditPart 구성
-				IGraphicalEditPart beneathEditPart  = ApexSequenceUtil.apexGetBeneathEditPart(abstractGraphicalEditPart);
+//				IGraphicalEditPart beneathEditPart  = ApexSequenceUtil.apexGetBeneathEditPart(abstractGraphicalEditPart);
+				IGraphicalEditPart beneathEditPart = belowEditPartList.get(0);
 
 				int topOfBeneathEditPart = ApexSequenceUtil.apexGetAbsolutePosition(beneathEditPart, SWT.TOP);
 
-				// beneathEditPart 보다 아래로 내릴 경우
+				// beneathEditPart 보다 아래로 내릴 경우(그냥 내리기만 하면 밀려내려가게 변경 아래 if행 주석처리)
 //				if (bottom >= topOfBeneathEditPart) {
 					if ( beneathEditPart instanceof IGraphicalEditPart ) {
 						if ( beneathEditPart instanceof CombinedFragmentEditPart ) {
@@ -1231,15 +1232,13 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 
 							// beneathEditpart 가 아래로 밀려 내려가서 beneathEditPart의 Parent의 Resize 필요한 경우
 							apexResizeParentCombinedFragments(cbRequest, (GraphicalEditPart)beneathEditPart, compoundCmd);
-						} else if ( beneathEditPart instanceof AbstractExecutionSpecificationEditPart
-								    || beneathEditPart instanceof LabelEditPart
-								    || beneathEditPart instanceof MessageEditPart ) { // message의 경우 상단은 Activation(Message보다 1px 높음) 또는 LabelEditPart임
-							// 해당 connectionEditPart 추출 
-							if ( beneathEditPart instanceof AbstractExecutionSpecificationEditPart ) {
-								AbstractExecutionSpecificationEditPart activationEP = (AbstractExecutionSpecificationEditPart)beneathEditPart;
-								List targetConnections = activationEP.getTargetConnections();
-
-							} 
+						} else if ( beneathEditPart instanceof MessageEditPart ) { // message의 경우 상단은 Activation(Message보다 1px 높음) 또는 LabelEditPart임
+							MessageEditPart mEditPart = (MessageEditPart)beneathEditPart;
+							ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+							cbRequest.setMoveDelta(new Point(0, deltaY));
+							cbRequest.setEditParts(beneathEditPart);
+							compoundCmd.add(mEditPart.getCommand(cbRequest));
+							
 							
 							// ApexConnectionMoveEditPolicy.apexGetMoveConnectionCommand(request, connectionPart, false);
 
@@ -1341,18 +1340,19 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		} else if ( pEditPart instanceof LifelineEditPart ) { // ApexConnectionMoveEditPolicy.apexGetMoveConnectionCommand()에서 호출된 경우 ActivationEP가 넘어옴
 
 			InteractionOperandEditPart ioep = ApexSequenceUtil.apexGetEnclosingInteractionOperandEditpart(graphicalEditPart);
-			Rectangle parentOperandBounds = ioep.getFigure().getBounds().getCopy();
-			ioep.getFigure().translateToAbsolute(parentOperandBounds);
-			if ( newBoundsCF.right() > parentOperandBounds.right()
-			     || newBoundsCF.bottom() > parentOperandBounds.bottom() ) {		
-				ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
-				Dimension resizeParentDimension = moveDelta.y != 0 ? new Dimension(0, moveDelta.y) : sizeDelta;
-				cbRequest.setSizeDelta(resizeParentDimension);	
-				cbRequest.setResizeDirection(PositionConstants.SOUTH);
-				CombinedFragmentEditPart parentCFEditPart = (CombinedFragmentEditPart)ioep.getParent().getParent();
-				apexCombinedFragmentResizeChildren(cbRequest, parentCFEditPart, graphicalEditPart, ccmd);
-			}	
-
+			if ( ioep != null ) {
+				Rectangle parentOperandBounds = ioep.getFigure().getBounds().getCopy();
+				ioep.getFigure().translateToAbsolute(parentOperandBounds);
+				if ( newBoundsCF.right() > parentOperandBounds.right()
+				     || newBoundsCF.bottom() > parentOperandBounds.bottom() ) {		
+					ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+					Dimension resizeParentDimension = moveDelta.y != 0 ? new Dimension(0, moveDelta.y) : sizeDelta;
+					cbRequest.setSizeDelta(resizeParentDimension);	
+					cbRequest.setResizeDirection(PositionConstants.SOUTH);
+					CombinedFragmentEditPart parentCFEditPart = (CombinedFragmentEditPart)ioep.getParent().getParent();
+					apexCombinedFragmentResizeChildren(cbRequest, parentCFEditPart, graphicalEditPart, ccmd);
+				}	
+			}
 		}
 	}
 	

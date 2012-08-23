@@ -32,7 +32,9 @@ import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature.Setting;
 import org.eclipse.gef.EditPart;
+import org.eclipse.gef.EditPartFactory;
 import org.eclipse.gef.EditPartViewer;
+import org.eclipse.gef.RootEditPart;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.editparts.AbstractGraphicalEditPart;
@@ -45,6 +47,7 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.INodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
+import org.eclipse.gmf.runtime.diagram.ui.services.editpart.EditPartService;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.util.DiagramEditPartsUtil;
@@ -58,6 +61,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractio
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionUseEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.PackageEditPart;
 import org.eclipse.swt.SWT;
 import org.eclipse.uml2.common.util.CacheAdapter;
 import org.eclipse.uml2.uml.CombinedFragment;
@@ -893,11 +897,11 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		if (gep instanceof ConnectionNodeEditPart) {
 			ConnectionNodeEditPart connection = (ConnectionNodeEditPart)gep;
 			Point edge = SequenceUtil.getAbsoluteEdgeExtremity(connection, true);
-			fragment = SequenceUtil.findInteractionFragmentContainerAt(edge, gep);
+			fragment = SequenceUtil.findInteractionFragmentContainerAt(edge, gep, false);
 		}
 		else {
 			Rectangle bounds = SequenceUtil.getAbsoluteBounds(gep);
-			fragment = SequenceUtil.findInteractionFragmentContainerAt(bounds, gep);
+			fragment = SequenceUtil.findInteractionFragmentContainerAt(bounds, gep, false);
 		}
 		
 		return apexGetSiblingEditParts(fragment, gep.getViewer());
@@ -1316,12 +1320,31 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		return ioep;
 	}
 	
-	public static EditPart getEditPart(EObject eObject, EditPartViewer viewer) {
+	/**
+	 * eObject에 해당하는 EditPart 반환
+	 * 
+	 * @param eObject
+	 * @param editPart EditPartViewer를 얻기위한 any EditPart
+	 * @return
+	 */
+	public static EditPart getEditPart(EObject eObject, EditPart editPart) {
 		Collection<Setting> settings = CacheAdapter.getInstance().getNonNavigableInverseReferences(eObject);
 		for (Setting ref : settings) {
 			if(NotationPackage.eINSTANCE.getView_Element().equals(ref.getEStructuralFeature())) {
 				View view = (View)ref.getEObject();
-				EditPart part = (EditPart)viewer.getEditPartRegistry().get(view);
+				EditPartViewer epViewer = editPart.getViewer();
+//				EditPartFactory epFactory = epViewer.getEditPartFactory();
+//				EditPartService epService = (EditPartService)epFactory;
+//				IGraphicalEditPart igep = epService.createGraphicEditPart(view);
+				EObject eObj = view.getElement();
+				EditPart part = (EditPart)epViewer.getEditPartRegistry().get(view);
+				if ( eObj instanceof Interaction ) {
+//					RootEditPart rootEP = igep.getRoot();
+					RootEditPart rootEP = editPart.getRoot();		
+					PackageEditPart packageEP = (PackageEditPart)rootEP.getContents();
+					List<InteractionEditPart> interactionEditParts = packageEP.getChildren();
+					part = interactionEditParts.get(0);
+				}
 				return part;
 			}
 		}
