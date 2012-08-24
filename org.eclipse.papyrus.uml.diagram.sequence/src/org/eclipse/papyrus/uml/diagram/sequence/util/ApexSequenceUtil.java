@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.eclipse.draw2d.Connection;
 import org.eclipse.draw2d.IFigure;
-import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PointList;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
@@ -1309,13 +1308,30 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	
 	public static EditPart getEditPart(EObject eObject, EditPartViewer viewer) {
 		Collection<Setting> settings = CacheAdapter.getInstance().getNonNavigableInverseReferences(eObject);
+		List<EditPart> parts = new ArrayList<EditPart>();
 		for (Setting ref : settings) {
 			if(NotationPackage.eINSTANCE.getView_Element().equals(ref.getEStructuralFeature())) {
 				View view = (View)ref.getEObject();
 				EditPart part = (EditPart)viewer.getEditPartRegistry().get(view);
-				return part;
+				parts.add(part);
 			}
 		}
-		return null;
+
+		if (parts.size() == 1) {
+			return parts.get(0);
+		}
+
+		List<EditPart> removeParts = new ArrayList<EditPart>();
+		for (EditPart part : parts) {
+			EditPart parent = part.getParent();
+			while (parent != null) {
+				if (parts.contains(parent)) {
+					removeParts.add(parent);
+				}
+			}
+		}
+		
+		parts.removeAll(removeParts);
+		return parts.size() == 0 ? null : parts.get(0);
 	}
 }

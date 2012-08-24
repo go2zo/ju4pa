@@ -14,15 +14,23 @@
 package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.draw2d.IFigure;
+import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.commands.UnexecutableCommand;
+import org.eclipse.gef.requests.ReconnectRequest;
 import org.eclipse.gmf.runtime.common.core.command.ICommand;
 import org.eclipse.gmf.runtime.diagram.core.commands.DeleteCommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
 import org.eclipse.gmf.runtime.emf.type.core.requests.CreateRelationshipRequest;
 import org.eclipse.gmf.runtime.emf.type.core.requests.DestroyElementRequest;
 import org.eclipse.gmf.runtime.emf.type.core.requests.DestroyRequest;
@@ -64,6 +72,8 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.Message7EditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.MessageEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceDeleteHelper;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.OccurrenceSpecification;
 
@@ -116,12 +126,40 @@ public class ActionExecutionSpecificationItemSemanticEditPolicy extends UMLBaseI
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * This method has been overridden to also delete linked time/duration views
 	 * 
 	 * @generated NOT
 	 */
 	protected Command addDeleteViewCommand(Command mainCommand, DestroyRequest completedRequest) {
 		CompoundCommand deleteViewsCommand = new CompoundCommand();
+		
+		/* apex added start */
+		// Activation의 source connections들을 parent인 lifeline으로 이동하여 연결
+		if (getHost() instanceof ShapeNodeEditPart) {
+			LifelineEditPart lifelineEP = SequenceUtil.getParentLifelinePart(getHost());
+			IFigure figure = lifelineEP.getNodeFigure();
+			Rectangle newBounds = figure.getBounds().getCopy();
+			figure.translateToAbsolute(newBounds);
+			
+			List connections = ((ShapeNodeEditPart)getHost()).getSourceConnections();
+			for (Iterator iter = connections.iterator(); iter.hasNext(); ) {
+				ConnectionNodeEditPart connection = (ConnectionNodeEditPart)iter.next();
+				Point location = SequenceUtil.getAbsoluteEdgeExtremity(connection, true);
+				
+				ReconnectRequest reconnReq = new ReconnectRequest();
+				reconnReq.setConnectionEditPart(connection);
+				reconnReq.setLocation(location);
+				reconnReq.setTargetEditPart(lifelineEP);
+				reconnReq.setType(RequestConstants.REQ_RECONNECT_SOURCE);
+				reconnReq.getExtendedData().put(SequenceRequestConstant.DO_NOT_MOVE_EDIT_PARTS, true);
+				
+				deleteViewsCommand.add(lifelineEP.getCommand(reconnReq));
+			}
+		}
+		/* apex added end */
+		
 		Command deleteViewCommand = getGEFWrapper(new DeleteCommand(getEditingDomain(), (View)getHost().getModel()));
 		deleteViewsCommand.add(deleteViewCommand);
 		SequenceDeleteHelper.completeDeleteExecutionSpecificationViewCommand(deleteViewsCommand, getEditingDomain(), getHost());
