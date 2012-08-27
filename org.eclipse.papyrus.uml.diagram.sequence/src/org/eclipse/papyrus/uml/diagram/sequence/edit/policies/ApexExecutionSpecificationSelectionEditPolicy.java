@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.draw2d.PositionConstants;
-import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.gef.EditPart;
@@ -111,9 +110,7 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 				}		
 			}			
 		}
-		
 		return command == null ? super.getResizeCommand(request) :
-				command.chain(super.getResizeCommand(request));
+			command.chain(super.getResizeCommand(request));
 	}
-
 }

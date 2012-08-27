@@ -339,10 +339,6 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 //								apexGetResizeOrMoveBelowItemsCommand(request, nextSiblingEditPart);
 							}
 						}
-						// IOEP 내에 있는 message의 경우 포함하는 IOEP, CF Resize
-						// StackOverflow 에러 수정 필요 ㅠㅜ
-						apexGetResizeOrMoveBelowItemsCommand(request, connectionPart);							
-						
 					}
 				}
 				

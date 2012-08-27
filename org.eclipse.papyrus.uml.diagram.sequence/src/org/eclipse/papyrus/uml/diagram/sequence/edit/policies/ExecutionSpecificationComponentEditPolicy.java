@@ -79,4 +79,14 @@ public class ExecutionSpecificationComponentEditPolicy extends ComponentEditPoli
 
 		return deleteViewsCommand;
 	}
+
+	@Override
+	protected boolean shouldDeleteSemantic() {
+		/* apex improved start */
+		return true;
+		/* apex improved end */
+		/*
+		return super.shouldDeleteSemantic();
+		 */
+	}
 }

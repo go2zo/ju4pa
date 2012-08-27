@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.eclipse.draw2d.Connection;
 import org.eclipse.draw2d.IFigure;
-import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PointList;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
@@ -41,6 +40,7 @@ import org.eclipse.gef.editparts.AbstractGraphicalEditPart;
 import org.eclipse.gmf.runtime.common.core.command.CompositeCommand;
 import org.eclipse.gmf.runtime.common.core.command.ICommand;
 import org.eclipse.gmf.runtime.common.core.command.UnexecutableCommand;
+import org.eclipse.gmf.runtime.diagram.core.util.ViewUtil;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
@@ -70,7 +70,10 @@ import org.eclipse.uml2.uml.Interaction;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
 import org.eclipse.uml2.uml.Lifeline;
+import org.eclipse.uml2.uml.Message;
+import org.eclipse.uml2.uml.MessageEnd;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
+import org.eclipse.uml2.uml.OccurrenceSpecification;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ApexSequenceUtil {
@@ -896,15 +899,33 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		InteractionFragment fragment = null;
 		if (gep instanceof ConnectionNodeEditPart) {
 			ConnectionNodeEditPart connection = (ConnectionNodeEditPart)gep;
-			Point edge = SequenceUtil.getAbsoluteEdgeExtremity(connection, true);
-			fragment = SequenceUtil.findInteractionFragmentContainerAt(edge, gep, false);
+			Message message = (Message)ViewUtil.resolveSemanticElement(connection.getNotationView());
+			MessageEnd send = message.getSendEvent();
+			if (send instanceof OccurrenceSpecification) {
+				fragment = (OccurrenceSpecification)send;
+			}
+//			Point edge = SequenceUtil.getAbsoluteEdgeExtremity(connection, true);
+//			fragment = SequenceUtil.findInteractionFragmentContainerAt(edge, gep);
+
 		}
 		else {
-			Rectangle bounds = SequenceUtil.getAbsoluteBounds(gep);
-			fragment = SequenceUtil.findInteractionFragmentContainerAt(bounds, gep, false);
+			EObject element = ViewUtil.resolveSemanticElement((View)gep.getModel());
+			if (element instanceof InteractionFragment) {
+				fragment = (InteractionFragment)element;
+			}
+//			Rectangle bounds = SequenceUtil.getAbsoluteBounds(gep);
+//			fragment = SequenceUtil.findInteractionFragmentContainerAt(bounds, gep);
 		}
 		
-		return apexGetSiblingEditParts(fragment, gep.getViewer());
+		InteractionFragment parent = null;
+		if (fragment != null) {
+			parent = fragment.getEnclosingOperand();
+			if (parent == null) {
+				parent = fragment.getEnclosingInteraction();
+			}
+		}
+		
+		return apexGetSiblingEditParts(parent, gep.getViewer());
 	}
 
 	/**
@@ -977,17 +998,17 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 * @param viewer
 	 * @return
 	 */
-	public static List<IGraphicalEditPart> apexGetSiblingEditParts(InteractionFragment fragment, EditPartViewer viewer) {
+	public static List<IGraphicalEditPart> apexGetSiblingEditParts(InteractionFragment parent, EditPartViewer viewer) {
 		List<InteractionFragment> fragmentList = new ArrayList<InteractionFragment>();
 		
-		if (fragment instanceof Interaction) {
-			fragmentList.addAll( ((Interaction) fragment).getFragments() );
+		if (parent instanceof Interaction) {
+			fragmentList.addAll( ((Interaction) parent).getFragments() );
 		}
-		else if (fragment instanceof InteractionOperand) {
-			fragmentList.addAll( ((InteractionOperand) fragment).getFragments() );
+		else if (parent instanceof InteractionOperand) {
+			fragmentList.addAll( ((InteractionOperand) parent).getFragments() );
 		}
-		else if (fragment instanceof CombinedFragment) {
-			fragmentList.addAll( ((CombinedFragment) fragment).getOperands() );
+		else if (parent instanceof CombinedFragment) {
+			fragmentList.addAll( ((CombinedFragment) parent).getOperands() );
 		}
 		
 		List<IGraphicalEditPart> result = new ArrayList<IGraphicalEditPart>(fragmentList.size());
@@ -1010,7 +1031,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 				boolean isInteraction = part instanceof InteractionEditPart;
 				boolean isMessage = part instanceof ConnectionNodeEditPart;
 				boolean isActivation = part instanceof AbstractExecutionSpecificationEditPart;
-				boolean isSameEditPart = fragment.equals(view.getElement());
+				boolean isSameEditPart = parent.equals(view.getElement());
 				if(isCombinedFragment || isContinuation || isInteractionOperand || isInteractionUse || isInteraction || isMessage || isActivation) {
 					if (!result.contains(part) && !isSameEditPart) {
 						result.add((IGraphicalEditPart) part);
