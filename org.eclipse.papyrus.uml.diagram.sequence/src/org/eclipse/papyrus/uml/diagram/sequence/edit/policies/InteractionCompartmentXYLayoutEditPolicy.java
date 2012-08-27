@@ -671,7 +671,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			/* apex added start */
 			// 하향 확대 resize 시 아래에 있는 요소 이동 처리
 			if ( sizeDelta.height > 0 && (request.getResizeDirection() & PositionConstants.SOUTH) != 0) {
-				ChangeBoundsRequest moveBelowByResizeRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE_CHILDREN);
+				ChangeBoundsRequest moveBelowByResizeRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
 //				moveBelowByResizeRequest.setMoveDelta(new Point(0, sizeDelta.height));
 				moveBelowByResizeRequest.setSizeDelta(sizeDelta);
 				moveBelowByResizeRequest.setResizeDirection(request.getResizeDirection());
@@ -1237,7 +1237,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 							ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
 							cbRequest.setMoveDelta(new Point(0, deltaY));
 							cbRequest.setEditParts(beneathEditPart);
-							compoundCmd.add(mEditPart.getCommand(cbRequest));
+							ApexSequenceUtil.apexCompoundCommandToCompoundCommand(mEditPart.getCommand(cbRequest), compoundCmd);
+							//compoundCmd.add(mEditPart.getCommand(cbRequest));
 							
 							
 							// ApexConnectionMoveEditPolicy.apexGetMoveConnectionCommand(request, connectionPart, false);

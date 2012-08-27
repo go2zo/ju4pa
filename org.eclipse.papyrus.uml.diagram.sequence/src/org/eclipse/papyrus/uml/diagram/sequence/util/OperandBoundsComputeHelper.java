@@ -1,5 +1,8 @@
 package org.eclipse.papyrus.uml.diagram.sequence.util;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.core.commands.ExecutionException;
@@ -29,12 +32,10 @@ import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
 import org.eclipse.gmf.runtime.diagram.ui.requests.RequestConstants;
 import org.eclipse.gmf.runtime.emf.commands.core.command.AbstractTransactionalCommand;
-import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.gmf.runtime.notation.Bounds;
 import org.eclipse.gmf.runtime.notation.Node;
 import org.eclipse.gmf.runtime.notation.Shape;
-import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentCombinedFragmentCompartmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractionCompartmentEditPart;
@@ -144,6 +145,45 @@ public class OperandBoundsComputeHelper {
 		return latterIOEP;
 	}
 
+	/**
+	 * currentIOEP 아래의 sibling IOEP List를 위치순으로 정렬하여 반환
+	 * 
+	 * @param compartEP
+	 * @param currentIOEP
+	 * @return List<InteractionOperandEditPart>
+	 */
+	public static List<InteractionOperandEditPart> apexFindBelowIOEPs(
+			CombinedFragmentCombinedFragmentCompartmentEditPart compartEP,
+			InteractionOperandEditPart currentIOEP) {
+		List<InteractionOperandEditPart> belowIOEPs = new ArrayList<InteractionOperandEditPart>();
+		
+		int currentAbsBottom = ApexSequenceUtil.apexGetAbsolutePosition(currentIOEP, SWT.BOTTOM);
+		
+		List ioeps = compartEP.getChildren();
+		
+		for ( int i = 0 ; i < ioeps.size() ; i++ ) {
+			InteractionOperandEditPart ioep = (InteractionOperandEditPart)ioeps.get(i);
+			int ioepAbsTop = ApexSequenceUtil.apexGetAbsolutePosition(ioep, SWT.TOP);
+			
+			if ( ioepAbsTop >= currentAbsBottom ) {
+				belowIOEPs.add(ioep);
+			}
+		}
+		
+		Collections.sort(belowIOEPs, new Comparator<IGraphicalEditPart>() {
+			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
+				Rectangle r1 = ApexSequenceUtil.apexGetAbsoluteRectangle(o1);
+				Rectangle r2 = ApexSequenceUtil.apexGetAbsoluteRectangle(o2);
+				
+				if (r1.y - r2.y == 0)
+					return r1.x - r2.x;
+				return r1.y - r2.y;
+			}
+		});
+				
+		return belowIOEPs;
+	}
+	
 	/**
 	 * Update EditPart bounds using new rect
 	 * @param parent
@@ -499,12 +539,12 @@ public class OperandBoundsComputeHelper {
 			return null;
 		}
 		InteractionOperandEditPart targetIOEP = null;
+		List<InteractionOperandEditPart> belowIOEPs = null;
 		if ((direction & PositionConstants.NORTH) != 0) {
-			targetIOEP = OperandBoundsComputeHelper.findPreviousIOEP(compartEP,
-					currentIOEP);
+			targetIOEP = OperandBoundsComputeHelper.findPreviousIOEP(compartEP, currentIOEP);
 		} else if ((direction & PositionConstants.SOUTH) != 0) {
-			targetIOEP = OperandBoundsComputeHelper.findLatterIOEP(compartEP,
-					currentIOEP);
+			targetIOEP = OperandBoundsComputeHelper.findLatterIOEP(compartEP, currentIOEP);
+			belowIOEPs = apexFindBelowIOEPs(compartEP, currentIOEP);
 		}
 		
 		CompositeCommand compositeCommand = new CompositeCommand(
@@ -568,11 +608,18 @@ public class OperandBoundsComputeHelper {
 						height = height + heightDelta;
 						Rectangle containerRect = new Rectangle(containerBounds.getX(),containerBounds.getY(),width,height);
 						compositeCommand.add(OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(parent, containerRect));
+						/* apex added start */
+						CompoundCommand moveBelow = new CompoundCommand("Resize CF by child IO");
+						ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+						cbRequest.setMoveDelta(new Point(0, heightDelta));
+						InteractionCompartmentXYLayoutEditPolicy.apexMoveBelowItems(cbRequest, parent, moveBelow);
+						ApexSequenceUtil.apexCompoundCommandToCompositeCommand(moveBelow, compositeCommand);
+						/* apex added end */
 					}
 				}
 			}
 		}else{ // 위나 아래에 Op가 있는 경우
-			
+			/* apex improved start */
 			Bounds targetIOEPBounds = OperandBoundsComputeHelper
 					.getEditPartBounds(targetIOEP);
 			if (targetIOEPBounds == null) {
@@ -583,7 +630,109 @@ public class OperandBoundsComputeHelper {
 			if ( apexIsInvadingTargetChildren(currentIOEP, compartEP, direction, heightDelta) ) {
 				return null;
 			}						
-			/* apex added end */
+
+			Rectangle targetIOEPRect = null;
+			Rectangle currentIOEPRect = null;
+			
+			targetIOEPRect = OperandBoundsComputeHelper.fillRectangle(targetIOEPBounds);
+			currentIOEPRect = OperandBoundsComputeHelper.fillRectangle(currentIOEPBounds);
+			
+			if (heightDelta > 0) { // 확대하는 경우
+				if ( (direction & PositionConstants.NORTH) != 0 ) { // 위쪽에서 위로 드래그하여 확대하는 경우
+					// 축소되는 targetIOEP가 최소 높이 이하로 축소되지 않도록
+					if (targetIOEPBounds.getHeight() - heightDelta < OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT) {
+						return null;
+					}
+					// target을 축소하고, current를 확대, CF경계 불변
+					targetIOEPRect.setHeight(targetIOEPBounds.getHeight() - heightDelta);
+					currentIOEPRect.setHeight(currentIOEPBounds.getHeight() + heightDelta);
+					
+					currentIOEPRect.setY(currentIOEPRect.y() - heightDelta);
+					
+					ICommand currentIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(currentIOEP, currentIOEPRect);
+					ICommand targetIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(targetIOEP, targetIOEPRect);
+					
+					compositeCommand.add(currentIOEPCommand);	
+					compositeCommand.add(targetIOEPCommand);	
+					
+				} else if ( (direction & PositionConstants.SOUTH) != 0 ) { // 아래쪽에서 아래로 드래그하여 확대하는 경우
+					// current 경계 확대
+					currentIOEPRect.setHeight(currentIOEPBounds.getHeight() + heightDelta);
+					ICommand currentIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(currentIOEP, currentIOEPRect);
+					compositeCommand.add(currentIOEPCommand);
+					
+					// belowIOEPs 아래로 이동
+					for ( InteractionOperandEditPart belowIOEP : belowIOEPs ) {						
+						Bounds belowIOEPBounds = OperandBoundsComputeHelper.getEditPartBounds(belowIOEP);
+						Rectangle belowIOEPRect = OperandBoundsComputeHelper.fillRectangle(belowIOEPBounds);
+						
+						belowIOEPRect.setY(belowIOEPRect.y() + heightDelta);
+						
+						ICommand belowIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(belowIOEP, belowIOEPRect);						
+
+						compositeCommand.add(belowIOEPCommand);						
+					}
+					
+					// CF 경계 확대
+					ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+					cbRequest.setSizeDelta(new Dimension(0, heightDelta));
+					cbRequest.setResizeDirection(direction);
+					Command cfResizeCmd = InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(cbRequest, 
+							                                                                                                (CombinedFragmentEditPart)compartEP.getParent());
+					ApexSequenceUtil.apexCompoundCommandToCompositeCommand(cfResizeCmd, compositeCommand);
+				}
+			} else { // 축소하는 경우
+				if (currentIOEPBounds.getHeight() - Math.abs(heightDelta) < OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT) {
+					return null;
+				}
+				if ( (direction & PositionConstants.NORTH) != 0 ) { // 위쪽에서 아래로 드래그하여 축소하는 경우
+					// current를 축소하고, target을 확대, CF경계 불변
+					targetIOEPRect.setHeight(targetIOEPBounds.getHeight() - heightDelta);
+					currentIOEPRect.setHeight(currentIOEPBounds.getHeight() + heightDelta);
+					
+					currentIOEPRect.setY(currentIOEPRect.y() - heightDelta);
+					
+					ICommand currentIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(currentIOEP, currentIOEPRect);
+					ICommand targetIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(targetIOEP, targetIOEPRect);
+					
+					compositeCommand.add(currentIOEPCommand);	
+					compositeCommand.add(targetIOEPCommand);
+					
+				} else if ( (direction & PositionConstants.SOUTH) != 0 ) { // 아래쪽에서 위로 드래그하여 축소하는 경우
+					// current 경계 축소
+					currentIOEPRect.setHeight(currentIOEPBounds.getHeight() + heightDelta);
+					ICommand currentIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(currentIOEP, currentIOEPRect);
+					compositeCommand.add(currentIOEPCommand);
+					
+					// belowIOEPs 위로 이동
+					for ( InteractionOperandEditPart belowIOEP : belowIOEPs ) {						
+						Bounds belowIOEPBounds = OperandBoundsComputeHelper.getEditPartBounds(belowIOEP);
+						Rectangle belowIOEPRect = OperandBoundsComputeHelper.fillRectangle(belowIOEPBounds);
+						
+						belowIOEPRect.setY(belowIOEPRect.y() + heightDelta);
+						
+						ICommand belowIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(belowIOEP, belowIOEPRect);						
+
+						compositeCommand.add(belowIOEPCommand);						
+					}					
+					
+					// CF 경계 축소
+					ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+					cbRequest.setSizeDelta(new Dimension(0, heightDelta));
+					cbRequest.setResizeDirection(direction);
+					Command cfResizeCmd = InteractionCompartmentXYLayoutEditPolicy.getCombinedFragmentResizeChildrenCommand(cbRequest, 
+							                                                                                                (CombinedFragmentEditPart)compartEP.getParent());
+					ApexSequenceUtil.apexCompoundCommandToCompositeCommand(cfResizeCmd, compositeCommand);					
+				}
+			}			
+			
+			/* apex improved end */
+			/* apex replaced
+			Bounds targetIOEPBounds = OperandBoundsComputeHelper
+					.getEditPartBounds(targetIOEP);
+			if (targetIOEPBounds == null) {
+				return null;
+			}
 			if (heightDelta > 0) { // 확대하는 경우
 				if (targetIOEPBounds.getHeight() - heightDelta < OperandBoundsComputeHelper.DEFAULT_INTERACTION_OPERAND_HEIGHT) {
 					return null;
@@ -599,6 +748,7 @@ public class OperandBoundsComputeHelper {
 					.fillRectangle(currentIOEPBounds);
 			targetIOEPRect.setHeight(targetIOEPBounds.getHeight() - heightDelta);
 			currentIOEPRect.setHeight(currentIOEPBounds.getHeight() + heightDelta);
+			
 			if ((direction & PositionConstants.NORTH) != 0) {
 				currentIOEPRect.setY(currentIOEPRect.y() - heightDelta);
 			}else if ((direction & PositionConstants.SOUTH) != 0) {
@@ -612,6 +762,7 @@ public class OperandBoundsComputeHelper {
 
 			compositeCommand.add(previousIOEPCommand);
 			compositeCommand.add(currentIOEPCommand);
+			*/
 		}
 
 		return new ICommandProxy(compositeCommand);

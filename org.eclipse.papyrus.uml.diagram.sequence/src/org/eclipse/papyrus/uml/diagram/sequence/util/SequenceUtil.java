@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.papyrus.uml.diagram.common.helper.DurationConstraintHelper;
 import org.eclipse.papyrus.uml.diagram.common.helper.InteractionFragmentHelper;
 import org.eclipse.papyrus.uml.diagram.common.util.DiagramEditPartsUtil;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragment2EditPart;
@@ -1095,7 +1097,100 @@ public class SequenceUtil {
 					} else {
 						Rectangle intersection = selectionRect.getIntersection(figureBounds);						
 						if(!intersection.equals(new Rectangle()) && !intersection.equals(selectionRect)) {
+							
+							/* apex improved end 
+							// 중첩 CombinedFragment 생성, 즉 다른 CF의 Operand내에서 CF 생성하는 경우
+			                // 직접 InteractionOperandEditPart에서 ExecSpec을 추출하여
+			                // OccurrenceSpec이 모두 포함되지 않는 경우에만
+			                // 해당 ExecSpec을 ignoreInteractionFragments에 직접 추가하여 경계 교차 혀용
+							if ( hostEditPart instanceof InteractionOperandEditPart ) {
+								EObject eObj = ((InteractionOperandEditPart) hostEditPart).getNotationView().getElement();
+								if ( eObj instanceof InteractionOperand ) {
+									InteractionOperand io = (InteractionOperand)eObj;
+									List fragList = io.getFragments();
+									Iterator fragIter = fragList.iterator();
+									while ( fragIter.hasNext() ) {
+										Object obj = fragIter.next();
+										if ( obj instanceof ExecutionSpecification ) {
+											ExecutionSpecification execSpec = (ExecutionSpecification)obj;
+											OccurrenceSpecification start = execSpec.getStart();
+											OccurrenceSpecification finish = execSpec.getFinish();
+											
+											EditPart startOccurEP = ApexSequenceUtil.getEditPart(start, hostEditPart);
+											EditPart finishOccurEP = ApexSequenceUtil.getEditPart(finish, hostEditPart);
+											
+											if ( startOccurEP instanceof AbstractExecutionSpecificationEditPart 
+												 && finishOccurEP instanceof AbstractExecutionSpecificationEditPart ) {
+												IFigure startFigure = ((AbstractExecutionSpecificationEditPart)startOccurEP).getFigure();
+												IFigure finishFigure = ((AbstractExecutionSpecificationEditPart)finishOccurEP).getFigure();
+												
+												Rectangle startRect = startFigure.getBounds().getCopy();
+												Rectangle finishRect = finishFigure.getBounds().getCopy();
+												
+												if ( (!startRect.intersects(selectionRect) && !finishRect.intersects(selectionRect) )
+												  || (selectionRect.contains(startRect) && selectionRect.contains(finishRect) ) ) {
+													coveredInteractionFragments.add(start);
+													coveredInteractionFragments.add(start);
+												} else {
+													return null;
+												}
+											}
+										}
+									}						
+								}
+							// 중첩 생성이 아닌 경우 InteractionCompartmentEditPart에서 children 추출하여 ignoreInteractionFragments 생성
+							} else if ( hostEditPart instanceof InteractionEditPart ) {
+								List childrenList = hostEditPart.getChildren(); 
+				                Iterator iter = childrenList.iterator();
+				                while (iter.hasNext()) {
+				                	ShapeEditPart sep2 = (ShapeEditPart)iter.next();
+				                	EObject eObj = sep2.getNotationView().getElement();
+				                	
+									if ( eObj instanceof Lifeline ) {
+
+										Iterator iter1 = ep.getChildren().iterator();
+										while ( iter1.hasNext() ) {
+											EditPart lifelineChild = (EditPart)iter1.next();							
+											
+											if ( lifelineChild instanceof AbstractExecutionSpecificationEditPart ) {
+												AbstractExecutionSpecificationEditPart asep = (AbstractExecutionSpecificationEditPart)lifelineChild;
+						                		EObject eObj2 = asep.getNotationView().getElement();
+						                		
+						                		if ( eObj2 instanceof ExecutionSpecification ) {
+													ExecutionSpecification execSpec = (ExecutionSpecification)eObj2;
+													OccurrenceSpecification start = execSpec.getStart();
+													OccurrenceSpecification finish = execSpec.getFinish();
+													
+													EditPart startOccurEP = ApexSequenceUtil.getEditPart(start, hostEditPart);
+													EditPart finishOccurEP = ApexSequenceUtil.getEditPart(finish, hostEditPart);
+													
+													if ( startOccurEP instanceof AbstractExecutionSpecificationEditPart 
+														 && finishOccurEP instanceof AbstractExecutionSpecificationEditPart ) {
+														IFigure startFigure = ((AbstractExecutionSpecificationEditPart)startOccurEP).getFigure();
+														IFigure finishFigure = ((AbstractExecutionSpecificationEditPart)finishOccurEP).getFigure();
+														
+														Rectangle startRect = startFigure.getBounds().getCopy();
+														Rectangle finishRect = finishFigure.getBounds().getCopy();
+														
+														if ( (!startRect.intersects(selectionRect) && !finishRect.intersects(selectionRect) )
+														  || (selectionRect.contains(startRect) && selectionRect.contains(finishRect) ) ) {
+															coveredInteractionFragments.add(start);
+															coveredInteractionFragments.add(start);
+														} else {
+															return null;
+														}
+													}
+						                		}
+							                }		
+										}						
+									}                	
+				                }					
+							}
+							/* apex improved end */
+							
+							
 							return null;
+							
 						}
 					}
 				}

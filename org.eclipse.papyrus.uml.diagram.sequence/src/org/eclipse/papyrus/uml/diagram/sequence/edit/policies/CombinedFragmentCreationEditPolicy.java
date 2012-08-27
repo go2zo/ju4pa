@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
@@ -32,29 +33,26 @@ import org.eclipse.gmf.runtime.common.core.command.ICommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.CreationEditPolicy;
-import org.eclipse.gmf.runtime.diagram.ui.parts.DiagramCommandStack;
-import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeConnectionRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewAndElementRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.ActionExecutionSpecificationEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.BehaviorExecutionSpecificationEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
-import org.eclipse.papyrus.uml.diagram.sequence.util.CommandHelper;
+import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.util.OperandBoundsComputeHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
-import org.eclipse.uml2.uml.ActionExecutionSpecification;
-import org.eclipse.uml2.uml.BehaviorExecutionSpecification;
 import org.eclipse.uml2.uml.CombinedFragment;
+import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.InteractionFragment;
 import org.eclipse.uml2.uml.InteractionOperand;
 import org.eclipse.uml2.uml.InteractionOperatorKind;
 import org.eclipse.uml2.uml.Lifeline;
+import org.eclipse.uml2.uml.OccurrenceSpecification;
 
 /**
  * This creation policy is used to move covered interaction fragments into the interaction operand
@@ -86,7 +84,7 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 	@Override
 	protected Command getCreateElementAndViewCommand(CreateViewAndElementRequest request) {
 		/* apex improved start */
-		
+
 		Command createElementAndViewCmd = super.getCreateElementAndViewCommand(request);
 
 		EditPart targetEditPart1 = getTargetEditPart(request);
@@ -106,9 +104,9 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 			// CombinedFragment 생성 시 ExecSpec과의 교차는 무시되도록 처리 
 			if ( selectionRect.width > 0 && selectionRect.height > 0) {
 				Set<InteractionFragment> ignoreInteractionFragments = new HashSet<InteractionFragment>();
-				
+
                 EditPart targetEditPart = getTargetEditPart(request);   
-				
+
 				// 중첩 CombinedFragment 생성, 즉 다른 CF의 Operand내에서 CF 생성하는 경우
                 // 직접 InteractionOperandEditPart에서 ExecSpec을 추출하여 ignoreInteractionFragments 직접 추가
 				if ( targetEditPart instanceof InteractionOperandEditPart ) {
@@ -119,13 +117,11 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 						Iterator fragIter = fragList.iterator();
 						while ( fragIter.hasNext() ) {
 							Object obj = fragIter.next();
-							if ( obj instanceof ActionExecutionSpecification ||
-								 obj instanceof BehaviorExecutionSpecification )
-							{
+							if ( obj instanceof ExecutionSpecification ) {
 								ignoreInteractionFragments.add((InteractionFragment)obj);
 							}
 						}
-						
+
 					}
 				// 중첩 생성이 아닌 경우 InteractionCompartmentEditPart에서 children 추출하여 ignoreInteractionFragments 생성
 				} else {
@@ -134,15 +130,14 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 	                while (iter.hasNext()) {
 	                	ShapeEditPart ep = (ShapeEditPart)iter.next();
 	                	EObject eObj = ep.getNotationView().getElement();
-	                	
+
 						if ( eObj instanceof Lifeline ) {
 
 							Iterator iter1 = ep.getChildren().iterator();
 							while ( iter1.hasNext() ) {
 								EditPart lifelineChild = (EditPart)iter1.next();							
-								
-								if ( lifelineChild instanceof ActionExecutionSpecificationEditPart ||
-									 lifelineChild instanceof BehaviorExecutionSpecificationEditPart ) {
+
+								if ( lifelineChild instanceof AbstractExecutionSpecificationEditPart ) {
 			                		ShapeEditPart sep = (ShapeEditPart)lifelineChild;
 			                		EObject eObj2 = sep.getNotationView().getElement();
 			                		ignoreInteractionFragments.add((InteractionFragment)eObj2);
@@ -160,7 +155,7 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 				if (coveredInteractionFragments == null) {
 					return UnexecutableCommand.INSTANCE;
 				}				
-				
+
 				if ( targetEditPart instanceof InteractionOperandEditPart ) {
 					InteractionOperandEditPart ioep = (InteractionOperandEditPart)targetEditPart;				
 					CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)ioep.getParent().getParent();
@@ -187,7 +182,7 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 					}				
 				}
 			}			
-			
+
 			// 아래는 0.9에서 추가된 로직
 			// Add updating bounds command for Combined fragment createment
 			String hint = request.getViewAndElementDescriptor().getSemanticHint();
@@ -206,7 +201,7 @@ public class CombinedFragmentCreationEditPolicy extends CreationEditPolicy {
 		}
 		return createElementAndViewCmd;
 		/* apex improved end */
-		
+
 		/* apex replaced
 		Command createElementAndViewCmd = super.getCreateElementAndViewCommand(request);
 

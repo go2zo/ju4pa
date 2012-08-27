@@ -1085,15 +1085,21 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			Iterator itCmd = cmdList.iterator();
 			while ( itCmd.hasNext() ) {
 				Command aCommand = (Command)itCmd.next();
-				if ( aCommand != null && !aCommand.canExecute()) {
-					compositeCommand.add(UnexecutableCommand.INSTANCE);
-				} else if ( aCommand != null ) {
-					if ( aCommand instanceof ICommandProxy ) {
-						ICommandProxy iCommandProxy = (ICommandProxy)aCommand;
-						ICommand iCommand = iCommandProxy.getICommand();
-						compositeCommand.add(iCommand);
-					}									
+				
+				if ( aCommand instanceof CompoundCommand ) {
+					apexCompoundCommandToCompositeCommand(aCommand, compositeCommand);					
+				} else {
+					if ( aCommand != null && !aCommand.canExecute()) {
+						compositeCommand.add(UnexecutableCommand.INSTANCE);
+					} else if ( aCommand != null ) {
+						if ( aCommand instanceof ICommandProxy ) {
+							ICommandProxy iCommandProxy = (ICommandProxy)aCommand;
+							ICommand iCommand = iCommandProxy.getICommand();
+							compositeCommand.add(iCommand);
+						}									
+					}	
 				}
+				
 			}
 		} else if ( inputCommand instanceof org.eclipse.gef.commands.UnexecutableCommand) {
 			compositeCommand.add(UnexecutableCommand.INSTANCE);
@@ -1113,12 +1119,17 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 */
 	public static void apexCompoundCommandToCompoundCommand(Command inputCommand, CompoundCommand resultCompoundCommand) {
 		if ( inputCommand instanceof CompoundCommand ) {
-			CompoundCommand inputCompoundCommand = (CompoundCommand)inputCommand;
+			CompoundCommand inputCompoundCommand = (CompoundCommand)inputCommand;			
 			List cmdList = inputCompoundCommand.getCommands();
 			Iterator itCmd = cmdList.iterator();
 			while ( itCmd.hasNext() ) {
 				Command aCommand = (Command)itCmd.next();
-				resultCompoundCommand.add(aCommand);
+				
+				if ( aCommand instanceof CompoundCommand ) {
+					apexCompoundCommandToCompoundCommand(aCommand, resultCompoundCommand);
+				} else {
+					resultCompoundCommand.add(aCommand);	
+				}
 			}	
 		} else {
 			resultCompoundCommand.add(inputCommand);
@@ -1176,8 +1187,6 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 					Rectangle cepRect = apexGetAbsoluteRectangle(cep);
 					if ( ioepRect.contains(cepRect) ) {
 						containedEditParts.add(cep);
-						// 부속되는 MessageSyncAppliedStereotypeEditPart를 추출하여 
-						// containedEditParts에 add
 					}	
 				}
 			}
@@ -1229,7 +1238,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		
 		for ( Lifeline ll : coveredLifelines ) {
-			coveredLifelineEditParts.add((LifelineEditPart)apexGetEditPart(ll, snep.getViewer()));
+			coveredLifelineEditParts.add((LifelineEditPart)getEditPart(ll, snep));
 		}
 		/*
 		RootEditPart rootEP = snep.getRoot();
@@ -1334,7 +1343,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		
 		InteractionFragment iftContainer = SequenceUtil.findInteractionFragmentContainerAt(absRect.getLocation(), graphicalEditPart);
 		
-		EditPart editPart = ApexSequenceUtil.apexGetEditPart(iftContainer, graphicalEditPart.getViewer());
+		EditPart editPart = ApexSequenceUtil.getEditPart(iftContainer, graphicalEditPart);
 		if ( editPart instanceof InteractionOperandEditPart ) {
 			ioep = (InteractionOperandEditPart)editPart;
 		}

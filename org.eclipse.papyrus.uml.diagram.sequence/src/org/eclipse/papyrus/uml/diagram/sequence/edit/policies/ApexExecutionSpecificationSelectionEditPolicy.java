@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.draw2d.PositionConstants;
+import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.gef.EditPart;
@@ -16,9 +17,11 @@ import org.eclipse.gmf.runtime.diagram.ui.editpolicies.ResizableShapeEditPolicy;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.InteractionFragment;
+import org.eclipse.uml2.uml.InteractionOperand;
 
 public class ApexExecutionSpecificationSelectionEditPolicy extends
 		ResizableShapeEditPolicy {
@@ -87,11 +90,22 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 				
 				InteractionFragment parent = ((ExecutionSpecification)element).getEnclosingOperand();
 				if (parent != null) { // IOEP 내에 있는 Activation의 경우
-					EditPart interactionOperandEP = ApexSequenceUtil.getEditPart(parent, getHost());
-					EditPart combinedFragmentCompartmentEP = interactionOperandEP.getParent();
-					EditPart combinedFragmentEP = combinedFragmentCompartmentEP.getParent();
+//					EditPart interactionOperandEP = ApexSequenceUtil.getEditPart(parent, getHost());
+//					EditPart combinedFragmentCompartmentEP = interactionOperandEP.getParent();
+//					EditPart combinedFragmentEP = combinedFragmentCompartmentEP.getParent();
+//
+//					command = combinedFragmentEP.getCommand(request);
+					
+					
+					InteractionOperandEditPart ioep = (InteractionOperandEditPart)ApexSequenceUtil.getEditPart((InteractionOperand)parent, aep);
+					ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+					cbRequest.setSizeDelta(new Dimension(0, request.getSizeDelta().height));
+					cbRequest.setResizeDirection(PositionConstants.SOUTH);
+					command = ioep.getCommand(cbRequest);
 
-					command = combinedFragmentEP.getCommand(request);
+					
+					
+					
 					
 				} else { // Interaction 내에 있는 Activation의 경우
 					List<IGraphicalEditPart> nextSiblingEditParts = ApexSequenceUtil.apexGetNextSiblingEditParts(aep);

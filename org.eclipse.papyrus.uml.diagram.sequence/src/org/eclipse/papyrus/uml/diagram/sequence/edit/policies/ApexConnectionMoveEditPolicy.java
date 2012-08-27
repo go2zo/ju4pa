@@ -19,6 +19,7 @@ import org.eclipse.emf.transaction.TransactionalEditingDomain;
 import org.eclipse.gef.ConnectionEditPart;
 import org.eclipse.gef.EditPart;
 import org.eclipse.gef.Request;
+import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.commands.UnexecutableCommand;
@@ -31,7 +32,6 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
@@ -39,6 +39,9 @@ import org.eclipse.papyrus.uml.diagram.sequence.util.ApexOccurrenceSpecification
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.swt.SWT;
+import org.eclipse.uml2.uml.Interaction;
+import org.eclipse.uml2.uml.InteractionFragment;
+import org.eclipse.uml2.uml.InteractionOperand;
 import org.eclipse.uml2.uml.Message;
 import org.eclipse.uml2.uml.MessageEnd;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
@@ -201,6 +204,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 				Command srcCmd = null;
 				Command tgtCmd = null;
 				Command nextCmd = null;
+				Command enclosingCmd = null;
 				
 				if (moveAlone) {
 					// Target인 Activation의 Minimumsize 이하로 줄어들 수 없음
@@ -333,16 +337,32 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 							IGraphicalEditPart nextSiblingEditPart = nextParts.get(0);
 							if (nextSiblingEditPart instanceof ConnectionNodeEditPart) {
 								nextCmd = apexGetMoveConnectionCommand(request, (ConnectionNodeEditPart) nextSiblingEditPart, moveAlone);
-							}
-							else {
-								nextCmd = nextSiblingEditPart.getCommand(request);
-//								apexGetResizeOrMoveBelowItemsCommand(request, nextSiblingEditPart);
+							} else {
+								// moveDelta의 x값 0처리
+								request.setMoveDelta(new Point(0, request.getMoveDelta().y));
+								nextCmd = nextSiblingEditPart.getCommand(request);	
 							}
 						}
+						// IOEP 내에 있는 message의 경우 포함하는 IOEP, CF Resize
+						// StackOverflow 에러 수정 필요 ㅠㅜ						
+						Rectangle absConnectEPRect = ApexSequenceUtil.apexGetAbsoluteRectangle(connectionPart);
+						InteractionFragment ift = SequenceUtil.findInteractionFragmentContainerAt(absConnectEPRect, connectionPart);
+						if ( ift instanceof InteractionOperand ) {
+							InteractionOperandEditPart ioep = (InteractionOperandEditPart)ApexSequenceUtil.getEditPart((InteractionOperand)ift, connectionPart);
+							ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+							cbRequest.setSizeDelta(new Dimension(0, moveDelta.y));
+							cbRequest.setResizeDirection(PositionConstants.SOUTH);
+							enclosingCmd = ioep.getCommand(cbRequest);
+							compoundCmd.add(enclosingCmd);
+						} else if ( ift instanceof Interaction ) {
+							
+						}
+
 					}
 				}
 				
 				if (moveDeltaY > 0) {
+					
 					compoundCmd.add(nextCmd);
 					compoundCmd.add(tgtCmd);
 					compoundCmd.add(srcCmd);
