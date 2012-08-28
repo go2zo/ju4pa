@@ -262,6 +262,10 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 	}
 
 	/**
+	 * apex update
+	 * 
+	 * Lifeline 좌우 이동 시 CF의 Resize 처리 
+	 * 
 	 * Resize InteractionFragments if the Lifeline has CoveredBys, while
 	 * Lifeline moving.
 	 * 
@@ -291,7 +295,23 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				compoundCmd.add(command);
 			} 
 		}
+		
+		if ( request.getMoveDelta().x > 0 ) {
+			apexGetPushNextLifeline(compoundCmd, request, lifelineEditPart);
+		}			
 	}	
+	
+	public static void apexGetPushNextLifeline(CompoundCommand compoundCmd, ChangeBoundsRequest request, LifelineEditPart lifelineEditPart) {
+		List nextLifelineEditParts = ApexSequenceUtil.apexGetNextLifelineEditParts(lifelineEditPart);
+		
+		if ( nextLifelineEditParts.size() > 0 ) {
+			LifelineEditPart nextLifelineEditPart = (LifelineEditPart)ApexSequenceUtil.apexGetNextLifelineEditParts(lifelineEditPart).get(0);
+			
+			Command cmd = nextLifelineEditPart.getCommand(request);
+			//ApexSequenceUtil.apexCompoundCommandToCompoundCommand(cmd, compoundCmd);
+			compoundCmd.add(nextLifelineEditPart.getCommand(request));	
+		}		
+	}
 	
 	/**
 	 * apex updated

@@ -818,10 +818,14 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	public static int apexGetAbsolutePosition(IGraphicalEditPart gep, int type) {
 		Rectangle bounds = apexGetAbsoluteRectangle(gep);
 		switch (type) {
-		case SWT.TOP:
-			return bounds.getTop().y();
-		case SWT.BOTTOM:
-			return bounds.getBottom().y();
+			case SWT.TOP:
+				return bounds.getTop().y();
+			case SWT.BOTTOM:
+				return bounds.getBottom().y();
+			case SWT.LEFT:
+				return bounds.x;
+			case SWT.RIGHT:
+				return bounds.right();				
 		}
 		return -1;
 	}
@@ -1380,4 +1384,48 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		return null;
 	}
+	
+	public static List<LifelineEditPart> apexGetSortedLifelineEditParts(InteractionInteractionCompartmentEditPart iice) {
+		List<LifelineEditPart> sortedLifelineEPs = new ArrayList<LifelineEditPart>();
+		
+		for (Object ep : iice.getChildren()) {
+			if ( ep instanceof LifelineEditPart ) {
+				sortedLifelineEPs.add((LifelineEditPart)ep);
+			}
+		}
+		
+		Collections.sort(sortedLifelineEPs, new Comparator<IGraphicalEditPart>() {
+			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
+				Rectangle r1 = apexGetAbsoluteRectangle(o1);
+				Rectangle r2 = apexGetAbsoluteRectangle(o2);
+				
+				if (r1.x - r2.x == 0)
+					return r1.right() - r2.right();
+				return r1.x - r2.x;
+			}
+		});
+		
+		return sortedLifelineEPs;
+	}
+	
+	public static List<LifelineEditPart> apexGetNextLifelineEditParts(LifelineEditPart lep) {
+		
+		int leftOfLep = apexGetAbsolutePosition(lep, SWT.LEFT);				
+		
+		List<LifelineEditPart> sortedLifelineEPs = apexGetSortedLifelineEditParts((InteractionInteractionCompartmentEditPart)lep.getParent());
+		List<LifelineEditPart> removeList = new ArrayList<LifelineEditPart>();
+		
+		for ( LifelineEditPart aLep : sortedLifelineEPs) {
+			int leftOfLifeline = apexGetAbsolutePosition(aLep, SWT.LEFT);
+			
+			if ( leftOfLifeline <= leftOfLep ) {
+				removeList.add(aLep);
+			}
+		}
+		
+		sortedLifelineEPs.removeAll(removeList);		
+				
+		return sortedLifelineEPs;
+	}
+	
 }
