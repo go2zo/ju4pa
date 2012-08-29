@@ -31,7 +31,6 @@ import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature.Setting;
 import org.eclipse.gef.EditPart;
-import org.eclipse.gef.EditPartFactory;
 import org.eclipse.gef.EditPartViewer;
 import org.eclipse.gef.RootEditPart;
 import org.eclipse.gef.commands.Command;
@@ -47,7 +46,6 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.INodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
-import org.eclipse.gmf.runtime.diagram.ui.services.editpart.EditPartService;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.common.util.DiagramEditPartsUtil;
@@ -873,7 +871,12 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 */
 	public static List<CombinedFragmentEditPart> apexGetPositionallyLifelineCoveringCFEditParts(Rectangle lifelineRect, AbstractGraphicalEditPart hostEditPart) {
 		
-		//hostEditPart.getFigure().translateToAbsolute(selectionRect);
+//		System.out
+//				.println("ApexSequenceUtil.apexGetPositionallyLifelineCoveringCFEditParts(), line : "
+//						+ Thread.currentThread().getStackTrace()[1]
+//								.getLineNumber());
+//		System.out.println("lifelineRect in apexGetPosition.. : " + lifelineRect);
+		
 		
 		List<CombinedFragmentEditPart> positionallyLifelineCoveringCFEditParts = new ArrayList<CombinedFragmentEditPart>();
 
@@ -889,7 +892,6 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 					positionallyLifelineCoveringCFEditParts.add((CombinedFragmentEditPart)ep);
 				}
 			}
-
 		}
 		return positionallyLifelineCoveringCFEditParts;
 	}
@@ -1372,6 +1374,8 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 //				IGraphicalEditPart igep = epService.createGraphicEditPart(view);
 				EObject eObj = view.getElement();
 				EditPart part = (EditPart)epViewer.getEditPartRegistry().get(view);
+				
+				// Interaction의 경우 아래 처리를 해주지 않으면 PackageEditPart가 반환됨
 				if ( eObj instanceof Interaction ) {
 //					RootEditPart rootEP = igep.getRoot();
 					RootEditPart rootEP = editPart.getRoot();		
@@ -1428,4 +1432,19 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		return sortedLifelineEPs;
 	}
 	
+	public static List<CombinedFragmentEditPart> apexGetAllCombinedFragmentEditParts(EditPart editPart) {
+		List<CombinedFragmentEditPart> allCFs = new ArrayList<CombinedFragmentEditPart>();		
+
+		Set<Entry<Object, EditPart>> allEditPartEntries = editPart.getViewer().getEditPartRegistry().entrySet();	
+				
+		for(Entry<Object, EditPart> epEntry : allEditPartEntries) {
+			EditPart ep = epEntry.getValue();
+			if( ep instanceof CombinedFragmentEditPart ) {
+				CombinedFragmentEditPart combinedFragmentEditPart = (CombinedFragmentEditPart)ep;
+				allCFs.add(combinedFragmentEditPart);
+			}
+		}
+		
+		return allCFs;
+	}	
 }

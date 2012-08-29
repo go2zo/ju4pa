@@ -41,6 +41,10 @@ import org.eclipse.uml2.uml.PartDecomposition;
 import org.eclipse.uml2.uml.UMLPackage;
 
 /**
+ * apex udated
+ * 사용 안함
+ * 사용 시 모든 Lifeline에 대해 불필요한 update 발생하므로
+ * 
  * This class updates the property CoveredBy of Lifeline when a Lifeline gets created, moved/resize 
  * and also the resize of moving of each CombinedFragment  
  * 
@@ -116,6 +120,8 @@ public class LifelineCoveredByUpdater {
 	}	
 	
 	/**
+	 * apex updated
+	 * 
 	 * @param lifelineEditpart
 	 * @param centralLineRect 중간 dashline의 절대좌표
 	 * @param afterRect 옮겨진 후 절대좌표
@@ -131,6 +137,11 @@ public class LifelineCoveredByUpdater {
 		Rectangle beforeRect = lifelineEditpart.getFigure().getBounds().getCopy();
 		lifelineEditpart.getFigure().translateToAbsolute(beforeRect);
 		
+		System.out.println("LifelineCoveredByUpdater.updateLifeline(), line : "
+				+ Thread.currentThread().getStackTrace()[1].getLineNumber());
+		System.out.println("LifelineEP : " + lifelineEditpart);
+		System.out.println("abs beforeRect : " + beforeRect);
+		System.out.println("abs afterRect  : " + afterRect);
 		
 		List<CombinedFragment> coveredByCombinedFragmentsToAdd = new ArrayList<CombinedFragment>();
 		List<CombinedFragment> coveredByCombinedFragmentsToRemove = new ArrayList<CombinedFragment>();
@@ -179,8 +190,7 @@ public class LifelineCoveredByUpdater {
 			coveredByLifelinesToRemove.addAll(coveredByCombinedFragmentsToRemove);
 		}		
 		/* apex improved end */
-			
-		// 아래는 CF와 IO가 아닌 경우에만 작동하도록 변경 필요			
+					
 		for (Map.Entry<InteractionFragmentEditPart, Rectangle> entry : interactionFragments.entrySet()) {
 			InteractionFragmentEditPart editPart = entry.getKey();
 			Rectangle interactionFragmentBounds = entry.getValue();
