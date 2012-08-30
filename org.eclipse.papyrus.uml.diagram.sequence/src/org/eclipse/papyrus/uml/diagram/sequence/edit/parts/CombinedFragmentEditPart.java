@@ -168,8 +168,9 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 	 */
 	public EditPolicy getPrimaryDragEditPolicy() {
 		/* apex added start */
-		EditPolicy result = getEditPolicy(EditPolicy.PRIMARY_DRAG_ROLE);
-		return result != null ? result : new ApexResizableShapeEditPolicy(PositionConstants.NORTH_SOUTH, false, false);
+//		EditPolicy result = getEditPolicy(EditPolicy.PRIMARY_DRAG_ROLE);
+//		return result != null ? result : new ApexResizableShapeEditPolicy(PositionConstants.NORTH_SOUTH, false, false);
+		return super.getPrimaryDragEditPolicy();
 		/* apex added end */ 
 	}
 	

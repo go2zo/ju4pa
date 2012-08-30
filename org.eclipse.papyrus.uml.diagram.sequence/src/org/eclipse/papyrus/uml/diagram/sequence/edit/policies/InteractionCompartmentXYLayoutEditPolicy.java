@@ -344,17 +344,18 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				LifelineEditPart rightestLifelineEditPart = (LifelineEditPart)sortedCoveredLifelineEditParts.get(sortedCoveredLifelineEditParts.size()-1);
 				
 				if ( lifelineEditPart.equals(leftestLifelineEditPart) && deltaX > 0 ) { // 맨왼쪽 Lifeline을 우측으로 이동하는 경우
-					req = new ChangeBoundsRequest(REQ_MOVE);
+					req = new ChangeBoundsRequest(REQ_RESIZE);
 					req.setEditParts(cfep);
-					req.setMoveDelta(new Point(deltaX, 0));		
+					req.setSizeDelta(new Dimension(deltaX, 0));
+					req.setResizeDirection(PositionConstants.WEST);
 				} else if ( lifelineEditPart.equals(leftestLifelineEditPart) && deltaX < 0 ) { // 맨왼쪽 Lifeline을 좌측으로 이동하는 경우
-					req = new ChangeBoundsRequest(REQ_MOVE);
+//					req = new ChangeBoundsRequest(REQ_MOVE);
+//					req.setEditParts(cfep);
+//					req.setMoveDelta(new Point(deltaX, 0));		
+					req = new ChangeBoundsRequest(REQ_RESIZE);
 					req.setEditParts(cfep);
-					req.setMoveDelta(new Point(deltaX, 0));		
-	//				req = new ChangeBoundsRequest(REQ_RESIZE);
-	//				req.setEditParts(cfep);
-	//				req.setSizeDelta(new Dimension(Math.abs(deltaX), 0));
-	//				req.setResizeDirection(PositionConstants.WEST);			
+					req.setSizeDelta(new Dimension(Math.abs(deltaX), 0));
+					req.setResizeDirection(PositionConstants.WEST);			
 				} else if ( lifelineEditPart.equals(rightestLifelineEditPart) && deltaX > 0 ) { // 맨우측 Lifeline을 우측으로 이동하는 경우에만 CF Resize(안그러면 Resize가 누적됨)
 					req = new ChangeBoundsRequest(REQ_RESIZE);
 					req.setEditParts(cfep);
