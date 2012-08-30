@@ -287,40 +287,10 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			EObject eObj = sp.getElement();
 			/* apex improved start */
 			if (covereds.contains(eObj)) {
-				
-				// Lifeline을 커버하고 있는 CF의 이동 처리
-				ChangeBoundsRequest req = null;				
-				if ( eObj instanceof CombinedFragment ) {
-					CombinedFragmentEditPart cfEP = (CombinedFragmentEditPart)et;					
-					InteractionInteractionCompartmentEditPart iicep = (InteractionInteractionCompartmentEditPart)parent;
-					List<LifelineEditPart> lEPs = ApexSequenceUtil.apexGetSortedLifelineEditParts(iicep);
-					int deltaX = request.getMoveDelta().x;					
-					
-					if ( lEPs.size() > 0 ) {
-						LifelineEditPart leftestLifelineEditPart = (LifelineEditPart)lEPs.get(0);
-						LifelineEditPart rightestLifelineEditPart = (LifelineEditPart)lEPs.get(lEPs.size()-1);
-						
-						if ( deltaX > 0 && lifelineEditPart.equals(rightestLifelineEditPart) ) { // 맨우측 Lifeline을 우측으로 이동하는 경우에만 CF Resize(안그러면 Resize가 누적됨)
-							req = new ChangeBoundsRequest(REQ_RESIZE);
-							req.setEditParts(cfEP);
-							req.setSizeDelta(new Dimension(deltaX, 0));
-							req.setResizeDirection(PositionConstants.EAST);
-						} else if ( deltaX < 0 && lifelineEditPart.equals(leftestLifelineEditPart) ) { // 맨왼쪽 Lifeline을 좌측으로 이동하는 경우 
-							req = new ChangeBoundsRequest(REQ_RESIZE);
-							req.setEditParts(cfEP);
-							req.setSizeDelta(new Dimension(Math.abs(deltaX), 0));
-							req.setResizeDirection(PositionConstants.WEST);
-						} else if ( deltaX < 0 && lifelineEditPart.equals(rightestLifelineEditPart) ) { // 맨우측 Lifeline을 좌측으로 이동하는 경우
-							req = new ChangeBoundsRequest(REQ_RESIZE);
-							req.setEditParts(cfEP);
-							req.setSizeDelta(new Dimension(deltaX, 0));
-							req.setResizeDirection(PositionConstants.EAST);
-							
-						} else { // 그 외 중간 Lifeline을 좌측으로 이동 시 CF에는 아무런 변화 없음
-							continue;
-						}
-					}
-					
+				ChangeBoundsRequest req = null;
+								
+				if ( eObj instanceof CombinedFragment ) { // Lifeline을 커버하고 있는 CF의 이동은 아래에서 별도 처리
+					continue;
 				} else {
 					req = new ChangeBoundsRequest(REQ_MOVE);
 					req.setEditParts(et);
@@ -331,7 +301,20 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				if (command != null && command.canExecute()) {
 					compoundCmd.add(command);
 				}
-			}			
+			} else {
+				/*
+				if ( eObj instanceof CombinedFragment ) { // Lifeline을 커버하지 않는 최상위(Interaction의 child)인 우측 CF의 이동 처리
+					CombinedFragmentEditPart cfep = (CombinedFragmentEditPart)et;
+					Rectangle cfepRect = ApexSequenceUtil.apexGetAbsoluteRectangle(cfep);
+					Rectangle lepRect = ApexSequenceUtil.apexGetAbsoluteRectangle(lifelineEditPart);
+					
+					if ( lepRect.right() < cfepRect.x ) { // 우측에 있으면
+						
+					}
+					
+				}
+				*/
+			}
 			/* apex improved end */
 			/* apex replaced
 			if (!covereds.contains(sp.getElement())) {
@@ -346,6 +329,56 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			} 
 			*/
 		}
+		
+		// Lifeline을 커버하고 있는 CF의 이동 처리
+		int deltaX = request.getMoveDelta().x;						
+		ChangeBoundsRequest req = null;
+		List<CombinedFragmentEditPart> coveringCFEPs = ApexSequenceUtil.apexGetCoveringCombinedFragmentEditParts(lifelineEditPart);
+		
+		for ( CombinedFragmentEditPart cfep : coveringCFEPs ) {
+			List<LifelineEditPart> coveredLifelineEditParts = ApexSequenceUtil.apexGetCoveredLifelineEditParts(cfep, true);
+			List sortedCoveredLifelineEditParts = ApexSequenceUtil.apexGetSortedGraphicalEditPartList(coveredLifelineEditParts, SWT.LEFT);
+			
+			if ( sortedCoveredLifelineEditParts.size() > 0 ) {
+				LifelineEditPart leftestLifelineEditPart = (LifelineEditPart)sortedCoveredLifelineEditParts.get(0);
+				LifelineEditPart rightestLifelineEditPart = (LifelineEditPart)sortedCoveredLifelineEditParts.get(sortedCoveredLifelineEditParts.size()-1);
+				
+				if ( lifelineEditPart.equals(leftestLifelineEditPart) && deltaX > 0 ) { // 맨왼쪽 Lifeline을 우측으로 이동하는 경우
+					req = new ChangeBoundsRequest(REQ_MOVE);
+					req.setEditParts(cfep);
+					req.setMoveDelta(new Point(deltaX, 0));		
+				} else if ( lifelineEditPart.equals(leftestLifelineEditPart) && deltaX < 0 ) { // 맨왼쪽 Lifeline을 좌측으로 이동하는 경우
+					req = new ChangeBoundsRequest(REQ_MOVE);
+					req.setEditParts(cfep);
+					req.setMoveDelta(new Point(deltaX, 0));		
+	//				req = new ChangeBoundsRequest(REQ_RESIZE);
+	//				req.setEditParts(cfep);
+	//				req.setSizeDelta(new Dimension(Math.abs(deltaX), 0));
+	//				req.setResizeDirection(PositionConstants.WEST);			
+				} else if ( lifelineEditPart.equals(rightestLifelineEditPart) && deltaX > 0 ) { // 맨우측 Lifeline을 우측으로 이동하는 경우에만 CF Resize(안그러면 Resize가 누적됨)
+					req = new ChangeBoundsRequest(REQ_RESIZE);
+					req.setEditParts(cfep);
+					req.setSizeDelta(new Dimension(deltaX, 0));
+					req.setResizeDirection(PositionConstants.EAST);
+				} else if ( lifelineEditPart.equals(rightestLifelineEditPart) && deltaX < 0 ) { // 맨우측 Lifeline을 좌측으로 이동하는 경우
+					req = new ChangeBoundsRequest(REQ_RESIZE);
+					req.setEditParts(cfep);
+					req.setSizeDelta(new Dimension(deltaX, 0));
+					req.setResizeDirection(PositionConstants.EAST);
+						
+				} else { // 그 외 중간 Lifeline을 좌측으로 이동 시 CF에는 아무런 변화 없음
+					continue;
+				}
+			}
+			Command command = cfep.getCommand(req);
+			if (command != null && command.canExecute()) {
+				compoundCmd.add(command);
+			}
+		}
+
+		
+		
+		
 		
 		if ( request.getMoveDelta().x > 0 ) {
 			apexGetPushNextLifeline(compoundCmd, request, lifelineEditPart);

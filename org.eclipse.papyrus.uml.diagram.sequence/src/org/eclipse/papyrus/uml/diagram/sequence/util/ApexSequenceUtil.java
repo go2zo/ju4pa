@@ -1291,6 +1291,35 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	}
 	
 	/**
+	 * 
+	 * 
+	 * @param lifelineEditPart
+	 * @return
+	 */
+	public static List<CombinedFragmentEditPart> apexGetCoveringCombinedFragmentEditParts(LifelineEditPart lifelineEditPart) {
+	
+		List<CombinedFragmentEditPart> coveringCombinedFragmentEditParts = new ArrayList<CombinedFragmentEditPart>();
+		
+//		List<CombinedFragment> coveringCombinedFragments = new ArrayList<CombinedFragment>();
+		
+		Lifeline lifeline = (Lifeline)lifelineEditPart.resolveSemanticElement();
+		
+		List<InteractionFragment> coveringInteractionFragments = lifeline.getCoveredBys();
+		
+		//System.out.println("lifelineEP     : " + lifelineEditPart);
+		for ( InteractionFragment aInteractionFragment : coveringInteractionFragments ) {
+			if ( aInteractionFragment instanceof CombinedFragment ) {
+//				coveringCombinedFragments.add((CombinedFragment)aInteractionFragment);
+				CombinedFragmentEditPart cfEP = (CombinedFragmentEditPart)getEditPart(aInteractionFragment, lifelineEditPart);
+				coveringCombinedFragmentEditParts.add(cfEP);
+				
+				//System.out.println("  coveringCFEP : " + cfEP);
+			}
+		}
+		return coveringCombinedFragmentEditParts;
+	}
+	
+	/**
 	 * InteractionOperand의 children 과
 	 * InteractionOperand이 cover하는 Lifeline의 Activation 중 InteractionOperand에 위치적으로 포함된 Activation 함께 리턴 
 	 * 
@@ -1447,4 +1476,42 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		
 		return allCFs;
 	}	
+	
+	public static List apexGetSortedGraphicalEditPartList(List list, 
+			                                              final int position) {
+		Collections.sort(list, new Comparator<IGraphicalEditPart>() {
+			public int compare(IGraphicalEditPart o1, IGraphicalEditPart o2) {
+				Rectangle r1 = apexGetAbsoluteRectangle(o1);
+				Rectangle r2 = apexGetAbsoluteRectangle(o2);
+				
+				int result = 0;
+				
+				switch (position) {
+				    case SWT.LEFT:
+				    	if (r1.x - r2.x == 0)
+							result = r1.right() - r2.right();
+						result = r1.x - r2.x;
+						break;
+				    case SWT.RIGHT:
+				    	if (r1.right() - r2.right() == 0)
+				    		result = r1.x - r2.x;
+				    	result = r1.right() - r2.right();
+				    	break;
+				    case SWT.TOP:
+				    	if (r1.y - r2.y == 0)
+				    		result = r1.bottom() - r2.bottom();
+				    	result = r1.y - r2.y;
+				    	break;
+				    case SWT.BOTTOM:
+				    	if (r1.bottom() - r2.bottom() == 0)
+				    		result = r1.y - r2.y;
+				    	result = r1.bottom() - r2.bottom();
+				    	break;
+				}
+				return result;
+			}
+		});
+		
+		return list;
+	}
 }
