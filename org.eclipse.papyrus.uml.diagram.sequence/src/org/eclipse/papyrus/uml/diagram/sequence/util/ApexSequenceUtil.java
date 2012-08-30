@@ -1315,7 +1315,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	 */
 	public static List apexGetCombinedFragmentChildrenEditParts(CombinedFragmentEditPart cfep) {
 		
-		List cfChildren = null;
+		List cfChildren = new ArrayList();
 		
 		List<CombinedFragmentCombinedFragmentCompartmentEditPart> childCompartments = cfep.getChildren();
 		
@@ -1323,7 +1323,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			List<InteractionOperandEditPart> ioeps = compartEP.getChildren();
 			
 			for ( InteractionOperandEditPart ioep : ioeps ) {
-				cfChildren = apexGetIOEPContainedEditParts(ioep);
+				cfChildren.addAll(apexGetIOEPContainedEditParts(ioep));
 			}			
 		}		
 		

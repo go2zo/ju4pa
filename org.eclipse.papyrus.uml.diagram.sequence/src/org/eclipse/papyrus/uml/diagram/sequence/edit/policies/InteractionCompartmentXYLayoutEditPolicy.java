@@ -287,7 +287,9 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			EObject eObj = sp.getElement();
 			/* apex improved start */
 			if (covereds.contains(eObj)) {
-				ChangeBoundsRequest req = null;
+				
+				// Lifeline을 커버하고 있는 CF의 이동 처리
+				ChangeBoundsRequest req = null;				
 				if ( eObj instanceof CombinedFragment ) {
 					CombinedFragmentEditPart cfEP = (CombinedFragmentEditPart)et;					
 					InteractionInteractionCompartmentEditPart iicep = (InteractionInteractionCompartmentEditPart)parent;
@@ -298,7 +300,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 						LifelineEditPart leftestLifelineEditPart = (LifelineEditPart)lEPs.get(0);
 						LifelineEditPart rightestLifelineEditPart = (LifelineEditPart)lEPs.get(lEPs.size()-1);
 						
-						if ( deltaX > 0 ) {
+						if ( deltaX > 0 && lifelineEditPart.equals(rightestLifelineEditPart) ) { // 맨우측 Lifeline을 우측으로 이동하는 경우에만 CF Resize(안그러면 Resize가 누적됨)
 							req = new ChangeBoundsRequest(REQ_RESIZE);
 							req.setEditParts(cfEP);
 							req.setSizeDelta(new Dimension(deltaX, 0));

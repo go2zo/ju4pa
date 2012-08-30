@@ -2298,12 +2298,6 @@ public class LifelineEditPart extends NamedElementEditPart {
 			                                    EList<InteractionFragment> coveredByLifelines) {
 		CombinedFragment combinedFragment = (CombinedFragment)combinedFragmentEditPart.resolveSemanticElement();
 		/* apex improved start */	
-		System.out
-				.println("LifelineEditPart.updateCoveringCombinedFragment(), line : "
-						+ Thread.currentThread().getStackTrace()[1]
-								.getLineNumber());
-		System.out.println("beforeRect : " + beforeLifelineRect);
-		System.out.println("afterRect  : " + newLifelineRect);
 		Rectangle cfRect = ApexSequenceUtil.apexGetAbsoluteRectangle(combinedFragmentEditPart);
 		
 		// 새 lifeline 경계와 CF 경계가 교차되고
