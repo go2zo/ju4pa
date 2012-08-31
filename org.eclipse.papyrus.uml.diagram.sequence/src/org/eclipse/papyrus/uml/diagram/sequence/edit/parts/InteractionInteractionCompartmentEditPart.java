@@ -22,12 +22,16 @@ import org.eclipse.gef.EditPart;
 import org.eclipse.gef.EditPolicy;
 import org.eclipse.gef.GraphicalEditPart;
 import org.eclipse.gef.Request;
-import org.eclipse.gef.requests.CreateConnectionRequest;
+import org.eclipse.gef.commands.Command;
+import org.eclipse.gmf.runtime.common.core.command.ICommand;
+import org.eclipse.gmf.runtime.diagram.ui.commands.CommandProxy;
+import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeCompartmentEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.DragDropEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.EditPolicyRoles;
 import org.eclipse.gmf.runtime.diagram.ui.figures.ResizableCompartmentFigure;
 import org.eclipse.gmf.runtime.draw2d.ui.figures.ConstrainedToolbarLayout;
+import org.eclipse.gmf.runtime.emf.commands.core.command.CompositeTransactionalCommand;
 import org.eclipse.gmf.runtime.notation.NotationPackage;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.CombinedFragmentCreationEditPolicy;
@@ -142,6 +146,26 @@ public class InteractionInteractionCompartmentEditPart extends ShapeCompartmentE
 			index = 0;
 		}
 		super.addChildVisual(childEditPart, index);
+	}
+
+	/**
+	 * apex updated
+	 */
+	@Override
+	public Command getCommand(Request _request) {
+		/* apex improved start */
+		// undo에서 발생하는 트랜잭션 문제 해결을 위해 CompositeTransactionCommand 생성
+		Command command = super.getCommand(_request);
+//		if (command != null) {
+//			ICommand iCommand = (command instanceof ICommandProxy) ? ((ICommandProxy)command).getICommand() : new CommandProxy(command);
+//			CompositeTransactionalCommand compositeCommand = new CompositeTransactionalCommand(getEditingDomain(), command.getLabel());
+//			command = new ICommandProxy(compositeCommand.compose(iCommand));
+//		}
+		return command;
+		/* apex improved end */
+		/* apex replaced
+		return super.getCommand(_request);
+		*/
 	}
 
 }
