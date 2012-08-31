@@ -16,14 +16,14 @@ import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.InteractionFragment;
 
-public class ApexSetBoundsAndMoveInteractionFragmentsCommand extends
+public class ApexCreateAndMoveInteractionFragmentsCommand extends
 		ApexMoveInteractionFragmentsCommand {
 
 	private CreateElementAndNodeCommand createElementAndNodeCommand;
 	
 	private final static int EXECUTION_BOTTOM_MARGIN = 10;
 	
-	public ApexSetBoundsAndMoveInteractionFragmentsCommand(TransactionalEditingDomain domain, CreateElementAndNodeCommand command,
+	public ApexCreateAndMoveInteractionFragmentsCommand(TransactionalEditingDomain domain, CreateElementAndNodeCommand command,
 			ViewDescriptor descriptor, EditPartViewer viewer, InteractionFragment fragment, Point location) {
 		super(domain, descriptor, viewer, fragment, location, null);
 		

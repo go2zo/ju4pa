@@ -397,12 +397,18 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 		Dimension sizeDelta = new Dimension(newBounds.width - oldBounds.width, newBounds.height - oldBounds.height);
 		request.setMoveDelta(moveDelta);
 		request.setSizeDelta(sizeDelta);
-		if (oldBounds.y == newBounds.y)
-			request.setResizeDirection(PositionConstants.SOUTH);
-		else if (oldBounds.bottom() == newBounds.bottom())
-			request.setResizeDirection(PositionConstants.NORTH);
-		else
-			request.setResizeDirection(PositionConstants.NORTH_SOUTH);
+		if (sizeDelta.width == 0 && sizeDelta.height == 0) {
+			request.setType(REQ_MOVE);
+		}
+		else {
+			request.setType(REQ_RESIZE);
+			if (oldBounds.y == newBounds.y)
+				request.setResizeDirection(PositionConstants.SOUTH);
+			else if (oldBounds.bottom() == newBounds.bottom())
+				request.setResizeDirection(PositionConstants.NORTH);
+			else
+				request.setResizeDirection(PositionConstants.NORTH_SOUTH);
+		}
 		return request;
 	}
 	

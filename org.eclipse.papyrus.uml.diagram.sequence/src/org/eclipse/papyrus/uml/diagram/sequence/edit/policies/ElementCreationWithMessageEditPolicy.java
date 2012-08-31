@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.core.commands.operations.IUndoableOperation;
 import org.eclipse.draw2d.ConnectionAnchor;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.emf.ecore.EObject;
@@ -27,14 +28,17 @@ import org.eclipse.gef.editpolicies.FeedbackHelper;
 import org.eclipse.gef.requests.CreateConnectionRequest;
 import org.eclipse.gef.requests.CreateRequest;
 import org.eclipse.gmf.runtime.common.core.command.CompositeCommand;
+import org.eclipse.gmf.runtime.common.core.command.ICommand;
 import org.eclipse.gmf.runtime.diagram.core.commands.SetConnectionAnchorsCommand;
 import org.eclipse.gmf.runtime.diagram.core.util.ViewUtil;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.INodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
+import org.eclipse.gmf.runtime.diagram.ui.parts.DiagramCommandStack;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateConnectionViewAndElementRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeConnectionRequest;
+import org.eclipse.gmf.runtime.emf.commands.core.command.CompositeTransactionalCommand;
 import org.eclipse.gmf.runtime.emf.type.core.IElementType;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.gmf.runtime.notation.View;
@@ -126,6 +130,27 @@ public class ElementCreationWithMessageEditPolicy extends LifelineChildGraphical
 			}
 		}
 
+		return command;
+	}
+
+	/**
+	 * apex updated
+	 */
+	@Override
+	protected Command getConnectionAndRelationshipCompleteCommand(
+			CreateConnectionViewAndElementRequest request) {
+		Command command = super.getConnectionAndRelationshipCompleteCommand(request);
+		
+		ICommand iCommand = DiagramCommandStack.getICommand(command);
+		if (iCommand instanceof CompositeCommand) {
+			CompositeTransactionalCommand transactionCommand = new CompositeTransactionalCommand(getEditingDomain(), command.getLabel());
+			Iterator it = ((CompositeCommand)iCommand).iterator();
+			while (it.hasNext()) {
+				transactionCommand.compose((IUndoableOperation)it.next());
+			}
+			return new ICommandProxy(transactionCommand);
+		}
+		
 		return command;
 	}
 

@@ -44,6 +44,7 @@ import org.eclipse.gef.EditPolicy;
 import org.eclipse.gef.Request;
 import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.commands.Command;
+import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.editpolicies.LayoutEditPolicy;
 import org.eclipse.gef.editpolicies.NonResizableEditPolicy;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
@@ -62,6 +63,7 @@ import org.eclipse.gmf.runtime.diagram.ui.editpolicies.DragDropEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.EditPolicyRoles;
 import org.eclipse.gmf.runtime.diagram.ui.figures.IBorderItemLocator;
 import org.eclipse.gmf.runtime.diagram.ui.l10n.DiagramUIMessages;
+import org.eclipse.gmf.runtime.diagram.ui.parts.DiagramCommandStack;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateConnectionViewRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateUnspecifiedTypeConnectionRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewAndElementRequest;
@@ -1971,6 +1973,8 @@ public class LifelineEditPart extends NamedElementEditPart {
 	}
 
 	/**
+	 * apex updated
+	 * 
 	 * Handle message creation for execution specification
 	 */
 	@Override
@@ -2001,7 +2005,24 @@ public class LifelineEditPart extends NamedElementEditPart {
 			}
 
 		}
+		
+		/* apex improved start */
+		// undo에서 발생하는 트랜잭션 문제 해결을 위해 CompositeTransactionCommand 생성
+		Command command = super.getCommand(request);
+		if (command instanceof CompoundCommand) {
+			CompositeTransactionalCommand compositeCommand = new CompositeTransactionalCommand(getEditingDomain(), command.getLabel());
+			CompoundCommand compCmd = (CompoundCommand)command;
+			Object[] commands = compCmd.getChildren();
+			for (int i = 0; i < commands.length; i++) {
+				compositeCommand.compose(DiagramCommandStack.getICommand((Command)commands[i]));
+			}
+			command = new ICommandProxy(compositeCommand);
+		}
+		return command;
+		/* apex improved end */
+		/* apex replaced
 		return super.getCommand(request);
+		*/
 	}
 
 	/**

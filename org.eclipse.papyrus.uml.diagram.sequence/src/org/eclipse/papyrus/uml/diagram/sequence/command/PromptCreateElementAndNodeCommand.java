@@ -115,7 +115,7 @@ public class PromptCreateElementAndNodeCommand extends
 //		}
 		/* apex added end */
 		/* apex added start */
-		ApexSetBoundsAndMoveInteractionFragmentsCommand mifCmd = new ApexSetBoundsAndMoveInteractionFragmentsCommand(
+		ApexCreateAndMoveInteractionFragmentsCommand mifCmd = new ApexCreateAndMoveInteractionFragmentsCommand(
 				editingDomain, createExecutionSpecificationCommand, descriptor, sourceEP.getViewer(), container, location);
 		command.add(new ICommandProxy(mifCmd));
 

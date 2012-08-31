@@ -93,13 +93,19 @@ public class ApexMoveInteractionFragmentsCommand extends
 					underFragment instanceof CombinedFragment) {
 				IGraphicalEditPart editPart = getEditPart(underFragment);
 				Point moveDelta = getMoveDelta();
-				Rectangle bounds = editPart.getFigure().getBounds().getCopy();
-				editPart.getFigure().translateToAbsolute(bounds);
-				bounds.setY(bounds.y + moveDelta.y);
-				editPart.getFigure().translateToRelative(bounds);
 				
-				SetBoundsCommand sbCmd = new SetBoundsCommand(getEditingDomain(), "", editPart, bounds);
-				command.add(new ICommandProxy(sbCmd));
+				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+				request.setMoveDelta(moveDelta);
+	
+				command.add(editPart.getCommand(request));
+				
+//				Rectangle bounds = editPart.getFigure().getBounds().getCopy();
+//				editPart.getFigure().getParent().translateToAbsolute(bounds);
+//				editPart.getFigure().translateToAbsolute(bounds);
+//				bounds.setY(bounds.y + moveDelta.y);
+//				editPart.getFigure().translateToRelative(bounds);
+//				SetBoundsCommand sbCmd = new SetBoundsCommand(getEditingDomain(), "", editPart, bounds);
+//				command.add(new ICommandProxy(sbCmd));
 			}
 		}
 		
