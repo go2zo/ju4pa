@@ -533,8 +533,7 @@ public class OperandBoundsComputeHelper {
 			InteractionOperandEditPart currentIOEP, int heightDelta,
 			CombinedFragmentCombinedFragmentCompartmentEditPart compartEP,
 			int direction) {
-		Bounds currentIOEPBounds = OperandBoundsComputeHelper
-				.getEditPartBounds(currentIOEP);
+		Bounds currentIOEPBounds = OperandBoundsComputeHelper.getEditPartBounds(currentIOEP);
 		if (currentIOEPBounds == null) {
 			return null;
 		}
@@ -588,11 +587,9 @@ public class OperandBoundsComputeHelper {
 				}
 			}
 			/* apex added end */
-			Rectangle currentIOEPRect = OperandBoundsComputeHelper
-					.fillRectangle(currentIOEPBounds);
+			Rectangle currentIOEPRect = OperandBoundsComputeHelper.fillRectangle(currentIOEPBounds);
 			currentIOEPRect.setHeight(currentIOEPBounds.getHeight() + heightDelta);
-			ICommand currentIOEPCommand = OperandBoundsComputeHelper
-					.createUpdateEditPartBoundsCommand(currentIOEP, currentIOEPRect);
+			ICommand currentIOEPCommand = OperandBoundsComputeHelper.createUpdateEditPartBoundsCommand(currentIOEP, currentIOEPRect);
 			compositeCommand.add(currentIOEPCommand);
 			// auto update CombinedFragmentEditPart bounds after resize the last operand
 			if(compartEP.getParent() instanceof CombinedFragmentEditPart){
@@ -600,8 +597,7 @@ public class OperandBoundsComputeHelper {
 				if (parent.getModel() instanceof Node) {
 					Node node = (Node) parent.getModel();
 					if (node.getLayoutConstraint() instanceof Bounds) {
-						Bounds containerBounds = (Bounds) node
-								.getLayoutConstraint();
+						Bounds containerBounds = (Bounds) node.getLayoutConstraint();
 						Dimension preferredSize = parent.getFigure().getPreferredSize();
 						int width = containerBounds.getWidth()!=-1? containerBounds.getWidth() :  preferredSize.width();
 						int height = containerBounds.getHeight()!=-1? containerBounds.getHeight() :  preferredSize.height();
