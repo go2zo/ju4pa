@@ -1453,35 +1453,49 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				Rectangle parentOperandBounds = ioep.getFigure().getBounds().getCopy();
 				ioep.getFigure().translateToAbsolute(parentOperandBounds);
 				// 좌측으로 확대 또는 이동으로 parentCF보다 커질 경우
+				// parent는 child의 확대/이동에 관계없이 move와resize를 함께 해야한다.
 				if ( newBoundsCF.x < parentOperandBounds.x ) {
-					// 좌측 이동이나 확대량만큼 parentCF이동
+
 					ChangeBoundsRequest cbRequest = new ChangeBoundsRequest("Move and Resize CF");
 					cbRequest.setEditParts(parentEditPart);
 					
 					int deltaX = 0;
-					if ( moveDelta.x == 0 && moveDelta.y == 0 ) { //resize의 경우
+
+					//if ( moveDelta.x == 0 && moveDelta.y == 0 ) { //resize의 경우
+					// Child CF가 좌측으로 이동한 경우
+					if ( moveDelta.x < 0 && (sizeDelta.width == 0 && sizeDelta.height == 0) ) { // 좌측으로 move의 경우
 						if ( (direction & PositionConstants.WEST) == 0 ) {
 							compoundCmd.add(UnexecutableCommand.INSTANCE);
 						} else {
-							cbRequest.setMoveDelta(new Point(-sizeDelta.width, sizeDelta.height));							
+							cbRequest.setMoveDelta(moveDelta);
+							cbRequest.setSizeDelta(new Dimension(Math.abs(moveDelta.x), 0));
 						}
-					} else {
-						cbRequest.setMoveDelta(moveDelta);
+					// Child CF가 좌측으로 resize 확대된 경우
+					} else if ( sizeDelta.width > 0 ) { // resize 시에도 moveDelta가 존재한다.
+						if ( (direction & PositionConstants.WEST) == 0 ) {
+							compoundCmd.add(UnexecutableCommand.INSTANCE);
+						} else {
+							cbRequest.setMoveDelta(new Point(-sizeDelta.width, 0));
+							cbRequest.setSizeDelta(sizeDelta);
+						}
 					}
+//					else {
+//						cbRequest.setMoveDelta(moveDelta);
+//					}
 					//apexCombinedFragmentResizeChildren(cbRequest, parentEditPart, graphicalEditPart, ccmd);
 					
 					// Resize
-					if ( moveDelta.x == 0 && moveDelta.y == 0 ) { //resize의 경우
-						if ( (direction & PositionConstants.WEST) == 0 ) {
-							compoundCmd.add(UnexecutableCommand.INSTANCE);
-						} else {
-							cbRequest.setSizeDelta(sizeDelta);
-							cbRequest.setResizeDirection(direction);							
-						}
-					} else {
-						cbRequest.setSizeDelta(new Dimension(Math.abs(moveDelta.x), moveDelta.y));
-						cbRequest.setResizeDirection(direction);
-					}
+//					if ( moveDelta.x == 0 && moveDelta.y == 0 ) { //resize의 경우
+//						if ( (direction & PositionConstants.WEST) == 0 ) {
+//							compoundCmd.add(UnexecutableCommand.INSTANCE);
+//						} else {
+//							cbRequest.setSizeDelta(sizeDelta);
+//							cbRequest.setResizeDirection(direction);							
+//						}
+//					} else {
+//						cbRequest.setSizeDelta(new Dimension(Math.abs(moveDelta.x), moveDelta.y));
+//						cbRequest.setResizeDirection(direction);
+//					}
 //					Dimension resizeParentDimension = moveDelta.y != 0 ? new Dimension(0, moveDelta.y) : sizeDelta;
 //					cbRequest.setSizeDelta(resizeParentDimension);
 //					cbRequest.setResizeDirection(PositionConstants.SOUTH_WEST);
