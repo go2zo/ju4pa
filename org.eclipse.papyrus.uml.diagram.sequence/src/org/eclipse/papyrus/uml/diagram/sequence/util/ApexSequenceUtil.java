@@ -1352,7 +1352,7 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			List<InteractionOperandEditPart> ioeps = compartEP.getChildren();
 			
 			for ( InteractionOperandEditPart ioep : ioeps ) {
-				cfChildren.addAll(apexGetIOEPContainedEditParts(ioep));
+				cfChildren.addAll(apexGetInteractionOperandChildrenEditParts(ioep));
 			}			
 		}		
 		

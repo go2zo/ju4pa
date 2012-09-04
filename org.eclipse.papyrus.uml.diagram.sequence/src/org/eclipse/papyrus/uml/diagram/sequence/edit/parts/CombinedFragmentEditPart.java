@@ -21,7 +21,6 @@ import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.Shape;
 import org.eclipse.draw2d.StackLayout;
-import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EStructuralFeature;
@@ -55,7 +54,7 @@ import org.eclipse.papyrus.infra.gmfdiag.preferences.utils.GradientPreferenceCon
 import org.eclipse.papyrus.infra.gmfdiag.preferences.utils.PreferenceConstantHelper;
 import org.eclipse.papyrus.uml.diagram.common.editpolicies.ShowHideCompartmentEditPolicy;
 import org.eclipse.papyrus.uml.diagram.common.helper.PreferenceInitializerForElementHelper;
-import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ApexResizableShapeEditPolicy;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.ApexCombinedFragmentResizableShapeEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.CombinedFragmentItemComponentEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.CombinedFragmentItemSemanticEditPolicy;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.policies.SequenceGraphicalNodeEditPolicy;
@@ -65,7 +64,6 @@ import org.eclipse.papyrus.uml.diagram.sequence.part.UMLVisualIDRegistry;
 import org.eclipse.papyrus.uml.diagram.sequence.providers.UMLElementTypes;
 import org.eclipse.papyrus.uml.diagram.sequence.util.CommandHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.InteractionOperatorKindCompatibleMapping;
-import org.eclipse.papyrus.uml.diagram.sequence.util.LifelineCoveredByUpdater;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.uml2.uml.CombinedFragment;
@@ -168,9 +166,10 @@ public class CombinedFragmentEditPart extends InteractionFragmentEditPart {
 	 */
 	public EditPolicy getPrimaryDragEditPolicy() {
 		/* apex added start */
-//		EditPolicy result = getEditPolicy(EditPolicy.PRIMARY_DRAG_ROLE);
-//		return result != null ? result : new ApexResizableShapeEditPolicy(PositionConstants.NORTH_SOUTH, false, false);
-		return super.getPrimaryDragEditPolicy();
+		EditPolicy result = getEditPolicy(EditPolicy.PRIMARY_DRAG_ROLE);
+		return result != null ? result : new ApexCombinedFragmentResizableShapeEditPolicy(PositionConstants.NORTH_SOUTH, PositionConstants.NSEW);
+		//return result != null ? result : new ApexResizableShapeEditPolicy(PositionConstants.NORTH_SOUTH, false, false);
+		//return super.getPrimaryDragEditPolicy();
 		/* apex added end */ 
 	}
 	
