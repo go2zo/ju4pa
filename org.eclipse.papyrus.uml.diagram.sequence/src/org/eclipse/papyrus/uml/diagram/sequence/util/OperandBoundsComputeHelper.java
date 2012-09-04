@@ -1051,7 +1051,6 @@ public class OperandBoundsComputeHelper {
 				ioEPOriginalBounds.setWidth(ioEPOriginalBounds.getWidth()
 						+ sizeDelta.width());
 			}
-
 			return CommandResult.newOKCommandResult();
 		}
 

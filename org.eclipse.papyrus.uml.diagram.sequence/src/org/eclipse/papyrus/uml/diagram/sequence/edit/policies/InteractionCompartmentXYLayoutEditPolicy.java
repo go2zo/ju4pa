@@ -139,14 +139,17 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 //					}
 					*/
 				}
-
-				if(!(child instanceof LifelineEditPart) || isVerticalMove(request)) {
+				
+				/* apex replaced
+				다른 메서드에서 내부적으로 다 처리하므로 아래 내용 불필요
+				if(!(child instanceof LifelineEditPart) || isVerticalMove(request)) {		
 					Command changeConstraintCommand = createChangeConstraintCommand(request, child, translateToModelConstraint(constraintFor));
 					compoundCmd.add(changeConstraintCommand);
 				}
+				*/
 				
 				if(child instanceof CombinedFragmentEditPart) {
-					OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand(compoundCmd,request,(CombinedFragmentEditPart)child);
+//					OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand(compoundCmd,request,(CombinedFragmentEditPart)child);
 				}
 				
 				/* apex added start */
@@ -456,7 +459,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 //			boolean isResizeByChild = false;
 //			if ( childEditPart != null ) {
 //				isResizeByChild = true;
-//			}
+//			}			
+			
 			CompoundCommand ccmd = apexGetResizeCombinedFragmentBoundsCommand(request, combinedFragmentEditPart, childEditPart, true);
 			List<Command> resizeCmds = ccmd.getCommands();
 			for ( Command cmd : resizeCmds ) {
@@ -778,6 +782,11 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 					} else {
 						compoundCmd.add(new ICommandProxy(SequenceUtil.getSetEnclosingInteractionCommand(combinedFragmentEditPart.getEditingDomain(), ift, cf.getEnclosingInteraction())));
 					}
+				}
+				
+				// 146line에 있던 내용 여기로 이동
+				if ( childEditPart == null ) {
+					OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand(compoundCmd,request,(CombinedFragmentEditPart)combinedFragmentEditPart);
 				}
 			}
 			
@@ -1186,20 +1195,20 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		ICommand resizeOrMoveCFCommand = null;
 		if ( byMove ) {
 			resizeOrMoveCFCommand = new SetBoundsCommand(editingDomain, 
-                    "Apex_CF_Move",
-                    new EObjectAdapter((View) combinedFragmentEditPart.getModel()),
-                    origCFBounds);
+                                                         "Apex_CF_Move",
+                                                         combinedFragmentEditPart,
+                                                         origCFBounds);
 		} else {
-			if ( childEditPart == null) {
-				// 이상하게 아래처럼 더해줘도 영향이 없음
-				origCFBounds.x += sizeDelta.width;	
-			}			
+			// parent CF보다 좌측으로 resize 되는 경우 parent의 이동에 따라 한번더 이동되지 않도록 sizeDelta 만큼 보정
+			if ( origCFBounds.x < 0 ) {
+				origCFBounds.x += sizeDelta.width;
+			}
 			resizeOrMoveCFCommand = new SetBoundsCommand(editingDomain, 
-                    "Apex_CF_Resize",
-                    //new EObjectAdapter((View) combinedFragmentEditPart.getModel()),
-                    combinedFragmentEditPart,
-                    //new Dimension(origCFBounds.width, origCFBounds.height));
-                    origCFBounds);
+                                                         "Apex_CF_Resize",
+                                                         //new EObjectAdapter((View) combinedFragmentEditPart.getModel()),
+                                                         combinedFragmentEditPart,
+                                                         //new Dimension(origCFBounds.width, origCFBounds.height));
+                                                         origCFBounds);
 		}
 		System.out.println("combinedFragment after  bounds rel : " + origCFBounds);
 		
@@ -1211,12 +1220,10 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 //                                                                       "Apex_CF_Resize",
 //                                                                       new EObjectAdapter((View) combinedFragmentEditPart.getModel()),
 //                                                                       //new Dimension(origCFBounds.width, origCFBounds.height));
-//                                                                       origCFBounds);
+//                                                                       origCFBounds);		
 		ccmd.add(new ICommandProxy(resizeOrMoveCFCommand));
 
 		// 좌변에서 resize 시 child가 현위치에 머무르드록 처리
-		// 다른 child는 머무르나
-		// resize를 유발한 child는 이동되어버림 ㅠㅜ
 		if ( (direction & PositionConstants.WEST) != 0 ) {
 			// child가 좌측으로 따라 이동되지 않도록 우측으로 미리 이동시켜둠
 			List cfChildren = combinedFragmentEditPart.getChildren();
@@ -1233,17 +1240,29 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 							for ( Object aOpChild : childCFs ) {
 								if ( aOpChild instanceof CombinedFragmentEditPart ) {									
 									CombinedFragmentEditPart childCfep = (CombinedFragmentEditPart)aOpChild;
-									System.out.println(childEditPart.equals(childCfep));
 									IFigure childCfFigure = childCfep.getFigure();
 									Rectangle childCfRect = childCfFigure.getBounds().getCopy();
 									
-									childCfRect.x += sizeDelta.width;										
+									// resizeParent에 의해 호출된 경우 childEditPart가 아닌 것은 따라 이동되지 않도록 x 값 보정
+									if ( childEditPart != null && !childCfep.equals(childEditPart) ) {
+										childCfRect.x += sizeDelta.width;				
+										ICommand childAdjustment = new SetBoundsCommand(childCfep.getEditingDomain(), 
+	                                            "Apex_Child_Move_Adjustment",
+	                                            childCfep,
+	                                            childCfRect);
+	                                    ccmd.add(new ICommandProxy(childAdjustment));
+									}
+									// resizeParent에 의해 호출되지 않은 경우
+									if ( childEditPart == null ) {
+										// child들이 parent에 따라 이동되지 않도록 x 값 보정
+										childCfRect.x += sizeDelta.width;
+										ICommand childAdjustment = new SetBoundsCommand(childCfep.getEditingDomain(), 
+	                                            "Apex_Child_Move_Adjustment",
+	                                            childCfep,
+	                                            childCfRect);
+	                                    ccmd.add(new ICommandProxy(childAdjustment));
+									}
 									
-									ICommand moveChildRight = new SetBoundsCommand(childCfep.getEditingDomain(), 
-                                                                                     "Apex_Child_CF_Move_Right",
-                                                                                     new EObjectAdapter((View) childCfep.getModel()),
-                                                                                     childCfRect);
-									ccmd.add(new ICommandProxy(moveChildRight));
 								}
 							}								
 						}
@@ -1288,7 +1307,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 //*8				
 			ICommand resizeIOCommand = new SetBoundsCommand(editingDomain, 
 									                "Apex_IO_Resize",
-									                new EObjectAdapter((View) ioep.getModel()),
+									                ioep,
 									                new Dimension(ioRect.width, ioRect.height));
 			ccmd.add(new ICommandProxy(resizeIOCommand));
 //*/
@@ -1556,7 +1575,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 					}
 					
 					apexCombinedFragmentResizeChildren(cbRequest, parentEditPart, graphicalEditPart, compoundCmd);
-					
+					int a = 0;
 					// parent의 좌측이동에 따라 child도 함께 자동이동되므로
 					// 자동이동 후 원위치되도록 child를 우측으로 미리 이동
 //					cfFigure.translateToRelative(origCFBounds);
@@ -1619,10 +1638,10 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 	public static void apexCombinedFragmentResizeChildren(ChangeBoundsRequest request, 
 			                                              GraphicalEditPart combinedFragmentEditPart, 
 			                                              GraphicalEditPart childEditPart, 
-			                                              CompoundCommand compoundCmd) {
-	
+			                                              CompoundCommand compoundCmd) {	
 		// cpCmd를 분해하여 넘겨받은 원래의 ccmd 에 add
-		ApexSequenceUtil.apexCompoundCommandToCompoundCommand(getCombinedFragmentResizeChildrenCommand(request, combinedFragmentEditPart, childEditPart), compoundCmd);
+		ApexSequenceUtil.apexCompoundCommandToCompoundCommand(getCombinedFragmentResizeChildrenCommand(request, combinedFragmentEditPart, childEditPart), compoundCmd);		
+
 		/*
 		if ( cpCmd.equals(UnexecutableCommand.INSTANCE)) {
 			return UnexecutableCommand.INSTANCE;

@@ -30,6 +30,7 @@ public class ApexCombinedFragmentResizableShapeEditPolicy extends
 		
 		Point moveDelta = request.getMoveDelta();
 		Dimension sizeDelta = request.getSizeDelta();
+		int direction = request.getResizeDirection();
 		
 		Point movePoint = moveDelta;
 		
@@ -40,10 +41,8 @@ public class ApexCombinedFragmentResizableShapeEditPolicy extends
         
         if ( sizeDelta.equals(0, 0) && moveDelta.x != 0 ) {
 			request.setMoveDelta(new Point(0, moveDelta.y));
-//        	movePoint = new Point(0, moveDelta.y);
 		}
         rect.translate(request.getMoveDelta());
-//        rect.translate(movePoint);
         rect.resize(request.getSizeDelta());
         
         IFigure f = getHostFigure();
