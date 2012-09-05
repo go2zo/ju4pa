@@ -3,7 +3,6 @@ package org.eclipse.papyrus.uml.diagram.sequence.draw2d.anchors;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.PrecisionPoint;
-import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.gmf.runtime.gef.ui.figures.SlidableAnchor;
 
 public class ApexHorizontalAnchor extends SlidableAnchor {
