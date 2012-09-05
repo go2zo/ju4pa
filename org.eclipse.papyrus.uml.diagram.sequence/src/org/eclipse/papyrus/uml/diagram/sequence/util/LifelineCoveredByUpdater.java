@@ -44,6 +44,7 @@ import org.eclipse.uml2.uml.UMLPackage;
  * apex udated
  * 사용 안함
  * 사용 시 모든 Lifeline에 대해 불필요한 update 발생하므로
+ * LifelineEditPart.updateCoveringInteractionFragments()에서 처리
  * 
  * This class updates the property CoveredBy of Lifeline when a Lifeline gets created, moved/resize 
  * and also the resize of moving of each CombinedFragment  

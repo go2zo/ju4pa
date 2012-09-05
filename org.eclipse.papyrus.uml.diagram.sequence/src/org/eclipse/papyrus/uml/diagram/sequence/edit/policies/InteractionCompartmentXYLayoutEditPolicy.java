@@ -116,8 +116,18 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				}
 				
 				if(child instanceof LifelineEditPart) {
-					if (!isVerticalMove(request)) {
+					if (isHorizontalMove(request)) {
 						addLifelineResizeChildrenCommand(compoundCmd, request, (LifelineEditPart)child, 1);
+						/* apex improved start */
+						LifelineEditPart lep = (LifelineEditPart)child;
+				 		ICommand boundsCommand = new SetBoundsCommand(lep.getEditingDomain(),
+				 				                                      "Set Lifeline Move or Resize",
+				 				                                       lep,
+				 				                                       (Rectangle)translateToModelConstraint(constraintFor)); 
+						compoundCmd.add(new ICommandProxy(boundsCommand));
+						// lifeline 움직일 때 CF Resize 하는 command 여기서 호출
+						
+						/* apex improved start */
 					}
 				} else if(child instanceof CombinedFragmentEditPart) {
 					// Add restrictions to change the size
@@ -140,17 +150,26 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 					*/
 				}
 				
+				/* apex improved start */
+				// Lifeline이나 CF의 move는 위에서 처리 
+				else if ( isHorizontalMove(request)) {		
+					Command changeConstraintCommand = createChangeConstraintCommand(request, child, translateToModelConstraint(constraintFor));
+					compoundCmd.add(changeConstraintCommand);
+				}
+				/* apex improved end */				
 				/* apex replaced
-				다른 메서드에서 내부적으로 다 처리하므로 아래 내용 불필요
 				if(!(child instanceof LifelineEditPart) || isVerticalMove(request)) {		
 					Command changeConstraintCommand = createChangeConstraintCommand(request, child, translateToModelConstraint(constraintFor));
 					compoundCmd.add(changeConstraintCommand);
 				}
 				*/
-				
+
+				/* apex replaced
+				// CF, IO 관련은 InteractionCompartmentXYLayoutPolicy나 OperationBoundsComputeHelper에서 자체 처리
 				if(child instanceof CombinedFragmentEditPart) {
-//					OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand(compoundCmd,request,(CombinedFragmentEditPart)child);
+					OperandBoundsComputeHelper.createUpdateIOBoundsForCFResizeCommand(compoundCmd,request,(CombinedFragmentEditPart)child);
 				}
+				*/
 				
 				/* apex added start */
 				if(child instanceof InteractionUseEditPart) {
@@ -184,7 +203,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 
 	}
 
-	protected boolean isVerticalMove(ChangeBoundsRequest request) {
+	protected boolean isHorizontalMove(ChangeBoundsRequest request) {
 		if (request instanceof AlignmentRequest) {
 			AlignmentRequest alignmentRequest = (AlignmentRequest) request;
 			switch(alignmentRequest.getAlignment()) {
@@ -201,12 +220,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		}
 		
 		Point point = request.getMoveDelta();
-		/* apex improved start */
-		return point.y != 0;
-		/* apex improved start */
-		/* apex replaced
 		return point.y == 0;
-		*/
 	}
 	
 	/**
@@ -1790,7 +1804,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			CompoundCommand compoundCmd = new CompoundCommand("Resize of Interaction Compartment Elements");
 
 			for(EditPart ep : (List<EditPart>)cbr.getEditParts()) {
-				if(ep instanceof LifelineEditPart && isVerticalMove(cbr)) {
+				if(ep instanceof LifelineEditPart && isHorizontalMove(cbr)) {
 					// Lifeline EditPart
 					LifelineEditPart lifelineEP = (LifelineEditPart)ep;
 
