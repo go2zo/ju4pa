@@ -116,7 +116,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				}
 				
 				if(child instanceof LifelineEditPart) {
-					if (isVerticalMove(request)) {
+					if (!isVerticalMove(request)) {
 						addLifelineResizeChildrenCommand(compoundCmd, request, (LifelineEditPart)child, 1);
 					}
 				} else if(child instanceof CombinedFragmentEditPart) {
@@ -201,7 +201,12 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 		}
 		
 		Point point = request.getMoveDelta();
+		/* apex improved start */
 		return point.y != 0;
+		/* apex improved start */
+		/* apex replaced
+		return point.y == 0;
+		*/
 	}
 	
 	/**
@@ -350,7 +355,8 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				if ( lifelineEditPart.equals(leftestLifelineEditPart) && deltaX > 0 ) { // 맨왼쪽 Lifeline을 우측으로 이동하는 경우
 					req = new ChangeBoundsRequest(REQ_RESIZE);
 					req.setEditParts(cfep);
-					req.setSizeDelta(new Dimension(deltaX, 0));
+					req.setMoveDelta(new Point(deltaX, 0)); // WEST의 경우 resize 시에도 moveDelta 필요
+					req.setSizeDelta(new Dimension(-deltaX, 0));
 					req.setResizeDirection(PositionConstants.WEST);
 				} else if ( lifelineEditPart.equals(leftestLifelineEditPart) && deltaX < 0 ) { // 맨왼쪽 Lifeline을 좌측으로 이동하는 경우
 //					req = new ChangeBoundsRequest(REQ_MOVE);
@@ -358,6 +364,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 //					req.setMoveDelta(new Point(deltaX, 0));		
 					req = new ChangeBoundsRequest(REQ_RESIZE);
 					req.setEditParts(cfep);
+					req.setMoveDelta(new Point(deltaX, 0)); // WEST의 경우 resize 시에도 moveDelta 필요
 					req.setSizeDelta(new Dimension(Math.abs(deltaX), 0));
 					req.setResizeDirection(PositionConstants.WEST);			
 				} else if ( lifelineEditPart.equals(rightestLifelineEditPart) && deltaX > 0 ) { // 맨우측 Lifeline을 우측으로 이동하는 경우에만 CF Resize(안그러면 Resize가 누적됨)
@@ -380,10 +387,6 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				compoundCmd.add(command);
 			}
 		}
-
-		
-		
-		
 		
 		if ( request.getMoveDelta().x > 0 ) {
 			apexGetPushNextLifeline(compoundCmd, request, lifelineEditPart);
