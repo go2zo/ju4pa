@@ -68,18 +68,25 @@ public class ApexResizableShapeEditPolicy extends ResizableShapeEditPolicy {
 		setAutoSizeEnabled(autoSizeEnabled);
 		setMoveDeferredEnabled(moveDeferredEnabled);
 	}
+	
+	public ApexResizableShapeEditPolicy(int moveDirection, int resizeDirection, boolean autoSizeEnabled, boolean moveDeferredEnabled) {
+		super();
+		setMoveDirection(moveDirection);
+		setAutoSizeEnabled(autoSizeEnabled);
+		setMoveDeferredEnabled(moveDeferredEnabled);
+	}
 
 	@Override
 	protected void showChangeBoundsFeedback(ChangeBoundsRequest request) {
 		Point moveDelta = request.getMoveDelta();
-		if ((moveDirection & PositionConstants.EAST) == 0 && moveDelta.x < 0)
-			moveDelta.x = 0;
-		if ((moveDirection & PositionConstants.WEST) == 0 && moveDelta.x > 0)
-			moveDelta.x = 0;
-		if ((moveDirection & PositionConstants.SOUTH) == 0 && moveDelta.y < 0)
-			moveDelta.y = 0;
-		if ((moveDirection & PositionConstants.NORTH) == 0 && moveDelta.y > 0)
-			moveDelta.y = 0;
+//		if ((moveDirection & PositionConstants.EAST) == 0 && moveDelta.x < 0)
+//			moveDelta.x = 0;
+//		if ((moveDirection & PositionConstants.WEST) == 0 && moveDelta.x > 0)
+//			moveDelta.x = 0;
+//		if ((moveDirection & PositionConstants.SOUTH) == 0 && moveDelta.y < 0)
+//			moveDelta.y = 0;
+//		if ((moveDirection & PositionConstants.NORTH) == 0 && moveDelta.y > 0)
+//			moveDelta.y = 0;
 		request.setMoveDelta(moveDelta);
 		super.showChangeBoundsFeedback(request);
 	}
