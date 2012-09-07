@@ -15,11 +15,13 @@ package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
 import org.eclipse.gef.EditPart;
+import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.requests.GroupRequest;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.internal.editpolicies.ConnectionEditPolicy;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceDeleteHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 
@@ -54,8 +56,10 @@ public class MessageConnectionEditPolicy extends ConnectionEditPolicy {
 			
 			/* apex added start */
 			EditPart target = ((ConnectionNodeEditPart)getHost()).getTarget();
-			Command deleteTargetViewCommand = target.getCommand(deleteRequest);
-			deleteViewsCommand.add(deleteTargetViewCommand);
+			if (target instanceof AbstractExecutionSpecificationEditPart) {
+				Command deleteTargetViewCommand = target.getCommand(new GroupRequest(RequestConstants.REQ_DELETE));
+				deleteViewsCommand.add(deleteTargetViewCommand);
+			}
 			/* apex added end */
 		}
 		

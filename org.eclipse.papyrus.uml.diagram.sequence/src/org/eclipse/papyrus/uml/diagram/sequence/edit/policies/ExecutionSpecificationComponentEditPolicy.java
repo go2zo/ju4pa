@@ -83,10 +83,10 @@ public class ExecutionSpecificationComponentEditPolicy extends ComponentEditPoli
 	@Override
 	protected boolean shouldDeleteSemantic() {
 		/* apex improved start */
-		return true;
+//		return true;
 		/* apex improved end */
-		/*
+		/* apex replaced */
 		return super.shouldDeleteSemantic();
-		 */
+		// */
 	}
 }

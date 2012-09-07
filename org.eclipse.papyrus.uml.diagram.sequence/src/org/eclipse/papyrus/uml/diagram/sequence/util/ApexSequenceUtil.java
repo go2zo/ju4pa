@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1307,21 +1308,35 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 	}
 	
 	public static EditPart getEditPart(EObject eObject, EditPartViewer viewer) {
-		Collection<Setting> settings = CacheAdapter.getInstance().getNonNavigableInverseReferences(eObject);
-		List<EditPart> parts = new ArrayList<EditPart>();
-		for (Setting ref : settings) {
-			if(NotationPackage.eINSTANCE.getView_Element().equals(ref.getEStructuralFeature())) {
-				View view = (View)ref.getEObject();
-				EditPart part = (EditPart)viewer.getEditPartRegistry().get(view);
-				parts.add(part);
+		return getEditPart(eObject, null, viewer);
+	}
+	public static EditPart getEditPart(EObject eObject, Class targetClass, EditPartViewer viewer) {
+		if (eObject == null || viewer == null)
+			return null;
+		
+		Set<EditPart> parts = new HashSet<EditPart>();
+		
+		Map<?, ?> map = viewer.getEditPartRegistry();
+		for (Entry<?, ?> entry : map.entrySet()) {
+			Object key = entry.getKey();
+			if (!(key instanceof View)) {
+				continue;
+			}
+			View view = (View) key;
+			EObject tempElement = view.getElement();
+			if (eObject.equals(tempElement)) {
+				Object value = entry.getValue();
+				if (targetClass == null || value.getClass().isInstance(targetClass)) {
+					parts.add((EditPart) value);
+				}
 			}
 		}
-
+		
 		if (parts.size() == 1) {
-			return parts.get(0);
+			return parts.iterator().next();
 		}
-
-		List<EditPart> removeParts = new ArrayList<EditPart>();
+		
+		Set<EditPart> removeParts = new HashSet<EditPart>();
 		for (EditPart part : parts) {
 			EditPart parent = part.getParent();
 			while (parent != null) {
@@ -1332,6 +1347,33 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		}
 		
 		parts.removeAll(removeParts);
-		return parts.size() == 0 ? null : parts.get(0);
+		return parts.size() == 0 ? null : parts.iterator().next();
+		
+//		Collection<Setting> settings = CacheAdapter.getInstance().getNonNavigableInverseReferences(eObject);
+//		List<EditPart> parts = new ArrayList<EditPart>();
+//		for (Setting ref : settings) {
+//			if(NotationPackage.eINSTANCE.getView_Element().equals(ref.getEStructuralFeature())) {
+//				View view = (View)ref.getEObject();
+//				EditPart part = (EditPart)viewer.getEditPartRegistry().get(view);
+//				parts.add(part);
+//			}
+//		}
+//
+//		if (parts.size() == 1) {
+//			return parts.get(0);
+//		}
+//
+//		List<EditPart> removeParts = new ArrayList<EditPart>();
+//		for (EditPart part : parts) {
+//			EditPart parent = part.getParent();
+//			while (parent != null) {
+//				if (parts.contains(parent)) {
+//					removeParts.add(parent);
+//				}
+//			}
+//		}
+//		
+//		parts.removeAll(removeParts);
+//		return parts.size() == 0 ? null : parts.get(0);
 	}
 }

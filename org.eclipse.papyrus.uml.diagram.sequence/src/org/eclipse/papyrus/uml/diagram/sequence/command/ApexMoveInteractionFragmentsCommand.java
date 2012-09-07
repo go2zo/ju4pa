@@ -18,8 +18,6 @@ import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
 import org.eclipse.gmf.runtime.common.core.command.CommandResult;
-import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
-import org.eclipse.gmf.runtime.diagram.ui.commands.SetBoundsCommand;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
 import org.eclipse.gmf.runtime.emf.commands.core.command.AbstractTransactionalCommand;
@@ -85,6 +83,7 @@ public class ApexMoveInteractionFragmentsCommand extends
 				IGraphicalEditPart editPart = getEditPart(execution);
 				Point moveDelta = getMoveDelta();
 				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+				request.setMoveDelta(new Point(0, 0));
 				request.setResizeDirection(PositionConstants.SOUTH);
 				request.setSizeDelta(new Dimension(0, moveDelta.y));
 				command.add(editPart.getCommand(request));
@@ -93,13 +92,12 @@ public class ApexMoveInteractionFragmentsCommand extends
 					underFragment instanceof CombinedFragment) {
 				IGraphicalEditPart editPart = getEditPart(underFragment);
 				Point moveDelta = getMoveDelta();
-				Rectangle bounds = editPart.getFigure().getBounds().getCopy();
-				editPart.getFigure().translateToAbsolute(bounds);
-				bounds.setY(bounds.y + moveDelta.y);
-				editPart.getFigure().translateToRelative(bounds);
-				
-				SetBoundsCommand sbCmd = new SetBoundsCommand(getEditingDomain(), "", editPart, bounds);
-				command.add(new ICommandProxy(sbCmd));
+
+				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+				request.setMoveDelta(moveDelta);
+				request.setSizeDelta(new Dimension(0, 0));
+
+				command.add(editPart.getCommand(request));
 			}
 		}
 		
@@ -116,8 +114,14 @@ public class ApexMoveInteractionFragmentsCommand extends
 		this.moveDelta = moveDelta;
 	}
 	
+	/**
+	 * sort 필요 없음
+	 * @param fragment
+	 * @param location
+	 * @return
+	 */
 	private Collection<InteractionFragment> getUnderInteractionFragments(InteractionFragment fragment, Point location) {
-		Set<InteractionFragment> set = new HashSet<InteractionFragment>();
+		Set<InteractionFragment> result = new HashSet<InteractionFragment>();
 		
 		Set<InteractionFragment> allFragments = new HashSet<InteractionFragment>();
 		if (fragment instanceof Interaction) {
@@ -146,19 +150,13 @@ public class ApexMoveInteractionFragmentsCommand extends
 			}
 			else if (ift instanceof ExecutionOccurrenceSpecification) {
 				ExecutionSpecification execution = ((ExecutionOccurrenceSpecification)ift).getExecution();
-				IGraphicalEditPart editPart = getEditPart(execution);
-				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
-				Point loc = null;
-				if (ift.equals(execution.getStart())) {
-					loc = bounds.getTop();
-					ift = execution;
-				}
-				else if (ift.equals(execution.getFinish())) {
-					loc = bounds.getBottom();
-				}
-				
-				if (loc.y > location.y) {
-					set.add(ift);
+				if (ift.equals(execution.getFinish())) {
+					IGraphicalEditPart editPart = getEditPart(execution);
+					Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
+					Point loc = bounds.getBottom();
+					if (loc.y > location.y) {
+						result.add(ift);
+					}
 				}
 			}
 			else {
@@ -166,12 +164,21 @@ public class ApexMoveInteractionFragmentsCommand extends
 				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
 				Point loc = bounds.getTop();
 				if (loc.y > location.y) {
-					set.add(ift);
+					result.add(ift);
 				}
 			}
 		}
 		
-		return set;
+		Set<InteractionFragment> removedFragments = new HashSet<InteractionFragment>();
+		for (InteractionFragment ift : result) {
+			if (ift instanceof ExecutionSpecification) {
+				removedFragments.add(((ExecutionSpecification)ift).getStart());
+				removedFragments.add(((ExecutionSpecification)ift).getFinish());
+			}
+		}
+		result.removeAll(removedFragments);
+
+		return result;
 	}
 	
 	private IGraphicalEditPart getEditPart(InteractionFragment fragment) {

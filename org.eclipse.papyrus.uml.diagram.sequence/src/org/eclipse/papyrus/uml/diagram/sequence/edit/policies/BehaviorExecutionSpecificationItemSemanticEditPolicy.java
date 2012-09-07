@@ -32,13 +32,16 @@ import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
 import org.eclipse.gmf.runtime.emf.type.core.requests.CreateRelationshipRequest;
+import org.eclipse.gmf.runtime.emf.type.core.requests.DestroyDependentsRequest;
 import org.eclipse.gmf.runtime.emf.type.core.requests.DestroyElementRequest;
 import org.eclipse.gmf.runtime.emf.type.core.requests.DestroyRequest;
+import org.eclipse.gmf.runtime.emf.type.core.requests.IEditCommandRequest;
 import org.eclipse.gmf.runtime.emf.type.core.requests.ReorientReferenceRelationshipRequest;
 import org.eclipse.gmf.runtime.emf.type.core.requests.ReorientRelationshipRequest;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.infra.services.edit.service.ElementEditServiceUtils;
 import org.eclipse.papyrus.infra.services.edit.service.IElementEditService;
+import org.eclipse.papyrus.uml.diagram.sequence.command.ApexDestroyElementCommand;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.commands.CommentAnnotatedElementCreateCommand;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.commands.CommentAnnotatedElementReorientCommand;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.commands.ConstraintConstrainedElementCreateCommand;
@@ -78,6 +81,8 @@ import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.OccurrenceSpecification;
 
 /**
+ * apex updated
+ * 
  * @generated
  */
 public class BehaviorExecutionSpecificationItemSemanticEditPolicy extends UMLBaseItemSemanticEditPolicy {
@@ -88,12 +93,54 @@ public class BehaviorExecutionSpecificationItemSemanticEditPolicy extends UMLBas
 	public BehaviorExecutionSpecificationItemSemanticEditPolicy() {
 		super(UMLElementTypes.BehaviorExecutionSpecification_3003);
 	}
+	
+	/* apex added start */
+	private static final String SOURCE_CONNECTIONS_RECONNECTED = "Source Connections Reconnected";
+	/* apex added end */
 
 	/**
+	 * apex updated
+	 * 
 	 * @generated NOT
 	 */
 	protected Command getDestroyElementCommand(DestroyElementRequest req) {
 		CompoundCommand deleteElementsCommand = new CompoundCommand();
+		
+		/* apex added start */
+		Boolean isReconnedted = (Boolean)req.getParameter(SOURCE_CONNECTIONS_RECONNECTED);
+		if (isReconnedted != Boolean.TRUE) {
+			// Activation의 source connections들을 parent인 lifeline으로 이동하여 연결
+			if (getHost() instanceof ShapeNodeEditPart) {
+				LifelineEditPart lifelineEP = SequenceUtil.getParentLifelinePart(getHost());
+				IFigure figure = lifelineEP.getNodeFigure();
+				Rectangle newBounds = figure.getBounds().getCopy();
+				figure.translateToAbsolute(newBounds);
+
+				List connections = ((ShapeNodeEditPart)getHost()).getSourceConnections();
+				for (Iterator iter = connections.iterator(); iter.hasNext(); ) {
+					ConnectionNodeEditPart connection = (ConnectionNodeEditPart)iter.next();
+					Point location = SequenceUtil.getAbsoluteEdgeExtremity(connection, true);
+
+					ReconnectRequest reconnReq = new ReconnectRequest();
+					reconnReq.setConnectionEditPart(connection);
+					reconnReq.setLocation(location);
+					reconnReq.setTargetEditPart(lifelineEP);
+					reconnReq.setType(RequestConstants.REQ_RECONNECT_SOURCE);
+					reconnReq.getExtendedData().put(SequenceRequestConstant.DO_NOT_MOVE_EDIT_PARTS, true);
+
+					deleteElementsCommand.add(lifelineEP.getCommand(reconnReq));
+				}
+				
+				if (deleteElementsCommand.size() > 0) {
+					IEditCommandRequest request = new DestroyDependentsRequest(getEditingDomain(), req.getElementToDestroy(), false);
+					request.addParameters(req.getParameters());
+					request.setParameter(SOURCE_CONNECTIONS_RECONNECTED, true);
+					deleteElementsCommand.add(new ICommandProxy(new ApexDestroyElementCommand(getEditingDomain(), getHost(), request)));
+					return deleteElementsCommand;
+				}
+			}
+		}
+		/* apex added end */
 		
 		EObject selectedEObject = req.getElementToDestroy();
 		IElementEditService provider = ElementEditServiceUtils.getCommandProvider(selectedEObject);
