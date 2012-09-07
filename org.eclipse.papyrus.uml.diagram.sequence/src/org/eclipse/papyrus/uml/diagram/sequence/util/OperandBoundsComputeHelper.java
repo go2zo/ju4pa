@@ -36,6 +36,7 @@ import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.gmf.runtime.notation.Bounds;
 import org.eclipse.gmf.runtime.notation.Node;
 import org.eclipse.gmf.runtime.notation.Shape;
+import org.eclipse.gmf.runtime.notation.impl.BoundsImpl;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentCombinedFragmentCompartmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionInteractionCompartmentEditPart;
@@ -344,6 +345,8 @@ public class OperandBoundsComputeHelper {
 	}
 
 	/**
+	 * 
+	 * 
 	 * Update Interaction Operand EditpPart bounds after CombinedFragment to be resized. 
 	 * @param request
 	 * @param compoundCmd
@@ -354,29 +357,42 @@ public class OperandBoundsComputeHelper {
 	 * @param direction
 	 */
 	private static void updateIOBoundsForCFResize(final ChangeBoundsRequest request,
-			CompoundCommand compoundCmd,
-			List<EditPart> combinedFragmentChildrenEditParts,
-			CombinedFragment cf, InteractionOperand targetOperand,
-			final Dimension sizeDelta, int direction) {
-		InteractionOperandEditPart targetOperandEditPart = findTargetOperandEditPart(
-				cf, targetOperand, combinedFragmentChildrenEditParts);
+			                                      CompoundCommand compoundCmd,
+			                                      List<EditPart> combinedFragmentChildrenEditParts,
+			                                      CombinedFragment cf, 
+			                                      InteractionOperand targetOperand,
+			                                      final Dimension sizeDelta, 
+			                                      int direction) {
+		InteractionOperandEditPart targetOperandEditPart = findTargetOperandEditPart(cf, targetOperand, combinedFragmentChildrenEditParts);
 		for (EditPart ep : combinedFragmentChildrenEditParts) {
 			if (ep instanceof InteractionOperandEditPart) {
 				InteractionOperandEditPart ioEP = (InteractionOperandEditPart) ep;
+				IFigure ioFigure = ioEP.getFigure();				
+				Rectangle ioepRect = ioFigure.getBounds().getCopy();
+				ICommand cmd = new UpdateIOBoundsForCFResizeCommand(ioEP.getEditingDomain(),
+                                                                    "Update operand bounds interaction command",
+                                                                    ioepRect, 
+                                                                    request, 
+                                                                    sizeDelta,
+                                                                    ioEP == targetOperandEditPart, direction);
+                compoundCmd.add(new ICommandProxy(cmd));
+
+                /* apex replaced
 				Object ioEPModel = ioEP.getModel();
+				
 				if (ioEPModel instanceof Shape) {
 					Shape ioEPShape = (Shape) ioEPModel;
+					
 					if (ioEPShape.getLayoutConstraint() instanceof Bounds) {
-						final Bounds ioEPOriginalBounds = (Bounds) ioEPShape
-								.getLayoutConstraint();
-						ICommand cmd = new UpdateIOBoundsForCFResizeCommand(
-								ioEP.getEditingDomain(),
-								"Update operand bounds interaction command",
-								ioEPOriginalBounds, request, sizeDelta,
-								ioEP == targetOperandEditPart, direction);
+						final Bounds ioEPOriginalBounds = (Bounds)ioEPShape.getLayoutConstraint();
+						ICommand cmd = new UpdateIOBoundsForCFResizeCommand(ioEP.getEditingDomain(),
+								                                            "Update operand bounds interaction command",
+								                                            ioEPOriginalBounds, request, sizeDelta,
+								                                            ioEP == targetOperandEditPart, direction);
 						compoundCmd.add(new ICommandProxy(cmd));
 					}
 				}
+                //*/
 			}
 		}
 
@@ -1013,21 +1029,35 @@ public class OperandBoundsComputeHelper {
 		return false;
 	}
 	
-	/**
+	/** 
+	 * apex updated
+	 * 
 	 * Command class for updating Interaction Operand EditpPart bounds after CombinedFragment to be resized. 
 	 *
 	 */
 	private static final class UpdateIOBoundsForCFResizeCommand extends
 			AbstractTransactionalCommand {
+		/* apex improved start */
+		private final Rectangle ioEPOriginalBounds;
+		/* apex improved start */
+		/* apex replaced
 		private final Bounds ioEPOriginalBounds;
+		*/
 		private final ChangeBoundsRequest request;
 		private final Dimension sizeDelta;
 		private boolean updateHeight = false;
 		private int direction;
 
 		private UpdateIOBoundsForCFResizeCommand(TransactionalEditingDomain domain,
-				String label, Bounds ioEPOriginalBounds,
-				ChangeBoundsRequest request, Dimension sizeDelta,
+				                                 String label,
+				                                 /* apex improved start */
+				                                 Rectangle ioEPOriginalBounds,
+				                                 /* apex improved end */
+				                                 /* apex replaced
+				                                 Bounds ioEPOriginalBounds,
+				                                 */
+				                                 ChangeBoundsRequest request, 
+				                                 Dimension sizeDelta,
 				boolean updateHeight, int direction) {
 			super(domain, label, null);
 			this.ioEPOriginalBounds = ioEPOriginalBounds;
@@ -1041,15 +1071,30 @@ public class OperandBoundsComputeHelper {
 		protected CommandResult doExecuteWithResult(IProgressMonitor monitor,
 				IAdaptable info) throws ExecutionException {
 			if (updateHeight) {
+				/* apex improved start */
+				ioEPOriginalBounds.setHeight(ioEPOriginalBounds.height + sizeDelta.height());
+				/* apex improved end */
+				/* apex replaced
 				ioEPOriginalBounds.setHeight(ioEPOriginalBounds.getHeight()
 						+ sizeDelta.height());
+				*/
 			} else if ((direction & PositionConstants.NORTH) != 0) {
+				/* apex improved start */
+				ioEPOriginalBounds.setY(ioEPOriginalBounds.y + sizeDelta.height());
+				/* apex improved end */
+				/* apex replaced
 				ioEPOriginalBounds.setY(ioEPOriginalBounds.getY()
 						+ sizeDelta.height());
+				*/
 			}
 			if ((request.getResizeDirection() & PositionConstants.EAST_WEST) != 0) {
+				/* apex improved start */
+				ioEPOriginalBounds.setWidth(ioEPOriginalBounds.width + sizeDelta.width());
+				/* apex improved start */
+				/* apex replaced
 				ioEPOriginalBounds.setWidth(ioEPOriginalBounds.getWidth()
 						+ sizeDelta.width());
+				*/
 			}
 			return CommandResult.newOKCommandResult();
 		}
