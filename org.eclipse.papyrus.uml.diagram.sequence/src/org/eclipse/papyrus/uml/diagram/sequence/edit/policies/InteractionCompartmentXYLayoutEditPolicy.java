@@ -14,10 +14,13 @@
 package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.eclipse.draw2d.Connection;
 import org.eclipse.draw2d.ConnectionAnchor;
@@ -50,7 +53,6 @@ import org.eclipse.gmf.runtime.diagram.ui.editpolicies.XYLayoutEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest;
 import org.eclipse.gmf.runtime.diagram.ui.requests.RequestConstants;
 import org.eclipse.gmf.runtime.draw2d.ui.figures.BaseSlidableAnchor;
-import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.gmf.runtime.emf.type.core.IHintedType;
 import org.eclipse.gmf.runtime.emf.type.core.commands.SetValueCommand;
 import org.eclipse.gmf.runtime.emf.type.core.requests.SetRequest;
@@ -116,7 +118,7 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				}
 				
 				if(child instanceof LifelineEditPart) {
-					if (isHorizontalMove(request)) {
+					if (isHorizontalMove(request)) {						
 						addLifelineResizeChildrenCommand(compoundCmd, request, (LifelineEditPart)child, 1);
 						/* apex improved start */
 						LifelineEditPart lep = (LifelineEditPart)child;
@@ -124,10 +126,11 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				 				                                      "Set Lifeline Move or Resize",
 				 				                                       lep,
 				 				                                       (Rectangle)translateToModelConstraint(constraintFor)); 
-						compoundCmd.add(new ICommandProxy(boundsCommand));
-						// lifeline 움직일 때 CF Resize 하는 command 여기서 호출
-						
-						/* apex improved start */
+						compoundCmd.add(new ICommandProxy(boundsCommand));						
+						/* apex improved end */
+						/* apex replaced
+						addLifelineResizeChildrenCommand(compoundCmd, request, (LifelineEditPart)child, 1);
+						 */
 					}
 				} else if(child instanceof CombinedFragmentEditPart) {
 					// Add restrictions to change the size
@@ -362,40 +365,65 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			List<LifelineEditPart> coveredLifelineEditParts = ApexSequenceUtil.apexGetCoveredLifelineEditParts(cfep, true);
 			List sortedCoveredLifelineEditParts = ApexSequenceUtil.apexGetSortedGraphicalEditPartList(coveredLifelineEditParts, SWT.LEFT);
 			
+			Map apexMoveInfo = new HashMap();
+			
 			if ( sortedCoveredLifelineEditParts.size() > 0 ) {
 				LifelineEditPart leftestLifelineEditPart = (LifelineEditPart)sortedCoveredLifelineEditParts.get(0);
 				LifelineEditPart rightestLifelineEditPart = (LifelineEditPart)sortedCoveredLifelineEditParts.get(sortedCoveredLifelineEditParts.size()-1);
 				
-				if ( lifelineEditPart.equals(leftestLifelineEditPart) && deltaX > 0 ) { // 맨왼쪽 Lifeline을 우측으로 이동하는 경우
-					req = new ChangeBoundsRequest(REQ_RESIZE);
-					req.setEditParts(cfep);
-					req.setMoveDelta(new Point(deltaX, 0)); // WEST의 경우 resize 시에도 moveDelta 필요
-					req.setSizeDelta(new Dimension(-deltaX, 0));
-					req.setResizeDirection(PositionConstants.WEST);
-				} else if ( lifelineEditPart.equals(leftestLifelineEditPart) && deltaX < 0 ) { // 맨왼쪽 Lifeline을 좌측으로 이동하는 경우
-//					req = new ChangeBoundsRequest(REQ_MOVE);
-//					req.setEditParts(cfep);
-//					req.setMoveDelta(new Point(deltaX, 0));		
+				boolean isLeftestLifelineEditPart = lifelineEditPart.equals(leftestLifelineEditPart);
+				boolean isRightestLifelineEditPart = lifelineEditPart.equals(rightestLifelineEditPart);
+				
+				if ( isLeftestLifelineEditPart && deltaX < 0 ) { // 맨왼쪽 Lifeline을 좌측으로 이동하는 경우
+	//				req = new ChangeBoundsRequest(REQ_MOVE);
+	//				req.setEditParts(cfep);
+	//				req.setMoveDelta(new Point(deltaX, 0));		
 					req = new ChangeBoundsRequest(REQ_RESIZE);
 					req.setEditParts(cfep);
 					req.setMoveDelta(new Point(deltaX, 0)); // WEST의 경우 resize 시에도 moveDelta 필요
 					req.setSizeDelta(new Dimension(Math.abs(deltaX), 0));
-					req.setResizeDirection(PositionConstants.WEST);			
-				} else if ( lifelineEditPart.equals(rightestLifelineEditPart) && deltaX > 0 ) { // 맨우측 Lifeline을 우측으로 이동하는 경우에만 CF Resize(안그러면 Resize가 누적됨)
-					req = new ChangeBoundsRequest(REQ_RESIZE);
-					req.setEditParts(cfep);
-					req.setSizeDelta(new Dimension(deltaX, 0));
-					req.setResizeDirection(PositionConstants.EAST);
-				} else if ( lifelineEditPart.equals(rightestLifelineEditPart) && deltaX < 0 ) { // 맨우측 Lifeline을 좌측으로 이동하는 경우
-					req = new ChangeBoundsRequest(REQ_RESIZE);
-					req.setEditParts(cfep);
-					req.setSizeDelta(new Dimension(deltaX, 0));
-					req.setResizeDirection(PositionConstants.EAST);
+					req.setResizeDirection(PositionConstants.WEST);		
+				} else if ( isLeftestLifelineEditPart && deltaX > 0 ) { // 맨왼쪽 Lifeline을 우측으로 이동하는 경우
+					if ( isRightestLifelineEditPart ) { // 유일한 Lifeline인 경우
+						req = new ChangeBoundsRequest(REQ_RESIZE);
+						req.setEditParts(cfep);
+						req.setMoveDelta(new Point(deltaX, 0)); // WEST의 경우 resize 시에도 moveDelta 필요
+						req.setSizeDelta(new Dimension(-deltaX, 0));
+						req.setResizeDirection(PositionConstants.WEST);	
+					} else { // 우측에 Lifeline이 있는 경우 아래의 apexGetPushNextLifeline()을 통해 이동시킴
+						continue;
+					}
 						
+				} else if ( isRightestLifelineEditPart && deltaX < 0 ) { // 맨우측 Lifeline을 좌측으로 이동하는 경우
+					req = new ChangeBoundsRequest(REQ_RESIZE);
+					req.setEditParts(cfep);
+					req.setSizeDelta(new Dimension(deltaX, 0));
+					req.setResizeDirection(PositionConstants.EAST);
+				} else if ( isRightestLifelineEditPart && deltaX > 0 ) { // 맨우측 Lifeline을 우측으로 이동하는 경우에만 CF Resize(안그러면 Resize가 누적됨)
+					req = new ChangeBoundsRequest(REQ_RESIZE);
+					req.setEditParts(cfep);
+					req.setSizeDelta(new Dimension(deltaX, 0));
+					req.setResizeDirection(PositionConstants.EAST);						
 				} else { // 그 외 중간 Lifeline을 좌측으로 이동 시 CF에는 아무런 변화 없음
 					continue;
-				}
+				}				
 			}
+
+			// cfep가 중첩된 CF인 경우
+			// lifeline이 parent CF의 최좌측 covered Lifeline 인지 여부 확인(Resize 시 parent의 resize를 유발하냐 마냐에 필요)
+			if ( cfep.getParent() instanceof InteractionOperandEditPart ) {
+				List<LifelineEditPart> parentCFCoveredLifelineEditParts = ApexSequenceUtil.apexGetCoveredLifelineEditParts((ShapeNodeEditPart)cfep.getParent().getParent().getParent(), true);
+				List parentCFSortedCoveredLifelineEditParts = ApexSequenceUtil.apexGetSortedGraphicalEditPartList(parentCFCoveredLifelineEditParts, SWT.LEFT);
+				boolean isLeftestLifelineOfParent = lifelineEditPart.equals((LifelineEditPart)parentCFSortedCoveredLifelineEditParts.get(0));
+				
+				apexMoveInfo.put("Apex_Is_LeftestLifeline_Of_ParentCF", new Boolean(isLeftestLifelineOfParent));	
+			}			
+			
+			apexMoveInfo.put("Apex_Move_By_Lifeline", lifelineEditPart);
+
+			req.setExtendedData(apexMoveInfo);
+			
+			
 			Command command = cfep.getCommand(req);
 			if (command != null && command.canExecute()) {
 				compoundCmd.add(command);
@@ -1219,6 +1247,30 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 			// parent CF보다 좌측으로 resize 되는 경우 parent의 이동에 따라 한번더 이동되지 않도록 sizeDelta 만큼 보정
 			if ( origCFBounds.x < 0 ) {
 				origCFBounds.x += sizeDelta.width;
+			// Lifeline에 의한 좌측 이동 시 중첩된 CF의 경우 parent resize 유발 안하더라도 Lifeline의 이동에 의해 parent가 좌측으로 이동되므로 moveDelta 만큼 보정
+			} else {
+				boolean isMoveRequestFromLifelineMove = false;
+				boolean isLeftestLifelineOfParent = false;
+				LifelineEditPart lep = null;
+				Map extData = request.getExtendedData();
+				Set<Entry<Object, Object>> entrySet = extData.entrySet();
+				for (Entry<Object, Object> aExtendedDataEntry : entrySet ) {
+					Object value = aExtendedDataEntry.getValue();
+					if ( value instanceof LifelineEditPart ) {
+						isMoveRequestFromLifelineMove = true;
+						lep = (LifelineEditPart)value;
+					} else if ( value instanceof Boolean ) {
+						isLeftestLifelineOfParent = ((Boolean)value).booleanValue();
+					}					
+				}
+				
+				if ( isMoveRequestFromLifelineMove 
+					 && moveDelta.x < 0
+					// 이 lifeline 이 parentCF의 최좌측 lifeline인 경우
+					 && isLeftestLifelineOfParent
+					 && combinedFragmentEditPart.getParent() instanceof InteractionOperandEditPart ) {
+					origCFBounds.x += Math.abs(moveDelta.x);
+				}				
 			}
 			resizeOrMoveCFCommand = new SetBoundsCommand(editingDomain, 
                                                          "Apex_CF_Resize",

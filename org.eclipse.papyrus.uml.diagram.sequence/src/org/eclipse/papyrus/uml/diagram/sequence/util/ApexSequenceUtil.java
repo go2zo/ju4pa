@@ -1514,4 +1514,11 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 		
 		return list;
 	}
+	
+	public static List<CombinedFragmentEditPart> apexGetDeepestCombinedFragmentEditParts(List<CombinedFragmentEditPart> combinedFragmentEditParts) {
+		
+		
+		
+		return null;
+	}
 }
