@@ -1341,8 +1341,10 @@ System.out.println("agep1.absBounds : " + apexGetAbsoluteRectangle(agep1));
 			EditPart parent = part.getParent();
 			while (parent != null) {
 				if (parts.contains(parent)) {
-					removeParts.add(parent);
+					removeParts.add(part);
+					break;
 				}
+				parent = parent.getParent();
 			}
 		}
 		

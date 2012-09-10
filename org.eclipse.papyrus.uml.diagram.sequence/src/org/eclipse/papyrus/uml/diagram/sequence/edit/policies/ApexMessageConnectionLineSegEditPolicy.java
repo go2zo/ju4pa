@@ -276,10 +276,13 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						Rectangle newBounds = oldBounds.getCopy();
 
 						if (connectionPart.equals(lastConnPart)) {
-							newBounds.height += moveDeltaY;
+							newBounds.height = oldBounds.height + moveDeltaY;
 							compoudCmd.add( createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
 						}
 						
+						if (moveDeltaY > 0) {
+							newBounds.height = oldBounds.height + moveDeltaY;
+						}
 						sendMessageMoveCmd = ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
 								(OccurrenceSpecification)send, y, newBounds, srcPart, srcLifelinePart, empty);
 					}
@@ -324,77 +327,6 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 					}
 					
 					compoudCmd.add(sendMessageMoveCmd);
-					
-//					if (srcPart instanceof AbstractExecutionSpecificationEditPart) {
-//						IGraphicalEditPart srcExecSpecEP = (IGraphicalEditPart)srcPart;
-//						Rectangle oldBounds = ApexSequenceUtil.apexGetAbsoluteRectangle(srcExecSpecEP);
-//						Rectangle newBounds = oldBounds.getCopy();
-//						newBounds.height += moveDeltaY;
-//						
-//						compoudCmd.add( createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
-//
-//						List sourceConnections = srcExecSpecEP.getSourceConnections();
-//						int oldLocationY = oldLocation.y;
-//						for (Object sourceConnection : sourceConnections) {
-//							if (sourceConnection instanceof ConnectionNodeEditPart) {
-//								EObject semanticElement = ((ConnectionNodeEditPart)sourceConnection).resolveSemanticElement();
-//								if (semanticElement instanceof Message) {
-//									MessageEnd messageEnd = ((Message)semanticElement).getSendEvent();
-//									int tmp = SequenceUtil.findLocationOfMessageOccurrence((GraphicalEditPart) srcExecSpecEP, (MessageOccurrenceSpecification) messageEnd).y;
-//									
-//									if (oldLocationY < tmp || connectionPart.equals(sourceConnection)) {
-//										compoudCmd.add( ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
-//												(OccurrenceSpecification)messageEnd, tmp + moveDeltaY, newBounds, srcLifelinePart, empty) );
-//
-//										List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(
-//												(IGraphicalEditPart) sourceConnection, false, true, false);
-//										
-//										for (IGraphicalEditPart linkedPart : linkedParts) {
-//											Rectangle oldBounds2 = ApexSequenceUtil.apexGetAbsoluteRectangle(linkedPart);
-//											Rectangle newBounds2 = oldBounds2.getCopy().translate(0, moveDeltaY);
-//											compoudCmd.add( createChangeBoundsCommand(linkedPart, oldBounds2, newBounds2, false) );
-//										}
-//									}
-//								}
-//							}
-//						}
-//
-//						if (moveDeltaY > 0) {
-//							List<IGraphicalEditPart> linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(srcExecSpecEP, true, false, false);
-//							nextParts.removeAll(linkedParts);
-//							IGraphicalEditPart realNextPart = null;
-//							int top = Integer.MAX_VALUE;
-//							for (IGraphicalEditPart part : nextParts) {
-//								int tmp = ApexSequenceUtil.apexGetAbsolutePosition(part, SWT.TOP);
-//								if (top > tmp) {
-//									top = tmp;
-//									realNextPart = part;
-//								}
-//							}
-//
-//							Point newMoveDelta = new Point(0, moveDeltaY);
-//							ChangeBoundsRequest newRequest = new ChangeBoundsRequest(REQ_MOVE);
-//							newRequest.setMoveDelta(newMoveDelta);
-//
-//							if (realNextPart instanceof ConnectionNodeEditPart) {
-//								compoudCmd.add( apexGetMoveConnectionCommand(newRequest, (ConnectionNodeEditPart) realNextPart, false) );
-//							}
-//							else if (realNextPart != null) {
-//								compoudCmd.add( apexGetResizeOrMoveBelowItemsCommand(newRequest, realNextPart) );
-//							}
-//						}
-//					}
-//					else if (srcPart.equals(srcLifelinePart)) {
-//						IFigure figure = srcLifelinePart.getPrimaryShape().getFigureLifelineDotLineFigure();
-//						Rectangle oldBounds = figure.getBounds().getCopy();
-//						figure.translateToAbsolute(oldBounds);
-//						
-//						Rectangle newBounds = oldBounds.getCopy();
-//						if (newBounds.bottom() < y + MARGIN) {
-//							newBounds.height = y + MARGIN - newBounds.y;
-//							compoudCmd.add( createChangeBoundsCommand(srcLifelinePart, oldBounds, newBounds, true) );
-//						}
-//					}
 				}
 
 				return compoudCmd.size() > 0 ? compoudCmd : null;

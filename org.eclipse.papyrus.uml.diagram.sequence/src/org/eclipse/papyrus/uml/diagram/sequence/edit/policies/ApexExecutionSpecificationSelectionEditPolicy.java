@@ -9,6 +9,7 @@ import org.eclipse.gef.EditPart;
 import org.eclipse.gef.Handle;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.INodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.ResizableShapeEditPolicy;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
@@ -80,7 +81,7 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 		if (element instanceof ExecutionSpecification) {
 			InteractionFragment parent = ((ExecutionSpecification)element).getEnclosingOperand();
 			if (parent != null) {
-				EditPart interactionOperandEP = ApexSequenceUtil.getEditPart(parent, getHost().getViewer());
+				EditPart interactionOperandEP = ApexSequenceUtil.getEditPart(parent, INodeEditPart.class, getHost().getViewer());
 				EditPart combinedFragmentCompartmentEP = interactionOperandEP.getParent();
 				EditPart combinedFragmentEP = combinedFragmentCompartmentEP.getParent();
 

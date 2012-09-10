@@ -13,6 +13,8 @@ import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
+import org.eclipse.gef.ConnectionEditPart;
+import org.eclipse.gef.EditPart;
 import org.eclipse.gef.EditPartViewer;
 import org.eclipse.gef.RequestConstants;
 import org.eclipse.gef.commands.CompoundCommand;
@@ -22,6 +24,7 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
 import org.eclipse.gmf.runtime.emf.commands.core.command.AbstractTransactionalCommand;
 import org.eclipse.gmf.runtime.notation.View;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.uml2.uml.CombinedFragment;
@@ -37,6 +40,8 @@ public class ApexMoveInteractionFragmentsCommand extends
 		AbstractTransactionalCommand {
 
 	protected final static String COMMAND_LABEL = "Move InteractionFragments";
+	
+	private final static int EXECUTION_BOTTOM_MARGIN = 20;
 	
 	protected EditPartViewer viewer;
 	protected ViewDescriptor descriptor;
@@ -77,26 +82,23 @@ public class ApexMoveInteractionFragmentsCommand extends
 		}
 		
 		Collection<InteractionFragment> underFragments = getUnderInteractionFragments(fragment, location);
+		Point realMoveDelta = getRealMoveDelta(getMoveDelta(), underFragments);
 		for (InteractionFragment underFragment : underFragments) {
 			if (underFragment instanceof ExecutionOccurrenceSpecification) {
 				ExecutionSpecification execution = ((ExecutionOccurrenceSpecification)underFragment).getExecution();
 				IGraphicalEditPart editPart = getEditPart(execution);
-				Point moveDelta = getMoveDelta();
 				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
 				request.setMoveDelta(new Point(0, 0));
 				request.setResizeDirection(PositionConstants.SOUTH);
-				request.setSizeDelta(new Dimension(0, moveDelta.y));
+				request.setSizeDelta(new Dimension(0, realMoveDelta.y));
 				command.add(editPart.getCommand(request));
 			}
 			else if (underFragment instanceof ExecutionSpecification ||
 					underFragment instanceof CombinedFragment) {
 				IGraphicalEditPart editPart = getEditPart(underFragment);
-				Point moveDelta = getMoveDelta();
-
 				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
-				request.setMoveDelta(moveDelta);
+				request.setMoveDelta(realMoveDelta);
 				request.setSizeDelta(new Dimension(0, 0));
-
 				command.add(editPart.getCommand(request));
 			}
 		}
@@ -110,8 +112,28 @@ public class ApexMoveInteractionFragmentsCommand extends
 		return moveDelta;
 	}
 	
-	public void setMoveDelta(Point moveDelta) {
-		this.moveDelta = moveDelta;
+	public Point getRealMoveDelta(Point delta, Collection<InteractionFragment> fragments) {
+		for (InteractionFragment underFragment : fragments) {
+			if (underFragment instanceof ExecutionOccurrenceSpecification) {
+				ExecutionSpecification execution = ((ExecutionOccurrenceSpecification)underFragment).getExecution();
+				IGraphicalEditPart editPart = getEditPart(execution);
+				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
+				if (bounds.bottom() < location.y + EXECUTION_BOTTOM_MARGIN) {
+					System.out.println("over");
+					delta.y += location.y + EXECUTION_BOTTOM_MARGIN - bounds.bottom();
+				}
+			}
+			else if (underFragment instanceof ExecutionSpecification ||
+					underFragment instanceof CombinedFragment) {
+				IGraphicalEditPart editPart = getEditPart(underFragment);
+				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
+				if (bounds.bottom() < location.y + EXECUTION_BOTTOM_MARGIN) {
+					System.out.println("over");
+					delta.y += location.y + EXECUTION_BOTTOM_MARGIN - bounds.bottom();
+				}
+			}
+		}
+		return delta;
 	}
 	
 	/**
@@ -146,7 +168,22 @@ public class ApexMoveInteractionFragmentsCommand extends
 				continue;
 			
 			if (ift instanceof MessageOccurrenceSpecification) {
-				continue;
+				Message message = ((MessageOccurrenceSpecification)ift).getMessage();
+				IGraphicalEditPart editPart = getEditPart(message);
+				if (editPart instanceof ConnectionEditPart) {
+					if (ift.equals(message.getSendEvent())) {
+						EditPart source = ((ConnectionEditPart)editPart).getSource();
+						if (!(source instanceof AbstractExecutionSpecificationEditPart)) {
+							result.add(ift);
+						}
+					}
+					else if (ift.equals(message.getReceiveEvent())) {
+						EditPart target = ((ConnectionEditPart)editPart).getTarget();
+						if (!(target instanceof AbstractExecutionSpecificationEditPart)) {
+							result.add(ift);
+						}
+					}
+				}
 			}
 			else if (ift instanceof ExecutionOccurrenceSpecification) {
 				ExecutionSpecification execution = ((ExecutionOccurrenceSpecification)ift).getExecution();
@@ -181,8 +218,8 @@ public class ApexMoveInteractionFragmentsCommand extends
 		return result;
 	}
 	
-	private IGraphicalEditPart getEditPart(InteractionFragment fragment) {
-		return (IGraphicalEditPart)ApexSequenceUtil.getEditPart(fragment, viewer);
+	private IGraphicalEditPart getEditPart(EObject eObject) {
+		return (IGraphicalEditPart)ApexSequenceUtil.getEditPart(eObject, viewer);
 	}
 	
 }

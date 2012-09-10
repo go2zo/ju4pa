@@ -21,8 +21,6 @@ public class ApexSetBoundsAndMoveInteractionFragmentsCommand extends
 
 	private CreateElementAndNodeCommand createElementAndNodeCommand;
 	
-	private final static int EXECUTION_BOTTOM_MARGIN = 10;
-	
 	public ApexSetBoundsAndMoveInteractionFragmentsCommand(TransactionalEditingDomain domain, CreateElementAndNodeCommand command,
 			ViewDescriptor descriptor, EditPartViewer viewer, InteractionFragment fragment, Point location) {
 		super(domain, descriptor, viewer, fragment, location, null);
@@ -49,17 +47,15 @@ public class ApexSetBoundsAndMoveInteractionFragmentsCommand extends
 
 	@Override
 	public Point getMoveDelta() {
-		View createdView = createElementAndNodeCommand.getCreatedView();
-		if (createdView != null) {
-			Rectangle b = new Rectangle();
-			b.x = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getLocation_X());
-			b.y = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getLocation_Y());
-			b.width = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getSize_Width());
-			b.height = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getSize_Height());
-			
-			return new Point(0, b.height);
+		Point delta = super.getMoveDelta();
+		if (delta == null) {
+			View createdView = createElementAndNodeCommand.getCreatedView();
+			if (createdView != null) {
+				int height = (Integer)ViewUtil.getStructuralFeatureValue(createdView, NotationPackage.eINSTANCE.getSize_Height());
+				moveDelta = new Point(0, height);
+				return moveDelta;
+			}
 		}
-		
-		return super.getMoveDelta();
+		return delta;
 	}
 }
