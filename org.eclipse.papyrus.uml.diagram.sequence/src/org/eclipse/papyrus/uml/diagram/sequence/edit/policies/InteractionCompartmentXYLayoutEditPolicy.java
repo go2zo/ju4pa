@@ -1533,10 +1533,10 @@ public class InteractionCompartmentXYLayoutEditPolicy extends XYLayoutEditPolicy
 				CombinedFragmentCombinedFragmentCompartmentEditPart cfcfep = (CombinedFragmentCombinedFragmentCompartmentEditPart)combinedFragmentEditPart.getChildren().get(0);
 				List ioeps = cfcfep.getChildren();
 				
-				if ( (direction & PositionConstants.NORTH_SOUTH) != 0 ) {
-					ioep = (InteractionOperandEditPart)ioeps.get(ioeps.size()-1);
-				} else {
+				if ( (direction & PositionConstants.EAST_WEST) != 0 ) {
 					ioep = (InteractionOperandEditPart)cfcfep.getChildren().get(0);
+				} else if ( (direction & PositionConstants.NORTH_SOUTH) != 0 ) {
+					ioep = (InteractionOperandEditPart)ioeps.get(ioeps.size()-1);
 				}
 			} else if ( parentEP instanceof InteractionOperandEditPart ) {				
 				ioep = (InteractionOperandEditPart)parentEP;
