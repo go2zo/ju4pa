@@ -71,4 +71,12 @@ public interface ApexSequenceRequestConstants {
 	 * 
 	 */
 	public static final String APEX_KEY_IS_RESIZE_BY_IO_APPEND = "Apex_Is_ResizeCF_By_IOAppend"; //$NON-NLS-1$
+	
+	/**
+	 * 
+	 */
+	public static final String APEX_KEY_IS_RESIZE_BY_MESSAGE_MOVE = "Resize IO by message Move or activation Resize"; //$NON-NLS-1$
+
+
+
 }

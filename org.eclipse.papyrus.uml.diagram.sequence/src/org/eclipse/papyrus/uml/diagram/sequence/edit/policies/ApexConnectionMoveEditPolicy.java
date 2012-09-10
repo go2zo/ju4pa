@@ -2,8 +2,10 @@ package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.draw2d.Connection;
 import org.eclipse.draw2d.Graphics;
@@ -36,6 +38,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEdi
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexOccurrenceSpecificationMoveHelper;
+import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceRequestConstants;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.swt.SWT;
@@ -343,8 +346,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 								nextCmd = nextSiblingEditPart.getCommand(request);	
 							}
 						}
-						// IOEP 내에 있는 message의 경우 포함하는 IOEP, CF Resize
-						// StackOverflow 에러 수정 필요 ㅠㅜ						
+						// IOEP 내에 있는 message의 경우 포함하는 IOEP, CF Resize				
 						Rectangle absConnectEPRect = ApexSequenceUtil.apexGetAbsoluteRectangle(connectionPart);
 						InteractionFragment ift = SequenceUtil.findInteractionFragmentContainerAt(absConnectEPRect, connectionPart);
 						if ( ift instanceof InteractionOperand ) {

@@ -40,10 +40,11 @@ public class InteractionOperandDragDropEditPolicy extends ResizableEditPolicy {
 	 */
 	@Override
 	protected Command getResizeCommand(ChangeBoundsRequest request) {
-		if ((request.getResizeDirection() & PositionConstants.EAST_WEST) != 0) {
-			EditPart parent = getHost().getParent().getParent();
-			return parent.getCommand(request);
-		} else{
+//		if ((request.getResizeDirection() & PositionConstants.EAST_WEST) != 0) {
+//			EditPart parent = getHost().getParent().getParent();
+//			return parent.getCommand(request);
+//		} else{
+			
 			if (this.getHost() instanceof InteractionOperandEditPart
 					&& this.getHost().getParent() instanceof CombinedFragmentCombinedFragmentCompartmentEditPart) {
 				InteractionOperandEditPart currentIOEP = (InteractionOperandEditPart) this
@@ -58,20 +59,38 @@ public class InteractionOperandDragDropEditPolicy extends ResizableEditPolicy {
 				/* apex added end */
 				if(this.getHost() == OperandBoundsComputeHelper.findFirstIOEP(compartEP)&&(request.getResizeDirection() & PositionConstants.NORTH) != 0){ 
 					return getHost().getParent().getParent().getCommand(request);
-				}else{
+				} else {
+					/* apex improved start */
 					int heightDelta = request.getSizeDelta().height();
+					int widthDelta = request.getSizeDelta().width();
+					int direction = request.getResizeDirection();
 
+					return OperandBoundsComputeHelper.createIOEPResizeCommand(request, 
+                                                                              currentIOEP,
+                                                                              widthDelta,
+                                                                              heightDelta,
+                                                                              compartEP,
+                                                                              direction);
+				
+					/* apex improved end */
+					/* apex replaced
+					int heightDelta = request.getSizeDelta().height();
+					
 					if ((request.getResizeDirection() & PositionConstants.NORTH) != 0) {
-						return OperandBoundsComputeHelper.createIOEPResizeCommand(currentIOEP, heightDelta,
-								compartEP,PositionConstants.NORTH);
+						return OperandBoundsComputeHelper.createIOEPResizeCommand(request, 
+								                                                  currentIOEP,
+								                                                  widthDelta,
+								                                                  heightDelta,
+								                                                  compartEP,PositionConstants.NORTH);
 					} else if ((request.getResizeDirection() & PositionConstants.SOUTH) != 0) {
-						return OperandBoundsComputeHelper.createIOEPResizeCommand(currentIOEP, heightDelta,
+						return OperandBoundsComputeHelper.createIOEPResizeCommand(request, currentIOEP, heightDelta,
 								compartEP,PositionConstants.SOUTH);
 					}
+					*/
 				}
 			}
 			return null;
-		}
+//		}
 	}
 
 }

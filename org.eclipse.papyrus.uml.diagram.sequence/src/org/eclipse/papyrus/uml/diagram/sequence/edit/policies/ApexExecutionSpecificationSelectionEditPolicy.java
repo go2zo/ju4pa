@@ -1,7 +1,9 @@
 package org.eclipse.papyrus.uml.diagram.sequence.edit.policies;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.draw2d.PositionConstants;
 import org.eclipse.draw2d.geometry.Dimension;
@@ -18,6 +20,7 @@ import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.CombinedFragmentEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.InteractionOperandEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceRequestConstants;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.uml2.uml.ExecutionSpecification;
 import org.eclipse.uml2.uml.InteractionFragment;
@@ -102,10 +105,6 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 					cbRequest.setSizeDelta(new Dimension(0, request.getSizeDelta().height));
 					cbRequest.setResizeDirection(PositionConstants.SOUTH);
 					command = ioep.getCommand(cbRequest);
-
-					
-					
-					
 					
 				} else { // Interaction 내에 있는 Activation의 경우
 					List<IGraphicalEditPart> nextSiblingEditParts = ApexSequenceUtil.apexGetNextSiblingEditParts(aep);
@@ -116,7 +115,7 @@ public class ApexExecutionSpecificationSelectionEditPolicy extends
 						if ( nextSiblingEditPart != null ) {							
 							if ( nextSiblingEditPart instanceof CombinedFragmentEditPart ) {
 								ChangeBoundsRequest cbRequest = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
-								cbRequest.setMoveDelta(new Point(0, request.getSizeDelta().height));								
+								cbRequest.setMoveDelta(new Point(0, request.getSizeDelta().height));	
 								command = nextSiblingEditPart.getCommand(cbRequest);
 							}
 						}		
