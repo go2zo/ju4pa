@@ -475,7 +475,7 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 					}
 					/* apex added start */
 					else {
-						compoundCmd.add(apexCreateMovingAffixedExecutionSpecificationCommand(executionSpecificationEP, realMoveDelta, newBounds));
+//						compoundCmd.add(apexCreateMovingAffixedExecutionSpecificationCommand(executionSpecificationEP, realMoveDelta, newBounds));
 					}
 					/* apex added end */
 					

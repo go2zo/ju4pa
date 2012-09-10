@@ -258,8 +258,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						
 						srcCmd.add( createChangeBoundsCommand(realPrevPart, oldBounds, newBounds, true));
 					}
-					if (request.getMoveDelta().y<-100)
-						System.out.println();
+					
 					if (srcPart instanceof AbstractExecutionSpecificationEditPart) {
 						IGraphicalEditPart srcExecSpecEP = (IGraphicalEditPart)srcPart;
 						
@@ -283,9 +282,10 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 						
 						Rectangle oldBounds = ApexSequenceUtil.apexGetAbsoluteRectangle(srcExecSpecEP);
 						Rectangle newBounds = oldBounds.getCopy();
-						newBounds.height += moveDeltaY;
 
 						if (connectionPart.equals(lastConnPart)) {
+							// source connections 중 가장 하위의 connection이 이동하였을 경우에 만 bounds 변경
+							newBounds.height += moveDeltaY;
 							srcCmd.add( createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true));
 						}
 						
