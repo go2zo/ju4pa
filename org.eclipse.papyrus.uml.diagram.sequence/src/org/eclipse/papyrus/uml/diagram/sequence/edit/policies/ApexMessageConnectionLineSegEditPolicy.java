@@ -16,7 +16,6 @@ import org.eclipse.draw2d.geometry.PointList;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
-import org.eclipse.gef.ConnectionEditPart;
 import org.eclipse.gef.EditPart;
 import org.eclipse.gef.Request;
 import org.eclipse.gef.commands.Command;
@@ -42,6 +41,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.util.ApexOccurrenceSpecification
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.uml2.uml.Message;
 import org.eclipse.uml2.uml.MessageEnd;
 import org.eclipse.uml2.uml.MessageOccurrenceSpecification;
@@ -274,9 +274,9 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						
 						Rectangle oldBounds = ApexSequenceUtil.apexGetAbsoluteRectangle(srcExecSpecEP);
 						Rectangle newBounds = oldBounds.getCopy();
-						newBounds.height += moveDeltaY;
 
 						if (connectionPart.equals(lastConnPart)) {
+							newBounds.height += moveDeltaY;
 							compoudCmd.add( createChangeBoundsCommand(srcExecSpecEP, oldBounds, newBounds, true) );
 						}
 						
@@ -482,19 +482,6 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 		Point location = request.getLocation().getCopy();
 		connection.translateToRelative(location);
 		
-//		Point srcAnchorPoint = connection.getSourceAnchor().getReferencePoint();
-//		Point tgtAnchorPoint = connection.getTargetAnchor().getReferencePoint();
-//		Point start = connection.getSourceAnchor().getLocation(tgtAnchorPoint);
-//		Point end = connection.getTargetAnchor().getLocation(srcAnchorPoint);
-////		Point start = connection.getSourceAnchor().getReferencePoint();
-////		Point end = connection.getTargetAnchor().getReferencePoint();
-////		Point start = SequenceUtil.getAbsoluteEdgeExtremity(host, true);
-////		Point end = SequenceUtil.getAbsoluteEdgeExtremity(host, false);
-//		connection.translateToRelative(start);
-//		connection.translateToRelative(end);
-//		start.setY(location.y());
-//		end.setY(location.y());
-		
 		PointList pl = connection.getPoints().getCopy();
 		int dy = location.y - pl.getFirstPoint().y;
 		for (int i = 0; i < pl.size(); i++) {
@@ -504,8 +491,6 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 		}
 		
 		PolylineConnection feedbackConnection = getDragSourceFeedbackFigure();
-//		feedbackConnection.setStart(start);
-//		feedbackConnection.setEnd(end);
 		feedbackConnection.setPoints(pl);
 		/* apex added end */
 	}
@@ -532,7 +517,8 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 		PolylineConnection connection = new PolylineConnection();
 		connection.setLineWidth(1);
 		connection.setLineStyle(Graphics.LINE_DASHDOT);
-		connection.setForegroundColor(((IGraphicalEditPart)getHost()).getFigure().getLocalForegroundColor());
+//		connection.setForegroundColor(((IGraphicalEditPart)getHost()).getFigure().getLocalForegroundColor());
+		connection.setForegroundColor(new Color(null, 100, 100, 255));
 		return connection;
 		/* apex improved end */
 		/* apex replaced

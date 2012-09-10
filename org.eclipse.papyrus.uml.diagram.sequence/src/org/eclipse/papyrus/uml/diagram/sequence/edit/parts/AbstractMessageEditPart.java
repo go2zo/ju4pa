@@ -101,7 +101,8 @@ public abstract class AbstractMessageEditPart extends ConnectionNodeEditPart {
 	@Override
 	public DragTracker getDragTracker(Request req) {
 		/* apex improved start */
-		return new ApexSelectConnectionEditPartTracker(this);
+//		return new ApexSelectConnectionEditPartTracker(this);
+		return super.getDragTracker(req);
 		/* apex improved end */
 		/* apex replaced
 		return super.getDragTracker(req);
