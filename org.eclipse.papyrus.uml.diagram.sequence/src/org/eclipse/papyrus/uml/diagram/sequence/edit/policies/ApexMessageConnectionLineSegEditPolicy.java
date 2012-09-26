@@ -31,7 +31,6 @@ import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editpolicies.ConnectionBendpointEditPolicy;
 import org.eclipse.gmf.runtime.diagram.ui.util.SelectInDiagramHelper;
-import org.eclipse.gmf.runtime.emf.core.util.EObjectAdapter;
 import org.eclipse.gmf.runtime.gef.ui.internal.editpolicies.LineMode;
 import org.eclipse.papyrus.uml.diagram.sequence.draw2d.routers.MessageRouter.RouterKind;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
@@ -39,6 +38,7 @@ import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
 import org.eclipse.papyrus.uml.diagram.sequence.part.Messages;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexOccurrenceSpecificationMoveHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
@@ -306,11 +306,11 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 						Rectangle newBounds = oldBounds.getCopy();
 						newBounds.y += moveDeltaY;
 						
-						compoudCmd.add( createChangeBoundsCommand(linkedPart, oldBounds, newBounds, true) );
+						compoudCmd.add( createChangeBoundsCommand(linkedPart, oldBounds, newBounds, false) );
 					}
 					
 					if (moveDeltaY > 0) {
-						linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, true, false, false);
+						linkedParts = ApexSequenceUtil.apexGetLinkedEditPartList(connectionPart, true, true, false);
 						nextParts.removeAll(linkedParts);
 						if (nextParts.size() > 0) {
 							IGraphicalEditPart nextSiblingEditPart = nextParts.get(0);
@@ -359,8 +359,12 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 		
 		if (!isPreserveAnchorsPosition) {
 			TransactionalEditingDomain editingDomain = gep.getEditingDomain();
-			EObject element = gep.resolveSemanticElement();
-			command = new ICommandProxy( new SetBoundsCommand(editingDomain, "", new EObjectAdapter(element), newBounds) );
+			Rectangle parentBounds = gep.getFigure().getParent().getBounds();
+			// newBounds를 parent(Lifeline)을 기준으로 한 상대좌표로 변경
+			gep.getFigure().translateToRelative(newBounds);
+			newBounds.translate(-parentBounds.x, -parentBounds.y);
+			// end
+			command = new ICommandProxy( new SetBoundsCommand(editingDomain, "", gep, newBounds) );
 		}
 		else {
 			ChangeBoundsRequest request = createChangeBoundsRequest(oldBounds, newBounds);
@@ -376,6 +380,8 @@ public class ApexMessageConnectionLineSegEditPolicy extends
 		Dimension sizeDelta = new Dimension(newBounds.width - oldBounds.width, newBounds.height - oldBounds.height);
 		request.setMoveDelta(moveDelta);
 		request.setSizeDelta(sizeDelta);
+		// execution 이동에 의해 editpart들이 겹치는 현상 방지
+		request.getExtendedData().put(SequenceRequestConstant.DO_NOT_MOVE_EDIT_PARTS, true);
 		if (oldBounds.y == newBounds.y)
 			request.setResizeDirection(PositionConstants.SOUTH);
 		else if (oldBounds.bottom() == newBounds.bottom())

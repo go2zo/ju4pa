@@ -3,9 +3,10 @@ package org.eclipse.papyrus.uml.diagram.sequence.command;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.ShapeNodeEditPart;
+import org.eclipse.papyrus.uml.diagram.common.commands.PreserveAnchorsPositionCommand;
 
 public class ApexSetBoundsAndPreserveAnchorsPositionCommand extends
-		ApexPreserveAnchorsPositionCommand {
+		PreserveAnchorsPositionCommand {
 	
 	private ApexSetBoundsForExecutionSpecificationCommand setBoundsCommand;
 

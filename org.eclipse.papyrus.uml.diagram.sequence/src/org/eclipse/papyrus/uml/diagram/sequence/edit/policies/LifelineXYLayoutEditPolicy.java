@@ -475,8 +475,11 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 					}
 					/* apex added start */
 					else {
-						compoundCmd.add(apexCreateMovingAffixedExecutionSpecificationCommand(executionSpecificationEP, realMoveDelta, newBounds));
-						compoundCmd.add(createZOrderCommand(lifelineEP, executionSpecificationEP, newBounds, notToCheckExecutionSpecificationList));
+						Object data = request.getExtendedData().get(SequenceRequestConstant.DO_NOT_MOVE_EDIT_PARTS);
+						if (!Boolean.TRUE.equals(data)) {
+							compoundCmd.add(apexCreateMovingAffixedExecutionSpecificationCommand(executionSpecificationEP, realMoveDelta, newBounds));
+							compoundCmd.add(createZOrderCommand(lifelineEP, executionSpecificationEP, newBounds, notToCheckExecutionSpecificationList));
+						}
 					}
 					/* apex added end */
 					
@@ -495,13 +498,15 @@ public class LifelineXYLayoutEditPolicy extends XYLayoutEditPolicy {
 
 					// keep absolute position of anchors
 					/* apex improved start */
-					compoundCmd.add(new ICommandProxy(new ApexPreserveAnchorsPositionCommand(executionSpecificationEP, new Dimension(realMoveDelta.width, realMoveDelta.height),
-							PreserveAnchorsPositionCommand.PRESERVE_Y, executionSpecificationEP.getFigure(), request.getResizeDirection())));
+					Object relative = request.getExtendedData().get(SequenceRequestConstant.PRESERVE_ANCHOR_RELATIVE_BOUNDS);
+					ApexPreserveAnchorsPositionCommand command = new ApexPreserveAnchorsPositionCommand(executionSpecificationEP, new Dimension(realMoveDelta.width, realMoveDelta.height),
+							PreserveAnchorsPositionCommand.PRESERVE_Y, executionSpecificationEP.getFigure(), request.getResizeDirection(), relative);
+					compoundCmd.add(new ICommandProxy(command));
 					/* apex improved end */
 					/* apex replaced
 					compoundCmd.add(new ICommandProxy(new PreserveAnchorsPositionCommand(executionSpecificationEP, new Dimension(realMoveDelta.width, realMoveDelta.height),
 							PreserveAnchorsPositionCommand.PRESERVE_Y, executionSpecificationEP.getFigure(), request.getResizeDirection())));
-					 */
+					//*/ 
 				}
 
 				if(ep instanceof CombinedFragment2EditPart) {

@@ -61,6 +61,9 @@ public interface SequenceRequestConstant {
 	/** update connectable element's type reference */
 	public static final String CONNECTABLE_ELEMENT_TYPE = "Connectable Element Type"; //$NON-NLS-1$
 	
+	/**  */
+	public static final String PRESERVE_ANCHOR_RELATIVE_BOUNDS = "Preserve Anchor Relative bounds"; //$NON-NLS-1$
+	
 	// XXX delete
 	/** changed execution specification bounds */
 //	public static final String CHANGED_EXECUTION_SPECIFICATION_BOUNDS = "Changed Execution Specification Bounds"; //$NON-NLS-1$

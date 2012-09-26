@@ -1,7 +1,13 @@
 package org.eclipse.papyrus.uml.diagram.sequence.command;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.core.commands.ExecutionException;
@@ -17,15 +23,22 @@ import org.eclipse.gef.ConnectionEditPart;
 import org.eclipse.gef.EditPart;
 import org.eclipse.gef.EditPartViewer;
 import org.eclipse.gef.RequestConstants;
+import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
 import org.eclipse.gef.requests.ChangeBoundsRequest;
 import org.eclipse.gmf.runtime.common.core.command.CommandResult;
+import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
+import org.eclipse.gmf.runtime.diagram.ui.commands.SetBoundsCommand;
+import org.eclipse.gmf.runtime.diagram.ui.editparts.ConnectionNodeEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.requests.CreateViewRequest.ViewDescriptor;
 import org.eclipse.gmf.runtime.emf.commands.core.command.AbstractTransactionalCommand;
 import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.AbstractExecutionSpecificationEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.edit.parts.LifelineEditPart;
+import org.eclipse.papyrus.uml.diagram.sequence.util.ApexOccurrenceSpecificationMoveHelper;
 import org.eclipse.papyrus.uml.diagram.sequence.util.ApexSequenceUtil;
+import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceRequestConstant;
 import org.eclipse.papyrus.uml.diagram.sequence.util.SequenceUtil;
 import org.eclipse.uml2.uml.CombinedFragment;
 import org.eclipse.uml2.uml.ExecutionOccurrenceSpecification;
@@ -80,32 +93,138 @@ public class ApexMoveInteractionFragmentsCommand extends
 				notToMoveEObject.add(message.getReceiveEvent());
 			}
 		}
+
+		Map<LifelineEditPart, Collection<MessageOccurrenceSpecification>> needToMoveMessages = new HashMap<LifelineEditPart, Collection<MessageOccurrenceSpecification>>();
+		Map<LifelineEditPart, Integer> needToMoveBottoms = new HashMap<LifelineEditPart, Integer>();
 		
-		Collection<InteractionFragment> underFragments = getUnderInteractionFragments(fragment, location);
-		Point realMoveDelta = getRealMoveDelta(getMoveDelta(), underFragments);
-		for (InteractionFragment underFragment : underFragments) {
-			if (underFragment instanceof ExecutionOccurrenceSpecification) {
-				ExecutionSpecification execution = ((ExecutionOccurrenceSpecification)underFragment).getExecution();
-				IGraphicalEditPart editPart = getEditPart(execution);
-				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
-				request.setMoveDelta(new Point(0, 0));
-				request.setResizeDirection(PositionConstants.SOUTH);
-				request.setSizeDelta(new Dimension(0, realMoveDelta.y));
-				command.add(editPart.getCommand(request));
+		Collection<InteractionFragment> fragments = getInteractionFragments(fragment);
+		Point realMoveDelta = getRealMoveDelta(getMoveDelta(), fragments);
+		for (InteractionFragment ift : fragments) {
+			if (notToMoveEObject.contains(ift))
+				continue;
+			
+			if (ift instanceof ExecutionSpecification) {
+				IGraphicalEditPart editPart = getEditPart(ift);
+				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
+				if (bounds.y > location.y) {
+//					ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+//					request.setMoveDelta(realMoveDelta);
+//					request.setSizeDelta(new Dimension(0, 0));
+//					command.add(editPart.getCommand(request));
+					
+					Rectangle newBounds = bounds.getCopy();
+					Rectangle parentBounds = editPart.getFigure().getParent().getBounds();
+					editPart.getFigure().translateToRelative(newBounds);
+					newBounds.translate(-parentBounds.x, -parentBounds.y);
+					newBounds.translate(realMoveDelta);
+					SetBoundsCommand sbCommand = new SetBoundsCommand(getEditingDomain(), "Set Bounds", editPart, newBounds);
+					command.add(new ICommandProxy(sbCommand));
+				}
+				else if (bounds.bottom() > location.y) {
+					ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+					request.getExtendedData().put(SequenceRequestConstant.PRESERVE_ANCHOR_RELATIVE_BOUNDS, location);
+					request.getExtendedData().put(SequenceRequestConstant.DO_NOT_MOVE_EDIT_PARTS, true);
+					request.setResizeDirection(PositionConstants.SOUTH);
+					request.setSizeDelta(new Dimension(0, realMoveDelta.y));
+					command.add(editPart.getCommand(request));
+				}
 			}
-			else if (underFragment instanceof ExecutionSpecification ||
-					underFragment instanceof CombinedFragment) {
-				IGraphicalEditPart editPart = getEditPart(underFragment);
-				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
-				request.setMoveDelta(realMoveDelta);
-				request.setSizeDelta(new Dimension(0, 0));
-				command.add(editPart.getCommand(request));
+			else if (ift instanceof CombinedFragment) {
+				IGraphicalEditPart editPart = getEditPart(ift);
+				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
+				if (bounds.y > location.y) {
+//					ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_MOVE);
+//					request.setMoveDelta(realMoveDelta);
+//					request.setSizeDelta(new Dimension(0, 0));
+//					command.add(editPart.getCommand(request));
+					
+					Rectangle newBounds = bounds.getCopy();
+					Rectangle parentBounds = editPart.getFigure().getParent().getBounds();
+					editPart.getFigure().translateToRelative(newBounds);
+					newBounds.translate(-parentBounds.x, -parentBounds.y);
+					newBounds.translate(realMoveDelta);
+					SetBoundsCommand sbCommand = new SetBoundsCommand(getEditingDomain(), "Set Bounds", editPart, newBounds);
+					command.add(new ICommandProxy(sbCommand));
+				}
+			}
+			else if (ift instanceof MessageOccurrenceSpecification) {
+				Message message = ((MessageOccurrenceSpecification)ift).getMessage();
+				IGraphicalEditPart editPart = getEditPart(message);
+				if (ift.equals(message.getSendEvent()) && editPart instanceof ConnectionNodeEditPart) {
+					EditPart source = ((ConnectionNodeEditPart)editPart).getSource();
+					Point edge = SequenceUtil.getAbsoluteEdgeExtremity((ConnectionNodeEditPart) editPart, true);
+					if (source instanceof LifelineEditPart && edge != null && edge.y > location.y) {
+						LifelineEditPart lifelineEP = (LifelineEditPart)source;
+						Collection<MessageOccurrenceSpecification> occurrenceSpecifications = needToMoveMessages.get(lifelineEP);
+						if (occurrenceSpecifications == null) {
+							occurrenceSpecifications = new HashSet<MessageOccurrenceSpecification>();
+							needToMoveMessages.put(lifelineEP, occurrenceSpecifications);
+						}
+						occurrenceSpecifications.add((MessageOccurrenceSpecification) ift);
+						
+						Integer bottom = needToMoveBottoms.get(lifelineEP);
+						if (bottom == null) {
+							needToMoveBottoms.put(lifelineEP, edge.y + realMoveDelta.y);
+						}
+						else if (bottom < edge.y + realMoveDelta.y) {
+							needToMoveBottoms.put(lifelineEP, edge.y + realMoveDelta.y);
+						}
+					}
+				}
 			}
 		}
+		
+		command.add(createPreserveAnchorCommands(needToMoveMessages, needToMoveBottoms, realMoveDelta));
 		
 		command.execute();
 		
 		return CommandResult.newOKCommandResult();
+	}
+	
+	private Command createPreserveAnchorCommands(Map<LifelineEditPart, Collection<MessageOccurrenceSpecification>> needToMoveMessages,
+			Map<LifelineEditPart, Integer> needToMoveBottoms, Point realMoveDelta) {
+		CompoundCommand compCmd = new CompoundCommand();
+		
+		for (Entry<LifelineEditPart, Collection<MessageOccurrenceSpecification>> entry : needToMoveMessages.entrySet()) {
+			LifelineEditPart lifelineEP = entry.getKey();
+			Collection<MessageOccurrenceSpecification> occurrenceSpecifications = entry.getValue();
+			Integer bottom = needToMoveBottoms.get(lifelineEP);
+			
+			if (bottom == null) {
+				continue;
+			}
+
+			Rectangle oldBounds = lifelineEP.getPrimaryShape().getFigureLifelineDotLineFigure().getBounds().getCopy();
+			lifelineEP.getFigure().translateToAbsolute(oldBounds);
+			Rectangle newBounds = oldBounds.getCopy();
+			if (newBounds.bottom() < bottom) {
+				newBounds.height = bottom - newBounds.y;
+			}
+			
+			if (!newBounds.equals(oldBounds)) {
+				ChangeBoundsRequest request = new ChangeBoundsRequest(RequestConstants.REQ_RESIZE);
+				request.getExtendedData().put(SequenceRequestConstant.PRESERVE_ANCHOR_RELATIVE_BOUNDS, location);
+				request.getExtendedData().put(SequenceRequestConstant.DO_NOT_MOVE_EDIT_PARTS, true);
+				request.setResizeDirection(PositionConstants.SOUTH);
+				request.setSizeDelta(new Dimension(0, newBounds.bottom() - oldBounds.bottom()));
+				compCmd.add(lifelineEP.getCommand(request));
+			}
+			
+			for (MessageOccurrenceSpecification occurrenceSpecification : occurrenceSpecifications) {
+				Message message = occurrenceSpecification.getMessage();
+				EditPart editPart = getEditPart(message);
+				if (occurrenceSpecification.equals(message.getSendEvent())
+						&& editPart instanceof ConnectionNodeEditPart) {
+					ConnectionNodeEditPart messageEP = (ConnectionNodeEditPart)editPart;
+					Point edge = SequenceUtil.getAbsoluteEdgeExtremity(messageEP, true);
+					
+					List<EditPart> empty = Collections.emptyList();
+					compCmd.add(ApexOccurrenceSpecificationMoveHelper.getMoveMessageOccurrenceSpecificationsCommand(
+							occurrenceSpecification, edge.y + realMoveDelta.y, newBounds, lifelineEP, lifelineEP, empty));
+				}
+			}
+		}
+		return compCmd.size() > 0 ? compCmd : null;
 	}
 	
 	public Point getMoveDelta() {
@@ -113,38 +232,22 @@ public class ApexMoveInteractionFragmentsCommand extends
 	}
 	
 	public Point getRealMoveDelta(Point delta, Collection<InteractionFragment> fragments) {
-		for (InteractionFragment underFragment : fragments) {
-			if (underFragment instanceof ExecutionOccurrenceSpecification) {
-				ExecutionSpecification execution = ((ExecutionOccurrenceSpecification)underFragment).getExecution();
+		Point newDelta = delta.getCopy();
+		for (InteractionFragment ift : fragments) {
+			if (ift instanceof ExecutionSpecification) {
+				ExecutionSpecification execution = (ExecutionSpecification)ift;
 				IGraphicalEditPart editPart = getEditPart(execution);
 				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
-				if (bounds.bottom() < location.y + EXECUTION_BOTTOM_MARGIN) {
-					System.out.println("over");
-					delta.y += location.y + EXECUTION_BOTTOM_MARGIN - bounds.bottom();
-				}
-			}
-			else if (underFragment instanceof ExecutionSpecification ||
-					underFragment instanceof CombinedFragment) {
-				IGraphicalEditPart editPart = getEditPart(underFragment);
-				Rectangle bounds = SequenceUtil.getAbsoluteBounds(editPart);
-				if (bounds.bottom() < location.y + EXECUTION_BOTTOM_MARGIN) {
-					System.out.println("over");
-					delta.y += location.y + EXECUTION_BOTTOM_MARGIN - bounds.bottom();
+				if (bounds.y < location.y && bounds.bottom() > location.y
+						&& bounds.bottom() < location.y + EXECUTION_BOTTOM_MARGIN) {
+					newDelta.y = delta.y + location.y + EXECUTION_BOTTOM_MARGIN - bounds.bottom();
 				}
 			}
 		}
-		return delta;
+		return newDelta;
 	}
 	
-	/**
-	 * sort 필요 없음
-	 * @param fragment
-	 * @param location
-	 * @return
-	 */
-	private Collection<InteractionFragment> getUnderInteractionFragments(InteractionFragment fragment, Point location) {
-		Set<InteractionFragment> result = new HashSet<InteractionFragment>();
-		
+	private Collection<InteractionFragment> getInteractionFragments(InteractionFragment fragment) {
 		Set<InteractionFragment> allFragments = new HashSet<InteractionFragment>();
 		if (fragment instanceof Interaction) {
 			allFragments.addAll(((Interaction)fragment).getFragments());
@@ -162,6 +265,19 @@ public class ApexMoveInteractionFragmentsCommand extends
 				allFragments.addAll(interaction.getFragments());
 			}
 		}
+		return allFragments;
+	}
+	
+	/**
+	 * sort 필요 없음
+	 * @param fragment
+	 * @param location
+	 * @return
+	 */
+	private Collection<InteractionFragment> getUnderInteractionFragments(InteractionFragment fragment, Point location) {
+		Set<InteractionFragment> result = new HashSet<InteractionFragment>();
+		
+		Collection<InteractionFragment> allFragments = getInteractionFragments(fragment);
 		
 		for (InteractionFragment ift : allFragments) {
 			if (notToMoveEObject.contains(ift))

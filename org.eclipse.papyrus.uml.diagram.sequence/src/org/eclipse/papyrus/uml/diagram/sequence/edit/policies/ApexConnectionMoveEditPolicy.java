@@ -374,8 +374,7 @@ public class ApexConnectionMoveEditPolicy extends SelectionHandlesEditPolicy {
 		
 		if (!isPreserveAnchorsPosition) {
 			TransactionalEditingDomain editingDomain = gep.getEditingDomain();
-			EObject element = gep.resolveSemanticElement();
-			command = new ICommandProxy( new SetBoundsCommand(editingDomain, "", new EObjectAdapter(element), newBounds) );
+			command = new ICommandProxy( new SetBoundsCommand(editingDomain, "", gep, newBounds) );
 		}
 		else {
 			ChangeBoundsRequest request = createChangeBoundsRequest(oldBounds, newBounds);
